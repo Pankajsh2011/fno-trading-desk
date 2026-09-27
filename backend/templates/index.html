@@ -1463,7 +1463,7 @@
 
       btn.disabled = true;
       spinner.classList.remove('hidden');
-      label.textContent = 'SCANNING 0%...';
+      label.textContent = 'SCANNING 10%...';
       addLogEntry('TOKYO', 'Manual scan sweep triggered: Scanning 197 NSE F&O equities...');
 
       try {
@@ -1472,24 +1472,21 @@
         if (scanPollInterval) clearInterval(scanPollInterval);
         if (scanSafetyTimeout) clearTimeout(scanSafetyTimeout);
 
-        // Safety watchdog: automatically unlock button after 25s if network stalls
+        // Safety watchdog: automatically unlock button after 20s
         scanSafetyTimeout = setTimeout(() => {
           if (scanPollInterval) clearInterval(scanPollInterval);
           btn.disabled = false;
           spinner.classList.add('hidden');
           label.textContent = 'SWEEP SCAN F&O';
           syncBackend();
-        }, 25000);
+        }, 20000);
 
         scanPollInterval = setInterval(async () => {
           try {
             const stRes = await fetch('/api/scanner/status');
             const stData = await stRes.json();
-            const prog = stData.progress || 0;
+            const prog = Math.max(10, stData.progress || 10);
             label.textContent = `SCANNING ${prog}%`;
-            
-            // Progressive live update of table
-            await syncBackend();
 
             if (!stData.status.isRunning || prog >= 100) {
               clearInterval(scanPollInterval);
@@ -1497,6 +1494,7 @@
               btn.disabled = false;
               spinner.classList.add('hidden');
               label.textContent = 'SWEEP SCAN F&O';
+              await syncBackend();
               addLogEntry('DENVER', `Sweep complete! Total ${stData.status.signalsFound || 0} signals active.`);
             }
           } catch (e) {
@@ -1506,7 +1504,7 @@
             spinner.classList.add('hidden');
             label.textContent = 'SWEEP SCAN F&O';
           }
-        }, 600);
+        }, 800);
       } catch (e) {
         if (scanSafetyTimeout) clearTimeout(scanSafetyTimeout);
         btn.disabled = false;

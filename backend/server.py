@@ -1649,16 +1649,16 @@ def run_automatic_scan(manual_trigger: bool = False):
     global scan_progress, scan_start_time
     now_ts = time.time()
     if scanner_status["isRunning"] and not manual_trigger:
-        if now_ts - scan_start_time < 35:
+        if now_ts - scan_start_time < 25:
             return
-        logger.warning("[Scanning Engine] Detected stalled scan cycle (>35s). Auto-recovering...")
+        logger.warning("[Scanning Engine] Detected stalled scan cycle (>25s). Auto-recovering...")
 
     scan_start_time = now_ts
     logger.info(f"[Scanning Engine] Triggered high-speed scan cycle. Active F&O count: {len(active_scanning_list)}")
     sync_fno_stocks_list()
 
     scanner_status["isRunning"] = True
-    scan_progress = 0
+    scan_progress = 10  # Immediate initial progress so UI displays progress
     new_signals_count = 0
     scanned_count = 0
     scan_lock = threading.Lock()
@@ -1677,6 +1677,7 @@ def run_automatic_scan(manual_trigger: bool = False):
                     candle_data.get("history")
                 )
                 if signal:
+                    should_alert = False
                     with scan_lock:
                         if not is_duplicate_alert(signal["symbol"], signal["type"]):
                             new_signals_count += 1
@@ -1684,23 +1685,26 @@ def run_automatic_scan(manual_trigger: bool = False):
                             if len(active_signals) > 50:
                                 active_signals.pop()
                             logger.info(f"[Signal Detected] {signal['type']} in {signal['symbol']} @ ₹{signal['entryPrice']}")
-                            dispatch_signal_alerts(signal, candle_data)
+                            should_alert = True
+                    if should_alert:
+                        threading.Thread(target=dispatch_signal_alerts, args=(signal, candle_data), daemon=True).start()
         except Exception as err:
             logger.debug(f"[Process Stock Notice] {stock.get('symbol')}: {err}")
         finally:
             with scan_lock:
                 scanned_count += 1
                 global scan_progress
-                scan_progress = round((scanned_count / max(len(active_scanning_list), 1)) * 100)
+                pct = round((scanned_count / max(len(active_scanning_list), 1)) * 100)
+                scan_progress = max(10, min(99, pct))
 
     try:
-        with ThreadPoolExecutor(max_workers=20) as executor:
+        with ThreadPoolExecutor(max_workers=8) as executor:
             list(executor.map(process_stock, active_scanning_list))
     except Exception as e:
         logger.error(f"[Scan ThreadPool Error]: {e}")
     finally:
         scanner_status["lastScan"] = datetime.utcnow().isoformat()
-        scanner_status["nextScan"] = (datetime.utcnow() + timedelta(minutes=1)).isoformat()
+        scanner_status["nextScan"] = (datetime.utcnow() + timedelta(minutes=5)).isoformat()
         scanner_status["stocksScanned"] = len(active_scanning_list)
         scanner_status["signalsFound"] = len(active_signals)
         scanner_status["isRunning"] = False
@@ -1973,13 +1977,15 @@ def scheduler_stock_scanner():
             day = now_ist.weekday()  # Mon=0, Sun=6
 
             is_market_open = (0 <= day <= 4 and market_start <= current_minutes <= market_end)
-            mode_desc = "Live Trading Session" if is_market_open else "Off-Hours Analysis (Latest 25-Min Intraday Bars)"
-            logger.info(f"[Scheduler] Stock Scan Triggered ({mode_desc}). Active F&O: {len(active_scanning_list)}")
-            run_automatic_scan(False)
+            if is_market_open:
+                logger.info(f"[Scheduler] Stock Scan Triggered (Live Trading Session). Active F&O: {len(active_scanning_list)}")
+                run_automatic_scan(False)
+            else:
+                logger.debug("[Scheduler] Market is closed. Automatic sweeps paused (use manual button).")
         except Exception as e:
             logger.error(f"[Scheduler Stock Error]: {e}")
 
-        time.sleep(60)
+        time.sleep(300)  # Check every 5 minutes
 
 def scheduler_options_scanner():
     while True:
@@ -1990,15 +1996,13 @@ def scheduler_options_scanner():
             market_end = 15 * 60 + 30
             day = now_ist.weekday()
 
-            is_mock = not credentials["clientId"] or credentials["clientId"] == "your_client_id_here"
             is_market_open = (0 <= day <= 4 and market_start <= current_minutes <= market_end)
-
-            if is_mock or is_market_open:
+            if is_market_open:
                 run_options_scan()
         except Exception as e:
             logger.error(f"[Scheduler Options Error]: {e}")
 
-        time.sleep(60)
+        time.sleep(180)
 
 def scheduler_daily_token_renewal():
     while True:
@@ -2451,27 +2455,30 @@ def get_quotes():
 
 @app.route("/api/scanner/trigger", methods=["POST"])
 def trigger_scanner():
-    global scan_start_time
+    global scan_start_time, scan_progress
     now_ts = time.time()
     if scanner_status["isRunning"]:
-        if now_ts - scan_start_time > 30:
-            logger.info("[Scanner Trigger] Stalled scan detected (>30s). Auto-recovering...")
+        if now_ts - scan_start_time > 20:
+            logger.info("[Scanner Trigger] Stalled scan detected (>20s). Auto-recovering...")
             scanner_status["isRunning"] = False
         else:
             return jsonify({
                 "success": True,
                 "message": "Scan already underway",
                 "inProgress": True,
-                "progress": scan_progress
+                "progress": max(10, scan_progress)
             })
 
+    scan_progress = 10
     threading.Thread(target=run_automatic_scan, args=(True,), daemon=True).start()
-    return jsonify({"success": True, "message": "Manual scan triggered successfully", "inProgress": True})
+    return jsonify({"success": True, "message": "Manual scan triggered successfully", "inProgress": True, "progress": 10})
 
 @app.route("/api/scanner/status", methods=["GET"])
 def get_scanner_status():
+    global scan_progress
+    prog = scan_progress if scanner_status["isRunning"] else 100
     return jsonify({
-        "progress": scan_progress,
+        "progress": prog,
         "status": scanner_status
     })
 
@@ -2826,16 +2833,7 @@ def startup_sequence():
     threading.Thread(target=scheduler_daily_token_renewal, daemon=True).start()
     threading.Thread(target=keep_alive_worker, daemon=True).start()
 
-    logger.info("[Startup] ✅ Server READY! Baseline signals loaded. Delaying initial scan 30s for cloud boot...")
-
-    # Delay heavy initial scan so Gunicorn can pass Render health checks first
-    def delayed_initial_scan():
-        time.sleep(30)
-        logger.info("[Startup] Executing initial automatic scan sweep now...")
-        run_automatic_scan(True)
-        run_options_scan()
-
-    threading.Thread(target=delayed_initial_scan, daemon=True).start()
+    logger.info("[Startup] ✅ Server READY! Baseline signals loaded. Scanner IDLE and waiting for sweeps.")
 
 _startup_lock = threading.Lock()
 _startup_done = False
