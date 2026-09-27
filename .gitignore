@@ -1,0 +1,25 @@
+# Environment Secrets (Crucial: Never commit real keys or tokens)
+.env
+backend/.env
+*.env
+*.local
+
+# Python compiled bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.mypy_cache/
+
+# Runtime persistence databases & logs
+backend/paper_trades_db.json
+paper_trades_db.json
+backend/local_sheets_db.json
+*.log
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

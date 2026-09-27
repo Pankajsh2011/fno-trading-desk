@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GPTHEIST DESK | F&O Engulfing Pro Bot</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      background-color: #f6f8fa;
+      color: #0f172a;
+    }
+    .font-mono-code {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .desk-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.03);
+    }
+    .desk-card-dark {
+      background: #090d16;
+      border: 1px solid #1e293b;
+      border-radius: 14px;
+    }
+    .pulse-live {
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      animation: pulse-green 2s infinite;
+    }
+    @keyframes pulse-green {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+    .scan-line {
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #10b981, transparent);
+      animation: scan 2s linear infinite;
+    }
+    @keyframes scan {
+      0% { transform: translateY(-100%); }
+      100% { transform: translateY(1000%); }
+    }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+  </style>
+</head>
+<body class="p-3 sm:p-5 lg:p-6 min-h-screen">
+
+  <div class="max-w-[1720px] mx-auto space-y-4 sm:space-y-5">
+
+    <!-- ============================================================== -->
+    <!-- 🔝 1. TOP HEADER (BRAND, LIVE BADGE, MISSION CLOCK, QUICK ACTIONS) -->
+    <!-- ============================================================== -->
+    <header class="desk-card p-3 sm:p-4 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <!-- Logo Icon -->
+        <div class="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-black shadow-md shadow-emerald-500/20">
+          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 font-mono-code uppercase">GPTHEIST DESK</h1>
+            <span class="text-xs text-rose-500 font-bold font-mono-code">| immortalhowwl</span>
+          </div>
+          <p class="text-[11px] text-slate-400 font-mono-code">F&O ENGULFING PATTERN AI TRADING ENGINE • 197 NSE_EQ SCRIPS</p>
+        </div>
+      </div>
+
+      <!-- Center / Right Status & Controls -->
+      <div class="flex flex-wrap items-center gap-2.5 sm:gap-4">
+        <!-- Engine / Broker Feed Status Pill -->
+        <div id="engineStatusPill" class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-xs font-mono-code text-slate-700">
+          <span id="engineStatusDot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span id="engineStatusText" class="font-bold">NSE REAL-TIME (197 F&O)</span>
+          <button onclick="openDhanTokenModal()" class="ml-1 px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 hover:bg-amber-200 text-[10px] font-bold font-mono-code transition">DHAN TOKEN</button>
+        </div>
+
+        <!-- Live Status Pill -->
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-live"></span>
+          <span class="text-xs font-bold font-mono-code text-emerald-700 tracking-wider">● LIVE</span>
+          <span id="marketSessionTime" class="text-xs text-slate-500 font-mono-code border-l border-emerald-200 pl-2">09:15 / 15:30 IST</span>
+        </div>
+
+        <!-- Audio Alert Toggle -->
+        <button id="audioToggleBtn" onclick="toggleAudio()" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 font-mono-code flex items-center gap-1.5 transition">
+          <span id="audioIcon">🔊</span>
+          <span id="audioText">SOUND: ON</span>
+        </button>
+
+        <!-- Auto Trading Toggle -->
+        <button id="autoTradeBtn" onclick="toggleAutoTrading()" class="px-3 py-1.5 rounded-lg border border-amber-300 bg-amber-50 hover:bg-amber-100 text-xs font-bold text-amber-800 font-mono-code flex items-center gap-1.5 transition">
+          <span>⚡</span>
+          <span id="autoTradeText">AUTO: OFF (PAPER)</span>
+        </button>
+
+        <!-- Manual Sweep Button -->
+        <button id="sweepScanBtn" onclick="triggerManualScan()" class="px-4 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold font-mono-code tracking-wide shadow-sm flex items-center gap-2 transition">
+          <svg id="sweepSpinner" class="w-3.5 h-3.5 animate-spin hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="12" cy="12" r="10" stroke-width="4" stroke="currentColor" class="opacity-25"></circle>
+            <path fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+          </svg>
+          <span id="sweepBtnLabel">SWEEP SCAN F&O</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- ============================================================== -->
+    <!-- 📊 2. TOP METRIC CARDS (BALANCE, TOTAL PNL, MISSION CLOCK, APPROVAL GATE) -->
+    <!-- ============================================================== -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      
+      <!-- Card 1: Balance / Capital -->
+      <div class="desk-card p-4 space-y-1 relative overflow-hidden">
+        <div class="text-[11px] font-bold text-slate-400 font-mono-code uppercase tracking-wider">// BALANCE / PORTFOLIO</div>
+        <div class="flex items-baseline gap-2">
+          <span id="displayBalance" class="text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono-code">₹1,00,000.00</span>
+        </div>
+        <div class="text-[11px] text-slate-400 font-mono-code">FROM ₹1,00,000.00 INITIAL CAPITAL</div>
+        <div class="absolute right-3 top-3 w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 text-xs font-mono-code">01</div>
+      </div>
+
+      <!-- Card 2: Total PnL -->
+      <div class="desk-card p-4 space-y-1 relative overflow-hidden">
+        <div class="text-[11px] font-bold text-slate-400 font-mono-code uppercase tracking-wider">// TOTAL PNL / GAIN</div>
+        <div class="flex items-baseline gap-2">
+          <span id="displayPnl" class="text-2xl sm:text-3xl font-extrabold text-emerald-600 font-mono-code">+₹0.00</span>
+          <span id="displayPnlPct" class="text-xs font-bold font-mono-code px-2 py-0.5 rounded bg-emerald-50 text-emerald-700">+0.00%</span>
+        </div>
+        <div class="text-[11px] text-slate-400 font-mono-code">REALIZED + PAPER TRADES PROFIT</div>
+        <div class="absolute right-3 top-3 w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 text-xs font-mono-code">02</div>
+      </div>
+
+      <!-- Card 3: Mission Clock -->
+      <div class="desk-card p-4 space-y-1 relative overflow-hidden">
+        <div class="text-[11px] font-bold text-slate-400 font-mono-code uppercase tracking-wider">// MISSION CLOCK / SESSION</div>
+        <div class="flex items-baseline gap-2">
+          <span id="missionClock" class="text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono-code">00:00:00</span>
+        </div>
+        <div class="text-[11px] text-slate-400 font-mono-code">SCANNING INTERVAL: 25-MIN ROLLING</div>
+        <div class="absolute right-3 top-3 w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 text-xs font-mono-code">03</div>
+      </div>
+
+      <!-- Card 4: Approval Gate -->
+      <div class="desk-card p-4 space-y-1 relative overflow-hidden">
+        <div class="text-[11px] font-bold text-slate-400 font-mono-code uppercase tracking-wider">// APPROVAL GATE / RISK</div>
+        <div class="flex items-center justify-between">
+          <span class="text-xl sm:text-2xl font-black text-slate-900 font-mono-code">PALERMO</span>
+          <span class="text-[10px] font-bold font-mono-code px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">DEPTH SCAN</span>
+        </div>
+        <!-- Stepper indicator -->
+        <div class="flex items-center gap-1 pt-1.5">
+          <div class="h-1.5 flex-1 rounded-full bg-emerald-500"></div>
+          <div class="h-1.5 flex-1 rounded-full bg-emerald-500"></div>
+          <div class="h-1.5 flex-1 rounded-full bg-emerald-500"></div>
+          <div class="h-1.5 flex-1 rounded-full bg-emerald-500"></div>
+          <div class="h-1.5 flex-1 rounded-full bg-emerald-500"></div>
+          <div class="h-1.5 flex-1 rounded-full bg-emerald-400"></div>
+          <div class="h-1.5 flex-1 rounded-full bg-emerald-300"></div>
+          <div class="h-1.5 flex-1 rounded-full bg-slate-200"></div>
+          <div class="h-1.5 flex-1 rounded-full bg-slate-200"></div>
+        </div>
+        <div class="text-[10px] text-slate-400 font-mono-code pt-0.5">CHECK 09 / EXIT DEPTH • RISK 1.0%</div>
+      </div>
+
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- 📈 3. DUAL TELEMETRY ROW (BALANCE HISTORY CHART + ACTIVITY LOG) -->
+    <!-- ============================================================== -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4">
+      
+      <!-- Left (7 Cols): Balance History Canvas Chart -->
+      <div class="desk-card p-4 lg:col-span-7 flex flex-col justify-between">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span class="text-xs font-bold text-slate-800 font-mono-code uppercase tracking-wider">// BALANCE HISTORY / EQUITY CURVE</span>
+          </div>
+          <div class="text-[11px] font-mono-code text-slate-400">INR / INTRADAY SESSION</div>
+        </div>
+        
+        <div class="relative w-full h-[220px]">
+          <canvas id="balanceChart" class="w-full h-full"></canvas>
+          <div id="chartTooltip" class="absolute hidden bg-slate-900 text-white text-[11px] font-mono-code px-2 py-1 rounded shadow-lg pointer-events-none"></div>
+        </div>
+
+        <div class="flex items-center justify-between text-[11px] text-slate-400 font-mono-code pt-2 border-t border-slate-100 mt-2">
+          <span>09:15 OPEN</span>
+          <span>11:30 MID</span>
+          <span>13:45 PEAK</span>
+          <span>15:30 CLOSE</span>
+        </div>
+      </div>
+
+      <!-- Right (5 Cols): Live Activity Log Terminal -->
+      <div class="desk-card p-4 lg:col-span-5 flex flex-col justify-between">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-2">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+            <span class="text-xs font-bold text-slate-800 font-mono-code uppercase tracking-wider">// ACTIVITY LOG STREAM</span>
+          </div>
+          <span id="logEventCount" class="text-[11px] font-mono-code text-slate-400">018 EVENTS</span>
+        </div>
+
+        <!-- Terminal Event Stream Box -->
+        <div id="activityLogBox" class="h-[220px] overflow-y-auto space-y-2 font-mono-code text-[11px] pr-2">
+          <!-- Sample initial messages -->
+          <div class="flex items-start gap-2 text-slate-700">
+            <span class="text-slate-400 shrink-0">09:15</span>
+            <span class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-bold shrink-0">TOKYO</span>
+            <span class="truncate">Scout engine primed: 197 F&O scrips master loaded</span>
+          </div>
+          <div class="flex items-start gap-2 text-slate-700">
+            <span class="text-slate-400 shrink-0">09:15</span>
+            <span class="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold shrink-0">PALERMO</span>
+            <span class="truncate">Risk gate active: Daily max 5 trades, 1.0% capital risk</span>
+          </div>
+          <div class="flex items-start gap-2 text-slate-700">
+            <span class="text-slate-400 shrink-0">09:16</span>
+            <span class="px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 text-[10px] font-bold shrink-0">RIO</span>
+            <span class="truncate">25-min rolling candle builder streaming intraday bars</span>
+          </div>
+        </div>
+
+        <div class="text-[10px] font-mono-code text-slate-400 pt-2 border-t border-slate-100 mt-2 flex items-center justify-between">
+          <span>PIPELINE: ACTIVE (ALL CHANNELS)</span>
+          <span class="text-emerald-600 font-bold">READY TO FIRE</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- 🔬 4. ADVANCED VISUALIZATION DECK (RIDGE PLOT + 5D HYPERCUBE LATTICE) -->
+    <!-- ============================================================== -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4">
+      
+      <!-- Left (7 Cols): Tail Probability Ridge / Strike Landscape -->
+      <div class="desk-card p-4 lg:col-span-7 flex flex-col justify-between">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-2 mb-2">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+            <span class="text-xs font-bold text-slate-800 font-mono-code uppercase tracking-wider">// TAIL PROBABILITY RIDGE & STRIKE LANDSCAPE</span>
+          </div>
+          <div class="text-[11px] font-mono-code text-slate-400">ONE RIDGE / ONE SESSION / TAILS PAY</div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+          <!-- Stats column -->
+          <div class="md:col-span-4 space-y-1.5 font-mono-code text-xs">
+            <div class="text-[10px] text-slate-400 uppercase">TAIL SCANNER / LIVE</div>
+            <div class="flex justify-between py-1 border-b border-slate-100">
+              <span class="text-slate-500">SESSIONS</span>
+              <span class="font-bold text-slate-900">1180</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-slate-100">
+              <span class="text-slate-500">TAIL MASS</span>
+              <span class="font-bold text-emerald-600">2.40%</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-slate-100">
+              <span class="text-slate-500">IMPLIED MULT</span>
+              <span class="font-bold text-slate-900">x52.6</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-slate-100">
+              <span class="text-slate-500">AVG ENTRY</span>
+              <span class="font-bold text-slate-900">₹1.10</span>
+            </div>
+            <div class="flex justify-between py-1">
+              <span class="text-slate-500">BEST HIT</span>
+              <span class="font-bold text-emerald-600">+81.2%</span>
+            </div>
+          </div>
+
+          <!-- Canvas Isometric Ridge Plot -->
+          <div class="md:col-span-8 h-[160px] relative">
+            <canvas id="ridgeCanvas" class="w-full h-full"></canvas>
+            <div class="absolute right-2 top-2 px-2 py-0.5 rounded bg-slate-900 text-white text-[9px] font-mono-code">STRIKE / EXIT</div>
+          </div>
+        </div>
+
+        <div class="text-[10px] text-slate-400 font-mono-code pt-2 border-t border-slate-100 mt-2 flex justify-between">
+          <span>PRICE THE TAIL, CHECK THE EXIT</span>
+          <span>-2σ • -1σ • 0 • +1σ • +2σ</span>
+        </div>
+      </div>
+
+      <!-- Right (5 Cols): 5D Strategy Lattice Hypercube 3D Wireframe -->
+      <div class="desk-card p-4 lg:col-span-5 flex flex-col justify-between">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-2 mb-2">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+            <span class="text-xs font-bold text-slate-800 font-mono-code uppercase tracking-wider">// 5D STRATEGY LATTICE</span>
+          </div>
+          <div class="text-[10px] font-mono-code text-slate-400">PENTERACT • 32 NODES / 80 EDGES</div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
+          <!-- 3D Canvas -->
+          <div class="sm:col-span-8 h-[160px] relative">
+            <canvas id="latticeCanvas" class="w-full h-full"></canvas>
+          </div>
+
+          <!-- Metadata -->
+          <div class="sm:col-span-4 space-y-1 font-mono-code text-[11px]">
+            <div class="flex justify-between">
+              <span class="text-slate-400">DIMENSIONS</span>
+              <span class="font-bold text-slate-800">5 / 5</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">VERTICES</span>
+              <span class="font-bold text-slate-800">32</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">EDGES</span>
+              <span class="font-bold text-slate-800">80</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">ROTATION</span>
+              <span id="rotationDeg" class="font-bold text-rose-500">24°</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">PROJECTION</span>
+              <span class="font-bold text-slate-800">5D → 2D</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="text-[10px] text-slate-400 font-mono-code pt-2 border-t border-slate-100 mt-2 flex items-center justify-between">
+          <span>EVERY AXIS IS AN EDGE</span>
+          <div class="flex gap-1">
+            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+            <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- 🌐 5. RELATIONSHIP GRAPH SIMULATION (FLOW & LIQUIDITY NODES) -->
+    <!-- ============================================================== -->
+    <div class="desk-card p-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2 mb-3">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-fuchsia-500 animate-pulse"></span>
+          <span class="text-xs font-bold text-slate-800 font-mono-code uppercase tracking-wider">// RELATIONSHIP GRAPH & SIGNAL FLOW PIPELINE</span>
+        </div>
+        <div class="text-[11px] font-mono-code text-slate-400">VOLUME / FLOW / LIQUIDITY • 90 NODES • 134 EDGES</div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+        <!-- Node classification sidebar -->
+        <div class="lg:col-span-2 space-y-2 font-mono-code text-[11px]">
+          <div class="text-[10px] text-slate-400 font-bold uppercase">NODE CLASS</div>
+          <div class="flex items-center gap-2 text-slate-700">
+            <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+            <span>Bear Signal</span>
+          </div>
+          <div class="flex items-center gap-2 text-slate-700">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span>Bull Signal</span>
+          </div>
+          <div class="flex items-center gap-2 text-slate-700">
+            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+            <span>Median Path</span>
+          </div>
+          <div class="flex items-center gap-2 text-slate-700">
+            <span class="w-2 h-2 rounded-full bg-teal-500"></span>
+            <span>Catalyst</span>
+          </div>
+          <div class="pt-2 border-t border-slate-100 space-y-1 text-[10px]">
+            <div class="flex justify-between text-slate-500"><span>BEAR PATHS</span><span class="font-bold text-slate-900">500</span></div>
+            <div class="flex justify-between text-slate-500"><span>BULL PATHS</span><span class="font-bold text-slate-900">1569</span></div>
+            <div class="flex justify-between text-slate-500"><span>CONVERGENCE</span><span class="font-bold text-emerald-600">97%</span></div>
+          </div>
+        </div>
+
+        <!-- Particle Node Canvas -->
+        <div class="lg:col-span-8 h-[170px] relative">
+          <canvas id="flowCanvas" class="w-full h-full"></canvas>
+        </div>
+
+        <!-- Confidence Gauge & Direction -->
+        <div class="lg:col-span-2 space-y-2 font-mono-code text-[11px] text-right">
+          <div>
+            <div class="text-slate-400 text-[10px]">P(UP) / P(DOWN)</div>
+            <div class="text-base font-extrabold text-emerald-600">0.79 / 0.21</div>
+          </div>
+          <div>
+            <div class="text-slate-400 text-[10px]">CONFIDENCE</div>
+            <div class="text-lg font-black text-slate-900">94.0%</div>
+          </div>
+          <div>
+            <div class="text-slate-400 text-[10px]">PREDICTED</div>
+            <div class="text-xs font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 inline-block">▲ UPWARD SWING</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- 👥 6. THE 10 OPERATOR AGENT DECK (FROM IMAGE 5) -->
+    <!-- ============================================================== -->
+    <div class="space-y-2">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xs font-bold text-slate-500 font-mono-code uppercase tracking-wider">// AGENT OPERATORS (COMMAND TEAM)</h3>
+        <span class="text-[11px] font-mono-code text-slate-400">10 ACTIVE ROLES • ZERO DRIFT</span>
+      </div>
+
+      <div id="agentsGridContainer" class="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-10 gap-2 sm:gap-2.5">
+        
+        <!-- 01. TOKYO (Scouts) -->
+        <div class="desk-card p-3 flex flex-col items-center text-center space-y-2 border-amber-300 bg-amber-50/20 hover:shadow-md transition">
+          <span class="text-[9px] font-mono-code text-amber-600 self-start">03</span>
+          <div class="w-11 h-11 rounded-full bg-amber-100 border-2 border-amber-400 flex items-center justify-center text-xl shadow-inner">
+            🧑‍🚀
+          </div>
+          <div>
+            <div class="text-xs font-bold font-mono-code text-slate-900">TOKYO</div>
+            <div class="text-[10px] font-semibold text-amber-700 uppercase">SCOUTS</div>
+          </div>
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
+        </div>
+
+        <!-- 02. PALERMO (Vetoes) -->
+        <div class="desk-card p-3 flex flex-col items-center text-center space-y-2 border-emerald-300 bg-emerald-50/20 hover:shadow-md transition">
+          <span class="text-[9px] font-mono-code text-emerald-600 self-start">10</span>
+          <div class="w-11 h-11 rounded-full bg-emerald-100 border-2 border-emerald-400 flex items-center justify-center text-xl shadow-inner">
+            👮
+          </div>
+          <div>
+            <div class="text-xs font-bold font-mono-code text-slate-900">PALERMO</div>
+            <div class="text-[10px] font-semibold text-emerald-700 uppercase">VETOES</div>
+          </div>
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+        </div>
+
+        <!-- 03. DENVER (Signals) -->
+        <div class="desk-card p-3 flex flex-col items-center text-center space-y-2 border-yellow-300 bg-yellow-50/20 hover:shadow-md transition">
+          <span class="text-[9px] font-mono-code text-yellow-600 self-start">07</span>
+          <div class="w-11 h-11 rounded-full bg-yellow-100 border-2 border-yellow-400 flex items-center justify-center text-xl shadow-inner">
+            🕵️
+          </div>
+          <div>
+            <div class="text-xs font-bold font-mono-code text-slate-900">DENVER</div>
+            <div class="text-[10px] font-semibold text-yellow-700 uppercase">SIGNALS</div>
+          </div>
+          <span class="w-1.5 h-1.5 rounded-full bg-yellow-500"></span>
+        </div>
+
+        <!-- 04. STOCKHOLM (Liquidity) -->
+        <div class="desk-card p-3 flex flex-col items-center text-center space-y-2 border-blue-300 bg-blue-50/20 hover:shadow-md transition">
+          <span class="text-[9px] font-mono-code text-blue-600 self-start">05</span>
+          <div class="w-11 h-11 rounded-full bg-blue-100 border-2 border-blue-400 flex items-center justify-center text-xl shadow-inner">
+            👱
+          </div>
+          <div>
+            <div class="text-xs font-bold font-mono-code text-slate-900">STOCKHOLM</div>
+            <div class="text-[10px] font-semibold text-blue-700 uppercase">LIQUIDITY</div>
+          </div>
+          <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+        </div>
+
+        <!-- 05. PROFESSOR (Router) -->
+        <div class="desk-card p-3 flex flex-col items-center text-center space-y-2 border-teal-300 bg-teal-50/20 hover:shadow-md transition">
+          <span class="text-[9px] font-mono-code text-teal-600 self-start">01</span>
+          <div class="w-11 h-11 rounded-full bg-teal-100 border-2 border-teal-400 flex items-center justify-center text-xl shadow-inner">
+            🧔
+          </div>
+          <div>
+            <div class="text-xs font-bold font-mono-code text-slate-900">PROFESSOR</div>
+            <div class="text-[10px] font-semibold text-teal-700 uppercase">ROUTER</div>
+          </div>
+          <span class="w-1.5 h-1.5 rounded-full bg-teal-500"></span>
+        </div>
+
+        <!-- 06. RIO (Charts) -->
+        <div class="desk-card p-3 flex flex-col items-center text-center space-y-2 border-purple-300 bg-purple-50/20 hover:shadow-md transition">
+          <span class="text-[9px] font-mono-code text-purple-600 self-start">04</span>
+          <div class="w-11 h-11 rounded-full bg-purple-100 border-2 border-purple-400 flex items-center justify-center text-xl shadow-inner">
+            🎧
+          </div>
+          <div>
+            <div class="text-xs font-bold font-mono-code text-slate-900">RIO</div>
+            <div class="text-[10px] font-semibold text-purple-700 uppercase">CHARTS</div>
+          </div>
+          <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+        </div>
+
+        <!-- 07. HELSINKI (Ledger) -->
+        <div class="desk-card p-3 flex flex-col items-center text-center space-y-2 border-fuchsia-300 bg-fuchsia-50/20 hover:shadow-md transition">
+          <span class="text-[9px] font-mono-code text-fuchsia-600 self-start">09</span>
+          <div class="w-11 h-11 rounded-full bg-fuchsia-100 border-2 border-fuchsia-400 flex items-center justify-center text-xl shadow-inner">
+            🧔‍♂️
+          </div>
+          <div>
+            <div class="text-xs font-bold font-mono-code text-slate-900">HELSINKI</div>
+            <div class="text-[10px] font-semibold text-fuchsia-700 uppercase">LEDGER</div>
+          </div>
+          <span class="w-1.5 h-1.5 rounded-full bg-fuchsia-500"></span>
+        </div>
+
+        <!-- 08. NAIROBI (Briefs) -->
+        <div class="desk-card p-3 flex flex-col items-center text-center space-y-2 border-rose-300 bg-rose-50/20 hover:shadow-md transition">
+          <span class="text-[9px] font-mono-code text-rose-600 self-start">06</span>
+          <div class="w-11 h-11 rounded-full bg-rose-100 border-2 border-rose-400 flex items-center justify-center text-xl shadow-inner">
+            👩
+          </div>
+          <div>
+            <div class="text-xs font-bold font-mono-code text-slate-900">NAIROBI</div>
+            <div class="text-[10px] font-semibold text-rose-700 uppercase">BRIEFS</div>
+          </div>
+          <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+        </div>
+
+        <!-- 09. BERLIN (Conditions) -->
+        <div class="desk-card p-3 flex flex-col items-center text-center space-y-2 border-red-300 bg-red-50/20 hover:shadow-md transition">
+          <span class="text-[9px] font-mono-code text-red-600 self-start">02</span>
+          <div class="w-11 h-11 rounded-full bg-red-100 border-2 border-red-400 flex items-center justify-center text-xl shadow-inner">
+            👨‍💼
+          </div>
+          <div>
+            <div class="text-xs font-bold font-mono-code text-slate-900">BERLIN</div>
+            <div class="text-[10px] font-semibold text-red-700 uppercase">CONDITIONS</div>
+          </div>
+          <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+        </div>
+
+        <!-- 10. LISBON (Recheck) -->
+        <div class="desk-card p-3 flex flex-col items-center text-center space-y-2 border-amber-400 bg-amber-50/20 hover:shadow-md transition">
+          <span class="text-[9px] font-mono-code text-amber-700 self-start">08</span>
+          <div class="w-11 h-11 rounded-full bg-amber-200 border-2 border-amber-500 flex items-center justify-center text-xl shadow-inner">
+            👩‍💼
+          </div>
+          <div>
+            <div class="text-xs font-bold font-mono-code text-slate-900">LISBON</div>
+            <div class="text-[10px] font-semibold text-amber-800 uppercase">RECHECK</div>
+          </div>
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- 🕯️ 7. DETECTED CANDLESTICK PATTERN SIGNALS TABLE (FROM PHOTOS) -->
+    <!-- ============================================================== -->
+    <div class="desk-card p-4 space-y-3">
+      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+          <h2 class="text-sm font-bold text-slate-900 font-mono-code uppercase tracking-wider">// DETECTED F&O ENGULFING SIGNALS (STRICT 25-MIN)</h2>
+        </div>
+        <div class="flex items-center gap-2 text-xs font-mono-code text-slate-500">
+          <span id="signalsCountBadge" class="px-2 py-0.5 rounded bg-slate-100 font-bold text-slate-800">0 SIGNALS</span>
+          <span>• FILTER: NSE_EQ ONLY</span>
+        </div>
+      </div>
+
+      <!-- Signals Table Container -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left font-mono-code text-xs">
+          <thead>
+            <tr class="border-b border-slate-200 text-slate-400 text-[11px]">
+              <th class="py-2.5 px-3">TIME</th>
+              <th class="py-2.5 px-3">SCRIP</th>
+              <th class="py-2.5 px-3">PATTERN SETUP</th>
+              <th class="py-2.5 px-3">TREND CONTEXT</th>
+              <th class="py-2.5 px-3">BODY ENGULF</th>
+              <th class="py-2.5 px-3">ENTRY</th>
+              <th class="py-2.5 px-3">STOP LOSS</th>
+              <th class="py-2.5 px-3">TARGET</th>
+              <th class="py-2.5 px-3">RATING</th>
+              <th class="py-2.5 px-3 text-right">ACTION</th>
+            </tr>
+          </thead>
+          <tbody id="signalsTableBody" class="divide-y divide-slate-100 text-slate-700">
+            <!-- Populated via Javascript -->
+            <tr id="emptySignalRow">
+              <td colspan="10" class="py-8 text-center text-slate-400">
+                Scanning 197 F&O scrips... Patterns matching Photos 1-4 will appear here instantly.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- 🔍 8. MODAL: CANDLESTICK PATTERN VISUALIZER (MATCHES PHOTOS 1-4) -->
+  <!-- ============================================================== -->
+  <div id="candleModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="desk-card max-w-xl w-full p-6 space-y-4 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
+      
+      <!-- Close button -->
+      <button onclick="closeCandleModal()" class="absolute right-4 top-4 text-slate-400 hover:text-slate-700 text-xl font-bold font-mono-code">&times;</button>
+      
+      <div class="border-b border-slate-100 pb-3">
+        <div class="flex items-center gap-2">
+          <span id="modalTypeBadge" class="px-2 py-0.5 rounded text-[11px] font-bold font-mono-code bg-emerald-100 text-emerald-800">BULLISH ENGULFING</span>
+          <h3 id="modalSymbol" class="text-base font-extrabold text-slate-900 font-mono-code">TATACHEM</h3>
+        </div>
+        <p id="modalSubtitle" class="text-xs text-slate-500 font-mono-code mt-0.5">Setup verified against Photo 1, 2, 3, 4 criteria</p>
+      </div>
+
+      <!-- Graphic Candle Container -->
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-6 flex flex-col items-center justify-center space-y-4">
+        
+        <!-- Prior Trend Indicator -->
+        <div id="modalTrendArrow" class="flex items-center gap-2 text-xs font-bold font-mono-code text-slate-600 bg-white px-3 py-1 rounded-full border border-slate-200 shadow-sm">
+          <span>↘️ Prior Decline Confirmed (Buyers Stepping In)</span>
+        </div>
+
+        <!-- SVG Candlesticks Draw -->
+        <div class="w-full max-w-xs h-[180px] flex items-center justify-center">
+          <svg id="modalCandleSvg" class="w-full h-full" viewBox="0 0 300 180">
+            <!-- Drawn via JavaScript -->
+          </svg>
+        </div>
+
+        <!-- Verification Checklist -->
+        <div class="w-full grid grid-cols-2 gap-2 text-[11px] font-mono-code">
+          <div class="p-2 rounded bg-white border border-slate-200 flex justify-between">
+            <span class="text-slate-500">Body Engulf:</span>
+            <span id="modalBodyRatio" class="font-bold text-slate-900">142.5% (>= 120%)</span>
+          </div>
+          <div class="p-2 rounded bg-white border border-slate-200 flex justify-between">
+            <span class="text-slate-500">Wick Limit:</span>
+            <span id="modalWickRatio" class="font-bold text-emerald-600">18.4% (<= 40%)</span>
+          </div>
+          <div class="p-2 rounded bg-white border border-slate-200 flex justify-between">
+            <span class="text-slate-500">Entry:</span>
+            <span id="modalEntry" class="font-bold text-slate-900">₹942.50</span>
+          </div>
+          <div class="p-2 rounded bg-white border border-slate-200 flex justify-between">
+            <span class="text-slate-500">Stop Loss:</span>
+            <span id="modalSL" class="font-bold text-rose-600">₹928.00</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Footer Buttons -->
+      <div class="flex items-center justify-end gap-3 pt-2">
+        <button onclick="closeCandleModal()" class="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 text-xs font-bold font-mono-code hover:bg-slate-50">CLOSE</button>
+        <button id="modalExecuteBtn" class="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold font-mono-code shadow-md shadow-emerald-600/20">PLACE BRACKET ORDER</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- 🔑 9. MODAL: DHAN API CREDENTIALS & ACCESS TOKEN UPDATE -->
+  <!-- ============================================================== -->
+  <div id="dhanTokenModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="desk-card max-w-md w-full p-6 space-y-4 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
+      <button onclick="closeDhanTokenModal()" class="absolute right-4 top-4 text-slate-400 hover:text-slate-700 text-xl font-bold font-mono-code">&times;</button>
+      
+      <div class="border-b border-slate-100 pb-3">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+          <h3 class="text-base font-extrabold text-slate-900 font-mono-code uppercase">DHANHQ API CREDENTIALS</h3>
+        </div>
+        <p class="text-xs text-slate-500 font-mono-code mt-0.5">Paste your 24-hr token or update API keys</p>
+      </div>
+
+      <div class="space-y-3 font-mono-code text-xs">
+        <div>
+          <label class="block text-slate-600 font-bold mb-1">Dhan Client ID:</label>
+          <input id="inputDhanClientId" type="text" placeholder="1100571858" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-emerald-500 text-slate-800" />
+        </div>
+
+        <div>
+          <label class="block text-slate-600 font-bold mb-1">Dhan 24-Hour Access Token (JWT):</label>
+          <textarea id="inputDhanAccessToken" rows="3" placeholder="Paste your fresh 24-hour Access Token here..." class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-emerald-500 text-slate-800 text-[11px]"></textarea>
+          <span class="text-[10px] text-slate-400">Get token from: web.dhan.co ➔ My Profile ➔ DhanHQ Trading APIs</span>
+        </div>
+
+        <div>
+          <label class="block text-slate-600 font-bold mb-1">Optional: PIN (6-Digits) & TOTP Secret:</label>
+          <div class="grid grid-cols-2 gap-2">
+            <input id="inputDhanPin" type="password" placeholder="PIN" class="px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-emerald-500 text-slate-800" />
+            <input id="inputDhanTotpSecret" type="text" placeholder="TOTP Key" class="px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:border-emerald-500 text-slate-800" />
+          </div>
+        </div>
+
+        <div id="dhanTokenAlert" class="hidden p-2.5 rounded-lg text-xs font-mono-code"></div>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-2">
+        <button onclick="closeDhanTokenModal()" class="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 text-xs font-bold font-mono-code hover:bg-slate-50">CANCEL</button>
+        <button id="saveDhanTokenBtn" onclick="saveDhanToken()" class="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold font-mono-code shadow-md shadow-emerald-600/20">SAVE & CONNECT</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- 💻 JAVASCRIPT: CANVASES, ANIMATIONS, WEBAUDIO & BACKEND SYNC -->
+  <!-- ============================================================== -->
+  <script>
+    // -------------------------------------------------------------
+    // Audio Chime Synthesizer
+    // -------------------------------------------------------------
+    let audioEnabled = true;
+    function playBreakoutChime() {
+      if (!audioEnabled) return;
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const now = ctx.currentTime;
+        
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(587.33, now); // D5
+        gain1.gain.setValueAtTime(0.08, now);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+        osc1.connect(gain1);
+        gain1.connect(ctx.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.6);
+
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(1174.66, now + 0.12); // D6
+        gain2.gain.setValueAtTime(0.06, now + 0.12);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.85);
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.start(now + 0.12);
+        osc2.stop(now + 0.85);
+      } catch (e) {
+        console.log("Audio not allowed yet:", e);
+      }
+    }
+
+    function toggleAudio() {
+      audioEnabled = !audioEnabled;
+      document.getElementById('audioText').textContent = audioEnabled ? 'SOUND: ON' : 'SOUND: OFF';
+      document.getElementById('audioIcon').textContent = audioEnabled ? '🔊' : '🔇';
+      if (audioEnabled) playBreakoutChime();
+    }
+
+    // -------------------------------------------------------------
+    // Canvas 1: Balance History (Smooth Curved Line)
+    // -------------------------------------------------------------
+    const bCanvas = document.getElementById('balanceChart');
+    const bCtx = bCanvas.getContext('2d');
+    let balancePoints = [100000, 100450, 100320, 101200, 101100, 102450, 103200, 104100, 105600];
+
+    function drawBalanceChart() {
+      const rect = bCanvas.getBoundingClientRect();
+      bCanvas.width = rect.width * window.devicePixelRatio || 600;
+      bCanvas.height = rect.height * window.devicePixelRatio || 220;
+      bCtx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+
+      const w = rect.width;
+      const h = rect.height;
+      bCtx.clearRect(0, 0, w, h);
+
+      // Grid lines
+      bCtx.strokeStyle = '#f1f5f9';
+      bCtx.lineWidth = 1;
+      for (let i = 1; i <= 4; i++) {
+        const y = (h / 5) * i;
+        bCtx.beginPath();
+        bCtx.moveTo(0, y);
+        bCtx.lineTo(w, y);
+        bCtx.stroke();
+      }
+
+      // Min & Max
+      const min = Math.min(...balancePoints) * 0.998;
+      const max = Math.max(...balancePoints) * 1.002;
+      const range = max - min || 1;
+
+      // Draw Gradient fill
+      const grad = bCtx.createLinearGradient(0, 0, 0, h);
+      grad.addColorStop(0, 'rgba(16, 185, 129, 0.25)');
+      grad.addColorStop(1, 'rgba(16, 185, 129, 0.00)');
+
+      bCtx.beginPath();
+      balancePoints.forEach((val, i) => {
+        const x = (w / (balancePoints.length - 1)) * i;
+        const y = h - ((val - min) / range) * (h - 30) - 15;
+        if (i === 0) bCtx.moveTo(x, y);
+        else bCtx.lineTo(x, y);
+      });
+      bCtx.lineTo(w, h);
+      bCtx.lineTo(0, h);
+      bCtx.closePath();
+      bCtx.fillStyle = grad;
+      bCtx.fill();
+
+      // Stroke line
+      bCtx.beginPath();
+      balancePoints.forEach((val, i) => {
+        const x = (w / (balancePoints.length - 1)) * i;
+        const y = h - ((val - min) / range) * (h - 30) - 15;
+        if (i === 0) bCtx.moveTo(x, y);
+        else bCtx.lineTo(x, y);
+      });
+      bCtx.strokeStyle = '#10b981';
+      bCtx.lineWidth = 2.5;
+      bCtx.stroke();
+
+      // Latest point dot
+      const lastX = w;
+      const lastY = h - ((balancePoints[balancePoints.length - 1] - min) / range) * (h - 30) - 15;
+      bCtx.beginPath();
+      bCtx.arc(lastX - 2, lastY, 4.5, 0, Math.PI * 2);
+      bCtx.fillStyle = '#10b981';
+      bCtx.fill();
+      bCtx.lineWidth = 2;
+      bCtx.strokeStyle = '#ffffff';
+      bCtx.stroke();
+    }
+
+    // -------------------------------------------------------------
+    // Canvas 2: Tail Probability Ridge Plot (Isometric stacked waves)
+    // -------------------------------------------------------------
+    const rCanvas = document.getElementById('ridgeCanvas');
+    const rCtx = rCanvas.getContext('2d');
+    let ridgeTick = 0;
+
+    function drawRidgePlot() {
+      const rect = rCanvas.getBoundingClientRect();
+      rCanvas.width = rect.width * window.devicePixelRatio || 400;
+      rCanvas.height = rect.height * window.devicePixelRatio || 160;
+      rCtx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+
+      const w = rect.width;
+      const h = rect.height;
+      rCtx.clearRect(0, 0, w, h);
+
+      const totalLines = 16;
+      for (let i = 0; i < totalLines; i++) {
+        const baseY = 30 + (i * (h - 50) / totalLines);
+        rCtx.beginPath();
+        rCtx.moveTo(0, baseY);
+
+        for (let x = 0; x <= w; x += 6) {
+          const normX = (x - w / 2) / (w * 0.28);
+          const bell = Math.exp(-0.5 * normX * normX);
+          const wave = Math.sin(ridgeTick * 0.03 + i * 0.4 + normX) * 2;
+          const peakHeight = 45 * Math.sin((i / totalLines) * Math.PI);
+          const y = baseY - (bell * peakHeight) + wave;
+          rCtx.lineTo(x, y);
+        }
+
+        rCtx.strokeStyle = (i > 11) ? 'rgba(244, 63, 94, 0.4)' : `rgba(15, 23, 42, ${0.1 + (i / totalLines) * 0.35})`;
+        rCtx.lineWidth = (i > 11) ? 1.4 : 1.1;
+        rCtx.stroke();
+      }
+
+      ridgeTick++;
+      requestAnimationFrame(drawRidgePlot);
+    }
+
+    // -------------------------------------------------------------
+    // Canvas 3: 5D Strategy Lattice (Rotating 3D/5D Pentaract)
+    // -------------------------------------------------------------
+    const lCanvas = document.getElementById('latticeCanvas');
+    const lCtx = lCanvas.getContext('2d');
+    let rotAngle = 0;
+
+    function drawLattice() {
+      const rect = lCanvas.getBoundingClientRect();
+      lCanvas.width = rect.width * window.devicePixelRatio || 200;
+      lCanvas.height = rect.height * window.devicePixelRatio || 160;
+      lCtx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+
+      const w = rect.width;
+      const h = rect.height;
+      lCtx.clearRect(0, 0, w, h);
+
+      const cx = w / 2;
+      const cy = h / 2;
+      const size = Math.min(w, h) * 0.34;
+
+      rotAngle += 0.012;
+      const deg = Math.round((rotAngle * 180 / Math.PI) % 360);
+      document.getElementById('rotationDeg').textContent = deg + '°';
+
+      // 16 points for 4D/5D hypercube projection
+      const points = [];
+      for (let i = 0; i < 16; i++) {
+        const u = (i & 1) ? 1 : -1;
+        const v = (i & 2) ? 1 : -1;
+        const s = (i & 4) ? 1 : -1;
+        const t = (i & 8) ? 1 : -1;
+
+        // 3D rotation projection
+        const cosR = Math.cos(rotAngle);
+        const sinR = Math.sin(rotAngle);
+        const x3 = u * cosR - v * sinR;
+        const y3 = u * sinR + v * cosR;
+        const z3 = s * 0.7 + t * 0.3;
+
+        const projX = cx + (x3 + z3 * 0.4) * size;
+        const projY = cy + (y3 - z3 * 0.4) * size;
+        points.push({ x: projX, y: projY });
+      }
+
+      // Draw Edges
+      lCtx.strokeStyle = 'rgba(99, 102, 241, 0.28)';
+      lCtx.lineWidth = 1;
+      for (let i = 0; i < 16; i++) {
+        for (let j = i + 1; j < 16; j++) {
+          const diff = i ^ j;
+          // Connect only hypercube adjacent vertices
+          if (diff === 1 || diff === 2 || diff === 4 || diff === 8) {
+            lCtx.beginPath();
+            lCtx.moveTo(points[i].x, points[i].y);
+            lCtx.lineTo(points[j].x, points[j].y);
+            lCtx.stroke();
+          }
+        }
+      }
+
+      // Draw Vertices
+      points.forEach((p, idx) => {
+        lCtx.beginPath();
+        lCtx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
+        lCtx.fillStyle = (idx % 2 === 0) ? '#10b981' : '#ec4899';
+        lCtx.fill();
+      });
+
+      requestAnimationFrame(drawLattice);
+    }
+
+    // -------------------------------------------------------------
+    // Canvas 4: Relationship Graph Flow Simulation (Particles)
+    // -------------------------------------------------------------
+    const fCanvas = document.getElementById('flowCanvas');
+    const fCtx = fCanvas.getContext('2d');
+    let particles = [];
+
+    for (let i = 0; i < 25; i++) {
+      particles.push({
+        x: Math.random() * 400,
+        y: Math.random() * 150,
+        vx: 0.5 + Math.random() * 0.8,
+        vy: (Math.random() - 0.5) * 0.3,
+        color: i % 2 === 0 ? '#10b981' : '#f43f5e'
+      });
+    }
+
+    function drawFlowSimulation() {
+      const rect = fCanvas.getBoundingClientRect();
+      fCanvas.width = rect.width * window.devicePixelRatio || 500;
+      fCanvas.height = rect.height * window.devicePixelRatio || 170;
+      fCtx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+
+      const w = rect.width;
+      const h = rect.height;
+      fCtx.clearRect(0, 0, w, h);
+
+      // Main flow path dashed curve
+      fCtx.beginPath();
+      fCtx.setLineDash([4, 4]);
+      fCtx.moveTo(40, h * 0.7);
+      fCtx.bezierCurveTo(w * 0.3, h * 0.2, w * 0.6, h * 0.8, w - 40, h * 0.4);
+      fCtx.strokeStyle = '#cbd5e1';
+      fCtx.lineWidth = 1.5;
+      fCtx.stroke();
+      fCtx.setLineDash([]);
+
+      // Clusters
+      const c1 = { x: w * 0.22, y: h * 0.45, label: "BEAR CLUSTER", col: "#f43f5e" };
+      const c2 = { x: w * 0.50, y: h * 0.70, label: "ASTRA PRIME", col: "#6366f1" };
+      const c3 = { x: w * 0.78, y: h * 0.40, label: "CATALYST RING", col: "#10b981" };
+
+      [c1, c2, c3].forEach(c => {
+        fCtx.beginPath();
+        fCtx.arc(c.x, c.y, 14, 0, Math.PI * 2);
+        fCtx.fillStyle = c.col;
+        fCtx.fill();
+
+        fCtx.beginPath();
+        fCtx.arc(c.x, c.y, 22, 0, Math.PI * 2);
+        fCtx.strokeStyle = c.col;
+        fCtx.lineWidth = 1;
+        fCtx.stroke();
+
+        fCtx.font = '9px "JetBrains Mono"';
+        fCtx.fillStyle = '#64748b';
+        fCtx.fillText(c.label, c.x - 28, c.y + 34);
+      });
+
+      // Move & draw particles
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x > w) p.x = 0;
+        if (p.y < 10 || p.y > h - 10) p.vy *= -1;
+
+        fCtx.beginPath();
+        fCtx.arc(p.x, p.y, 2.2, 0, Math.PI * 2);
+        fCtx.fillStyle = p.color;
+        fCtx.fill();
+      });
+
+      requestAnimationFrame(drawFlowSimulation);
+    }
+
+    // -------------------------------------------------------------
+    // Mission Clock Tracker
+    // -------------------------------------------------------------
+    let startSeconds = 0;
+    setInterval(() => {
+      startSeconds++;
+      const hrs = String(Math.floor(startSeconds / 3600)).padStart(2, '0');
+      const mins = String(Math.floor((startSeconds % 3600) / 60)).padStart(2, '0');
+      const secs = String(startSeconds % 60).padStart(2, '0');
+      document.getElementById('missionClock').textContent = `${hrs}:${mins}:${secs}`;
+    }, 1000);
+
+    // -------------------------------------------------------------
+    // Activity Log Pusher
+    // -------------------------------------------------------------
+    function addLogEntry(actor, text, type = 'info') {
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      const box = document.getElementById('activityLogBox');
+      
+      const badgeColors = {
+        TOKYO: 'bg-amber-100 text-amber-800',
+        PALERMO: 'bg-emerald-100 text-emerald-800',
+        DENVER: 'bg-yellow-100 text-yellow-800',
+        STOCKHOLM: 'bg-blue-100 text-blue-800',
+        PROFESSOR: 'bg-teal-100 text-teal-800',
+        RIO: 'bg-purple-100 text-purple-800',
+        HELSINKI: 'bg-fuchsia-100 text-fuchsia-800',
+        NAIROBI: 'bg-rose-100 text-rose-800',
+        BERLIN: 'bg-red-100 text-red-800',
+        LISBON: 'bg-amber-200 text-amber-900'
+      };
+
+      const colorCls = badgeColors[actor] || 'bg-slate-100 text-slate-800';
+
+      const div = document.createElement('div');
+      div.className = 'flex items-start gap-2 text-slate-700 animate-in fade-in duration-200';
+      div.innerHTML = `
+        <span class="text-slate-400 shrink-0">${timeStr}</span>
+        <span class="px-1.5 py-0.5 rounded ${colorCls} text-[10px] font-bold shrink-0">${actor}</span>
+        <span class="truncate">${text}</span>
+      `;
+      box.insertBefore(div, box.firstChild);
+
+      const count = box.children.length;
+      document.getElementById('logEventCount').textContent = `${String(count).padStart(3, '0')} EVENTS`;
+    }
+
+    // -------------------------------------------------------------
+    // Dhan Token Management Modal Controls
+    // -------------------------------------------------------------
+    function openDhanTokenModal() {
+      const modal = document.getElementById('dhanTokenModal');
+      const alertBox = document.getElementById('dhanTokenAlert');
+      if (alertBox) alertBox.className = 'hidden';
+      fetch('/api/dhan/status').then(r => r.json()).then(data => {
+        if (data.clientId) document.getElementById('inputDhanClientId').value = data.clientId;
+      }).catch(() => {});
+      modal.classList.remove('hidden');
+    }
+
+    function closeDhanTokenModal() {
+      document.getElementById('dhanTokenModal').classList.add('hidden');
+    }
+
+    async function saveDhanToken() {
+      const btn = document.getElementById('saveDhanTokenBtn');
+      const alertBox = document.getElementById('dhanTokenAlert');
+      const clientId = document.getElementById('inputDhanClientId').value.trim();
+      const token = document.getElementById('inputDhanAccessToken').value.trim();
+      const pin = document.getElementById('inputDhanPin').value.trim();
+      const totp = document.getElementById('inputDhanTotpSecret').value.trim();
+
+      btn.disabled = true;
+      btn.textContent = 'CONNECTING...';
+      alertBox.className = 'p-2.5 rounded-lg text-xs font-mono-code bg-slate-100 text-slate-700';
+      alertBox.textContent = 'Authenticating with DhanHQ server...';
+
+      try {
+        const res = await fetch('/api/dhan/update-token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ clientId, accessToken: token, pin, totpSecret: totp })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alertBox.className = 'p-2.5 rounded-lg text-xs font-mono-code bg-emerald-100 text-emerald-800 border border-emerald-300';
+          alertBox.textContent = '✔ ' + data.message;
+          addLogEntry('PROFESSOR', 'DhanHQ Direct API connection successfully established!');
+          setTimeout(() => {
+            closeDhanTokenModal();
+            syncBackend();
+          }, 1500);
+        } else {
+          alertBox.className = 'p-2.5 rounded-lg text-xs font-mono-code bg-amber-100 text-amber-900 border border-amber-300';
+          alertBox.textContent = '⚠️ ' + data.message;
+          addLogEntry('PALERMO', data.message, 'warning');
+        }
+      } catch (e) {
+        alertBox.className = 'p-2.5 rounded-lg text-xs font-mono-code bg-rose-100 text-rose-800 border border-rose-300';
+        alertBox.textContent = 'Error contacting backend: ' + e.message;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'SAVE & CONNECT';
+      }
+    }
+
+    // -------------------------------------------------------------
+    // Agent Operator Cards Renderer (10 Active Roles)
+    // -------------------------------------------------------------
+    function renderAgentCards(agents) {
+      const container = document.getElementById('agentsGridContainer');
+      if (!container || !agents || agents.length === 0) return;
+
+      container.innerHTML = agents.map(ag => `
+        <div class="desk-card p-2 sm:p-2.5 flex flex-col items-center text-center space-y-1.5 border border-slate-200 bg-white hover:border-slate-300 hover:shadow-md transition">
+          <div class="w-full flex items-center justify-between text-[9px] font-mono-code text-slate-400">
+            <span>${ag.number}</span>
+            <span class="w-1.5 h-1.5 rounded-full ${ag.dotClass}"></span>
+          </div>
+          <div class="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-base shadow-inner">
+            ${ag.emoji}
+          </div>
+          <div class="w-full">
+            <div class="text-[11px] font-extrabold font-mono-code text-slate-900 truncate">${ag.name}</div>
+            <div class="text-[9px] font-bold text-slate-500 uppercase tracking-tight truncate">${ag.role}</div>
+          </div>
+          <span class="px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-bold font-mono-code ${ag.statusClass} truncate w-full text-center">
+            ${ag.metric}
+          </span>
+        </div>
+      `).join('');
+    }
+
+    // -------------------------------------------------------------
+    // Backend API Synchronizer (Signals, Scanner Status, Trades, Agents)
+    // -------------------------------------------------------------
+    let previousSignalsCount = 0;
+    let latestSignals = [];
+
+    async function syncBackend() {
+      try {
+        // 1. Fetch Signals
+        const res = await fetch('/api/signals');
+        if (res.ok) {
+          const signals = await res.json();
+          latestSignals = signals;
+          renderSignalsTable(signals);
+
+          if (signals.length > previousSignalsCount && previousSignalsCount > 0) {
+            playBreakoutChime();
+            const newest = signals[0];
+            addLogEntry('DENVER', `🔥 NEW ${newest.type} ENGULFING: ${newest.symbol} @ ₹${Number(newest.entryPrice).toFixed(2)}`);
+            addLogEntry('NAIROBI', `Telegram alert dispatched for ${newest.symbol} (Target: ₹${Number(newest.target).toFixed(2)}, SL: ₹${Number(newest.stopLoss).toFixed(2)})`);
+          }
+          previousSignalsCount = signals.length;
+          document.getElementById('signalsCountBadge').textContent = `${signals.length} SIGNALS`;
+        }
+
+        // 2. Fetch Agents & Provider Status
+        const agRes = await fetch('/api/agents/status');
+        if (agRes.ok) {
+          const agData = await agRes.json();
+          if (agData.agents) renderAgentCards(agData.agents);
+          
+          const pill = document.getElementById('engineStatusPill');
+          const dot = document.getElementById('engineStatusDot');
+          const text = document.getElementById('engineStatusText');
+          if (pill && dot && text) {
+            if (agData.dhanStatus && agData.dhanStatus.isValid) {
+              dot.className = 'w-2 h-2 rounded-full bg-emerald-500 animate-pulse';
+              text.textContent = 'DHANHQ DIRECT';
+              pill.className = 'flex items-center gap-2 px-3 py-1.5 rounded-lg border border-emerald-200 bg-emerald-50 text-xs font-mono-code text-emerald-800';
+            } else {
+              dot.className = 'w-2 h-2 rounded-full bg-amber-500';
+              text.textContent = 'NSE LIVE FEED (197 F&O)';
+              pill.className = 'flex items-center gap-2 px-3 py-1.5 rounded-lg border border-amber-200 bg-amber-50 text-xs font-mono-code text-amber-800';
+            }
+          }
+        }
+
+        // 3. Fetch Risk Settings
+        const riskRes = await fetch('/api/settings/risk');
+        if (riskRes.ok) {
+          const riskData = await riskRes.json();
+          const autoBtn = document.getElementById('autoTradeText');
+          if (riskData.autoTrading) {
+            autoBtn.textContent = 'AUTO: LIVE ORDERS';
+            autoBtn.parentElement.className = 'px-3 py-1.5 rounded-lg border border-emerald-400 bg-emerald-50 text-emerald-800 text-xs font-bold font-mono-code flex items-center gap-1.5 transition';
+          } else {
+            autoBtn.textContent = 'AUTO: OFF (PAPER)';
+            autoBtn.parentElement.className = 'px-3 py-1.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-800 text-xs font-bold font-mono-code flex items-center gap-1.5 transition';
+          }
+        }
+      } catch (e) {
+        console.warn("Sync loop notice:", e);
+      }
+    }
+
+    function renderSignalsTable(signals) {
+      const tbody = document.getElementById('signalsTableBody');
+      if (!signals || signals.length === 0) return;
+
+      tbody.innerHTML = '';
+      signals.forEach((sig, idx) => {
+        const isBull = sig.type === 'BULLISH';
+        const typeBadge = isBull 
+          ? '<span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]">🟢 BULLISH</span>'
+          : '<span class="px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-bold text-[10px]">🔴 BEARISH</span>';
+
+        const timeStr = sig.timestamp ? new Date(sig.timestamp).toLocaleTimeString() : 'JUST NOW';
+        const trendTag = isBull ? '↘️ Reversal (Decline)' : '↗️ Reversal (Rally)';
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 transition cursor-pointer border-b border-slate-100';
+        tr.onclick = () => openCandleModal(sig);
+        tr.innerHTML = `
+          <td class="py-2.5 px-3 text-slate-400">${timeStr}</td>
+          <td class="py-2.5 px-3 font-bold text-slate-900">${sig.symbol}</td>
+          <td class="py-2.5 px-3">${typeBadge}</td>
+          <td class="py-2.5 px-3 text-slate-600">${trendTag}</td>
+          <td class="py-2.5 px-3 font-bold text-slate-800">${sig.ratio || '135%'}</td>
+          <td class="py-2.5 px-3 font-bold text-slate-900">₹${Number(sig.entryPrice).toFixed(2)}</td>
+          <td class="py-2.5 px-3 text-rose-600 font-semibold">₹${Number(sig.stopLoss).toFixed(2)}</td>
+          <td class="py-2.5 px-3 text-emerald-600 font-semibold">₹${Number(sig.target).toFixed(2)}</td>
+          <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded bg-slate-100 font-bold text-slate-800">${sig.strength}%</span></td>
+          <td class="py-2.5 px-3 text-right">
+            <button class="px-2.5 py-1 rounded bg-slate-900 text-white text-[10px] font-bold font-mono-code hover:bg-slate-700">INSPECT</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // -------------------------------------------------------------
+    // Candlestick Pattern Visualizer Modal (Matching Photos 1-4)
+    // -------------------------------------------------------------
+    function openCandleModal(sig) {
+      const modal = document.getElementById('candleModal');
+      const isBull = sig.type === 'BULLISH';
+
+      document.getElementById('modalSymbol').textContent = sig.symbol;
+      document.getElementById('modalTypeBadge').textContent = `${sig.type} ENGULFING`;
+      document.getElementById('modalTypeBadge').className = isBull 
+        ? 'px-2 py-0.5 rounded text-[11px] font-bold font-mono-code bg-emerald-100 text-emerald-800'
+        : 'px-2 py-0.5 rounded text-[11px] font-bold font-mono-code bg-rose-100 text-rose-800';
+
+      document.getElementById('modalTrendArrow').textContent = isBull 
+        ? '↘️ Appears after a decline, buyers step in (Photo 2 & 4)'
+        : '↗️ Appears after a rise, sellers take over (Photo 2 & 4)';
+
+      document.getElementById('modalBodyRatio').textContent = `${sig.ratio || '142%'} (${sig.requiredRange || '>= 120%'})`;
+      document.getElementById('modalEntry').textContent = `₹${Number(sig.entryPrice).toFixed(2)}`;
+      document.getElementById('modalSL').textContent = `₹${Number(sig.stopLoss).toFixed(2)}`;
+
+      // Draw Photo-accurate Candlestick Comparison in SVG
+      const svg = document.getElementById('modalCandleSvg');
+      svg.innerHTML = '';
+
+      if (isBull) {
+        // Bullish: Red previous candle + Taller Green current candle
+        svg.innerHTML = `
+          <!-- Previous Candle (Red) -->
+          <line x1="90" y1="35" x2="90" y2="145" stroke="#f43f5e" stroke-width="2.5" />
+          <rect x="70" y="55" width="40" height="65" fill="#f43f5e" rx="2" />
+          <text x="90" y="165" font-size="10" font-family="JetBrains Mono" fill="#94a3b8" text-anchor="middle">PREV (RED)</text>
+
+          <!-- Current Engulfing Candle (Green) -->
+          <line x1="210" y1="15" x2="210" y2="165" stroke="#10b981" stroke-width="3" />
+          <rect x="185" y="30" width="50" height="115" fill="#10b981" rx="2" />
+          <text x="210" y="178" font-size="11" font-weight="bold" font-family="JetBrains Mono" fill="#10b981" text-anchor="middle">ENGULFING (GREEN)</text>
+
+          <!-- Engulfing Bracket arrows -->
+          <line x1="120" y1="30" x2="175" y2="30" stroke="#10b981" stroke-dasharray="3,3" />
+          <line x1="120" y1="145" x2="175" y2="145" stroke="#10b981" stroke-dasharray="3,3" />
+        `;
+      } else {
+        // Bearish: Green previous candle + Taller Red current candle
+        svg.innerHTML = `
+          <!-- Previous Candle (Green) -->
+          <line x1="90" y1="35" x2="90" y2="145" stroke="#10b981" stroke-width="2.5" />
+          <rect x="70" y="55" width="40" height="65" fill="#10b981" rx="2" />
+          <text x="90" y="165" font-size="10" font-family="JetBrains Mono" fill="#94a3b8" text-anchor="middle">PREV (GREEN)</text>
+
+          <!-- Current Engulfing Candle (Red) -->
+          <line x1="210" y1="15" x2="210" y2="165" stroke="#f43f5e" stroke-width="3" />
+          <rect x="185" y="30" width="50" height="115" fill="#f43f5e" rx="2" />
+          <text x="210" y="178" font-size="11" font-weight="bold" font-family="JetBrains Mono" fill="#f43f5e" text-anchor="middle">ENGULFING (RED)</text>
+
+          <!-- Engulfing Bracket arrows -->
+          <line x1="120" y1="30" x2="175" y2="30" stroke="#f43f5e" stroke-dasharray="3,3" />
+          <line x1="120" y1="145" x2="175" y2="145" stroke="#f43f5e" stroke-dasharray="3,3" />
+        `;
+      }
+
+      modal.classList.remove('hidden');
+    }
+
+    function closeCandleModal() {
+      document.getElementById('candleModal').classList.add('hidden');
+    }
+
+    // -------------------------------------------------------------
+    // Trigger Manual Sweep Scan with Live Progress Polling
+    // -------------------------------------------------------------
+    let scanPollInterval = null;
+    async function triggerManualScan() {
+      const btn = document.getElementById('sweepScanBtn');
+      const spinner = document.getElementById('sweepSpinner');
+      const label = document.getElementById('sweepBtnLabel');
+
+      btn.disabled = true;
+      spinner.classList.remove('hidden');
+      label.textContent = 'STARTING SCAN...';
+      addLogEntry('TOKYO', 'Manual scan sweep triggered: Scanning 197 NSE F&O equities...');
+
+      try {
+        await fetch('/api/scanner/trigger', { method: 'POST' });
+        
+        if (scanPollInterval) clearInterval(scanPollInterval);
+        scanPollInterval = setInterval(async () => {
+          try {
+            const stRes = await fetch('/api/scanner/status');
+            const stData = await stRes.json();
+            const prog = stData.progress || 0;
+            label.textContent = `SCANNING ${prog}%`;
+            
+            if (!stData.status.isRunning) {
+              clearInterval(scanPollInterval);
+              btn.disabled = false;
+              spinner.classList.add('hidden');
+              label.textContent = 'SWEEP SCAN F&O';
+              addLogEntry('DENVER', `Sweep complete! Total ${stData.status.signalsFound || 0} signals active.`);
+              syncBackend();
+            }
+          } catch (e) {
+            clearInterval(scanPollInterval);
+            btn.disabled = false;
+            spinner.classList.add('hidden');
+            label.textContent = 'SWEEP SCAN F&O';
+          }
+        }, 800);
+      } catch (e) {
+        btn.disabled = false;
+        spinner.classList.add('hidden');
+        label.textContent = 'SWEEP SCAN F&O';
+        addLogEntry('PALERMO', 'Error contacting scanner backend', 'error');
+      }
+    }
+
+    // -------------------------------------------------------------
+    // Toggle Auto Trading State
+    // -------------------------------------------------------------
+    async function toggleAutoTrading() {
+      try {
+        const currentRes = await fetch('/api/settings/risk');
+        const currentData = await currentRes.json();
+        const nextState = !currentData.autoTrading;
+
+        await fetch('/api/settings/risk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ autoTrading: nextState })
+        });
+
+        addLogEntry('PROFESSOR', `Auto trading switched to: ${nextState ? 'LIVE ORDERS (OPENALGO/DHAN)' : 'PAPER SIMULATION'}`);
+        syncBackend();
+      } catch (e) {
+        console.error("Auto trade toggle error:", e);
+      }
+    }
+
+    // -------------------------------------------------------------
+    // Initialize Everything
+    // -------------------------------------------------------------
+    window.addEventListener('load', () => {
+      drawBalanceChart();
+      drawRidgePlot();
+      drawLattice();
+      drawFlowSimulation();
+      syncBackend();
+      setInterval(syncBackend, 3500);
+    });
+
+    window.addEventListener('resize', () => {
+      drawBalanceChart();
+    });
+  </script>
+</body>
+</html>
