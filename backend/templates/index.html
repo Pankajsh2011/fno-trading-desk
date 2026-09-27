@@ -1554,12 +1554,12 @@
     const cCanvas = document.getElementById('nativeCandleCanvas');
     const cCtx = cCanvas ? cCanvas.getContext('2d') : null;
 
-    async function loadCandleData(symbol, interval) {
+    async function loadCandleData(symbol, interval, isStreaming = false) {
       if (symbol) currentChartSymbol = symbol.toUpperCase().replace('.NS', '').replace('NSE:', '').replace('BSE:', '').trim();
       if (interval) currentChartInterval = interval;
 
       const overlay = document.getElementById('canvasLoadingOverlay');
-      if (overlay) overlay.classList.remove('hidden');
+      if (!isStreaming && overlay) overlay.classList.remove('hidden');
 
       const badge = document.getElementById('activeChartSymbolBadge');
       if (badge) badge.textContent = `${currentChartSymbol}.NS`;
@@ -1623,16 +1623,16 @@
           }
 
           const countEl = document.getElementById('chartCandleCount');
-          if (countEl) countEl.textContent = `${chartCandlesData.length} Real Candles Loaded (${currentChartInterval})`;
+          if (countEl) countEl.innerHTML = `<span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse mr-1"></span> ${chartCandlesData.length} Real Candles (${currentChartInterval}) • LIVE STREAMING`;
 
           updateTopMetrics(chartCandlesData[chartCandlesData.length - 1], chartVolumesData[chartVolumesData.length - 1]);
-          chartPanOffset = 0;
+          if (!isStreaming) chartPanOffset = 0;
           drawNativeCandles();
         }
       } catch (err) {
         console.error('Error fetching candles:', err);
       } finally {
-        if (overlay) overlay.classList.add('hidden');
+        if (!isStreaming && overlay) overlay.classList.add('hidden');
       }
     }
 
@@ -1941,12 +1941,14 @@
         sel.value = currentChartSymbol;
       }
       loadCandleData(currentChartSymbol, currentChartInterval);
+      startChartStreaming();
       addLogEntry('RIO', `Native real-time candle chart loaded: ${currentChartSymbol}.NS (${currentChartInterval} timeframe)`);
     }
 
     function switchChartInterval(interval) {
       currentChartInterval = interval;
       loadCandleData(currentChartSymbol, interval);
+      startChartStreaming();
     }
 
     function viewStockInChart(symbol) {
@@ -2003,15 +2005,25 @@
     // -------------------------------------------------------------
     // Initialize Everything
     // -------------------------------------------------------------
+    let chartStreamInterval = null;
+
+    function startChartStreaming() {
+      if (chartStreamInterval) clearInterval(chartStreamInterval);
+      chartStreamInterval = setInterval(() => {
+        loadCandleData(currentChartSymbol, currentChartInterval, true);
+      }, 10000);
+    }
+
     window.addEventListener('load', () => {
       drawBalanceChart();
       drawRidgePlot();
       drawLattice();
       drawFlowSimulation();
-      loadCandleData('IRFC', '25m');
+      loadCandleData('IRFC', '25m', false);
       loadFnoStocksDropdown();
       syncBackend();
       setInterval(syncBackend, 3500);
+      startChartStreaming();
     });
 
     window.addEventListener('resize', () => {

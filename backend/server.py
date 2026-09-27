@@ -2589,6 +2589,9 @@ def get_fno_stocks():
         "stocks": [{"symbol": s["symbol"], "name": s.get("name", s["symbol"])} for s in active_scanning_list]
     })
 
+_chart_endpoint_cache: Dict[str, Any] = {}
+_chart_endpoint_lock = threading.Lock()
+
 @app.route("/api/chart/candles", methods=["GET"])
 def get_chart_candles():
     raw_sym = request.args.get("symbol", "IRFC").upper().strip()
@@ -2620,15 +2623,34 @@ def get_chart_candles():
     elif clean_sym.startswith("SILVER"): ticker = "SI=F"
     elif clean_sym.startswith("CRUDE"): ticker = "CL=F"
 
+    cache_key = f"{ticker}_{yf_interval}_{yf_range}_{is_25m}"
+    now_ts = time.time()
+    with _chart_endpoint_lock:
+        if cache_key in _chart_endpoint_cache:
+            c_time, cached_payload = _chart_endpoint_cache[cache_key]
+            if now_ts - c_time < 15:  # Instant 15s streaming cache
+                return jsonify(cached_payload)
+
     try:
         url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?interval={yf_interval}&range={yf_range}"
-        resp = requests.get(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}, timeout=8)
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
+            "Accept": "*/*",
+            "Accept-Language": "en-US,en;q=0.9"
+        }
+        resp = _yf_session.get(url, headers=headers, timeout=12)
         if resp.status_code != 200:
+            with _chart_endpoint_lock:
+                if cache_key in _chart_endpoint_cache:
+                    return jsonify(_chart_endpoint_cache[cache_key][1])
             return jsonify({"success": False, "message": f"Data provider returned status {resp.status_code}"}), 502
 
         json_data = resp.json()
         chart_result = json_data.get("chart", {}).get("result")
         if not chart_result or not isinstance(chart_result, list) or len(chart_result) == 0:
+            with _chart_endpoint_lock:
+                if cache_key in _chart_endpoint_cache:
+                    return jsonify(_chart_endpoint_cache[cache_key][1])
             return jsonify({"success": False, "message": "No chart data found"}), 404
 
         result = chart_result[0]
@@ -2703,7 +2725,7 @@ def get_chart_candles():
 
         last_price = candles[-1]["close"] if candles else meta.get("regularMarketPrice", 0.0)
 
-        return jsonify({
+        response_payload = {
             "success": True,
             "symbol": clean_sym,
             "ticker": ticker,
@@ -2713,9 +2735,17 @@ def get_chart_candles():
             "candles": candles,
             "volumes": volumes,
             "levels": levels
-        })
+        }
+
+        with _chart_endpoint_lock:
+            _chart_endpoint_cache[cache_key] = (now_ts, response_payload)
+
+        return jsonify(response_payload)
     except Exception as e:
         logger.error(f"[Chart API Error] {clean_sym}: {e}")
+        with _chart_endpoint_lock:
+            if cache_key in _chart_endpoint_cache:
+                return jsonify(_chart_endpoint_cache[cache_key][1])
         return jsonify({"success": False, "message": str(e)}), 500
 
 @app.route("/api/health", methods=["GET"])
