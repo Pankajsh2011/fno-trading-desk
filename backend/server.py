@@ -2628,6 +2628,26 @@ def serve_frontend(path):
     return jsonify({"status": "running", "message": "GPTHEIST DESK Dashboard active"})
 
 
+def keep_alive_worker():
+    """
+    Automatic anti-sleep daemon to keep cloud deployments (Render, Koyeb)
+    continuously active by self-pinging before the 15-min idle spin-down.
+    """
+    time.sleep(60)  # Wait 1 minute after boot
+    target_url = os.getenv("RENDER_EXTERNAL_URL") or os.getenv("KEEP_ALIVE_URL")
+    if not target_url:
+        logger.info("[KeepAlive] Self-ping idle (No RENDER_EXTERNAL_URL). Recommended: Use free UptimeRobot to ping /api/health")
+        return
+    health_url = f"{target_url.rstrip('/')}/api/health"
+    logger.info(f"[KeepAlive] Automatic cloud anti-sleep daemon active: Pinging {health_url} every 8 minutes.")
+    while True:
+        try:
+            time.sleep(480)  # 8 minutes
+            resp = requests.get(health_url, timeout=15)
+            logger.info(f"[KeepAlive] Heartbeat ping {resp.status_code} at {datetime.now(IST).strftime('%H:%M:%S')}")
+        except Exception as e:
+            logger.debug(f"[KeepAlive] Ping notice: {e}")
+
 # ----------------------------------------------------
 # 🚀 STARTUP & ENTRY POINT
 # ----------------------------------------------------
@@ -2654,6 +2674,7 @@ def startup_sequence():
     threading.Thread(target=scheduler_stock_scanner, daemon=True).start()
     threading.Thread(target=scheduler_options_scanner, daemon=True).start()
     threading.Thread(target=scheduler_daily_token_renewal, daemon=True).start()
+    threading.Thread(target=keep_alive_worker, daemon=True).start()
 
     # Initial scan sweep in background
     logger.info("[Startup] Executing initial automatic scan sweep in background...")
