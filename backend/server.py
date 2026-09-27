@@ -2796,10 +2796,16 @@ def startup_sequence():
     threading.Thread(target=scheduler_daily_token_renewal, daemon=True).start()
     threading.Thread(target=keep_alive_worker, daemon=True).start()
 
-    # Initial scan sweep in background
-    logger.info("[Startup] Executing initial automatic scan sweep in background...")
-    threading.Thread(target=run_automatic_scan, args=(True,), daemon=True).start()
-    threading.Thread(target=run_options_scan, daemon=True).start()
+    logger.info("[Startup] ✅ Server READY! Baseline signals loaded. Delaying initial scan 30s for cloud boot...")
+
+    # Delay heavy initial scan so Gunicorn can pass Render health checks first
+    def delayed_initial_scan():
+        time.sleep(30)
+        logger.info("[Startup] Executing initial automatic scan sweep now...")
+        run_automatic_scan(True)
+        run_options_scan()
+
+    threading.Thread(target=delayed_initial_scan, daemon=True).start()
 
 _startup_lock = threading.Lock()
 _startup_done = False
