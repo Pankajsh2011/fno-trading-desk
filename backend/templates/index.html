@@ -597,12 +597,13 @@
 
           <!-- Timeframe selector -->
           <div class="flex items-center rounded border border-slate-200 overflow-hidden text-[11px]">
-            <button onclick="switchChartInterval('1m')" class="tf-btn px-2.5 py-1 hover:bg-slate-100 text-slate-600 font-semibold" data-tf="1m">1m</button>
-            <button onclick="switchChartInterval('5m')" class="tf-btn px-2.5 py-1 hover:bg-slate-100 text-slate-600 font-semibold" data-tf="5m">5m</button>
-            <button onclick="switchChartInterval('15m')" class="tf-btn px-2.5 py-1 bg-slate-900 text-white font-bold" data-tf="15m">15m</button>
-            <button onclick="switchChartInterval('30m')" class="tf-btn px-2.5 py-1 hover:bg-slate-100 text-slate-600 font-semibold" data-tf="30m">30m</button>
-            <button onclick="switchChartInterval('1h')" class="tf-btn px-2.5 py-1 hover:bg-slate-100 text-slate-600 font-semibold" data-tf="1h">1h</button>
-            <button onclick="switchChartInterval('1d')" class="tf-btn px-2.5 py-1 hover:bg-slate-100 text-slate-600 font-semibold" data-tf="1d">1D</button>
+            <button onclick="switchChartInterval('1m')" class="tf-btn px-2 py-1 hover:bg-slate-100 text-slate-600 font-semibold" data-tf="1m">1m</button>
+            <button onclick="switchChartInterval('5m')" class="tf-btn px-2 py-1 hover:bg-slate-100 text-slate-600 font-semibold" data-tf="5m">5m</button>
+            <button onclick="switchChartInterval('15m')" class="tf-btn px-2 py-1 hover:bg-slate-100 text-slate-600 font-semibold" data-tf="15m">15m</button>
+            <button onclick="switchChartInterval('25m')" class="tf-btn px-2.5 py-1 bg-slate-900 text-white font-bold" data-tf="25m">25m ★</button>
+            <button onclick="switchChartInterval('30m')" class="tf-btn px-2 py-1 hover:bg-slate-100 text-slate-600 font-semibold" data-tf="30m">30m</button>
+            <button onclick="switchChartInterval('1h')" class="tf-btn px-2 py-1 hover:bg-slate-100 text-slate-600 font-semibold" data-tf="1h">1h</button>
+            <button onclick="switchChartInterval('1d')" class="tf-btn px-2 py-1 hover:bg-slate-100 text-slate-600 font-semibold" data-tf="1d">1D</button>
           </div>
         </div>
       </div>
@@ -1523,7 +1524,7 @@
     // 📈 100% UNRESTRICTED REAL-TIME CANDLESTICK CHART CANVAS ENGINE
     // -------------------------------------------------------------
     let currentChartSymbol = 'IRFC';
-    let currentChartInterval = '15m';
+    let currentChartInterval = '25m';
     let chartCandlesData = [];
     let chartVolumesData = [];
     let chartSignalLevels = null;
@@ -1989,7 +1990,7 @@
       drawRidgePlot();
       drawLattice();
       drawFlowSimulation();
-      loadCandleData('IRFC', '15m');
+      loadCandleData('IRFC', '25m');
       loadFnoStocksDropdown();
       syncBackend();
       setInterval(syncBackend, 3500);

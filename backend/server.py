@@ -2485,7 +2485,11 @@ def get_chart_candles():
         "1d": ("1d", "6mo"),
         "d": ("1d", "6mo")
     }
-    yf_interval, yf_range = range_map.get(interval_req, ("15m", "5d"))
+    is_25m = interval_req in ["25m", "25", "25min"]
+    if is_25m:
+        yf_interval, yf_range = ("5m", "5d")
+    else:
+        yf_interval, yf_range = range_map.get(interval_req, ("15m", "5d"))
 
     ticker = f"{clean_sym}.NS"
     if clean_sym in ["NIFTY", "NIFTY 50", "^NSEI"]: ticker = "^NSEI"
@@ -2535,6 +2539,36 @@ def get_chart_candles():
                     "value": float(v or 0),
                     "color": "rgba(16, 185, 129, 0.45)" if c >= o else "rgba(239, 68, 68, 0.45)"
                 })
+
+        # Aggregate 5-minute bars into 25-minute rolling candles
+        if is_25m and len(candles) >= 5:
+            agg_candles = []
+            agg_volumes = []
+            for i in range(0, len(candles) - 4, 5):
+                chunk = candles[i:i + 5]
+                v_chunk = volumes[i:i + 5]
+                c_open = chunk[0]["open"]
+                c_close = chunk[-1]["close"]
+                c_high = max(c["high"] for c in chunk)
+                c_low = min(c["low"] for c in chunk)
+                c_time = chunk[-1]["time"]
+                v_sum = sum(v["value"] for v in v_chunk)
+
+                agg_candles.append({
+                    "time": c_time,
+                    "open": round(c_open, 2),
+                    "high": round(c_high, 2),
+                    "low": round(c_low, 2),
+                    "close": round(c_close, 2)
+                })
+                agg_volumes.append({
+                    "time": c_time,
+                    "value": v_sum,
+                    "color": "rgba(16, 185, 129, 0.45)" if c_close >= c_open else "rgba(239, 68, 68, 0.45)"
+                })
+            candles = agg_candles
+            volumes = agg_volumes
+            yf_interval = "25m"
 
         active_sig = next((s for s in active_signals if s["symbol"] == clean_sym), None)
         levels = None
