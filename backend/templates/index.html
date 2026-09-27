@@ -1454,6 +1454,8 @@
     // Trigger Manual Sweep Scan with Live Progress Polling
     // -------------------------------------------------------------
     let scanPollInterval = null;
+    let scanSafetyTimeout = null;
+
     async function triggerManualScan() {
       const btn = document.getElementById('sweepScanBtn');
       const spinner = document.getElementById('sweepSpinner');
@@ -1461,13 +1463,24 @@
 
       btn.disabled = true;
       spinner.classList.remove('hidden');
-      label.textContent = 'STARTING SCAN...';
+      label.textContent = 'SCANNING 0%...';
       addLogEntry('TOKYO', 'Manual scan sweep triggered: Scanning 197 NSE F&O equities...');
 
       try {
         await fetch('/api/scanner/trigger', { method: 'POST' });
         
         if (scanPollInterval) clearInterval(scanPollInterval);
+        if (scanSafetyTimeout) clearTimeout(scanSafetyTimeout);
+
+        // Safety watchdog: automatically unlock button after 25s if network stalls
+        scanSafetyTimeout = setTimeout(() => {
+          if (scanPollInterval) clearInterval(scanPollInterval);
+          btn.disabled = false;
+          spinner.classList.add('hidden');
+          label.textContent = 'SWEEP SCAN F&O';
+          syncBackend();
+        }, 25000);
+
         scanPollInterval = setInterval(async () => {
           try {
             const stRes = await fetch('/api/scanner/status');
@@ -1475,22 +1488,27 @@
             const prog = stData.progress || 0;
             label.textContent = `SCANNING ${prog}%`;
             
-            if (!stData.status.isRunning) {
+            // Progressive live update of table
+            await syncBackend();
+
+            if (!stData.status.isRunning || prog >= 100) {
               clearInterval(scanPollInterval);
+              clearTimeout(scanSafetyTimeout);
               btn.disabled = false;
               spinner.classList.add('hidden');
               label.textContent = 'SWEEP SCAN F&O';
               addLogEntry('DENVER', `Sweep complete! Total ${stData.status.signalsFound || 0} signals active.`);
-              syncBackend();
             }
           } catch (e) {
             clearInterval(scanPollInterval);
+            clearTimeout(scanSafetyTimeout);
             btn.disabled = false;
             spinner.classList.add('hidden');
             label.textContent = 'SWEEP SCAN F&O';
           }
-        }, 800);
+        }, 600);
       } catch (e) {
+        if (scanSafetyTimeout) clearTimeout(scanSafetyTimeout);
         btn.disabled = false;
         spinner.classList.add('hidden');
         label.textContent = 'SWEEP SCAN F&O';
