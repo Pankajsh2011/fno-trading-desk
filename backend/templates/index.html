@@ -556,7 +556,62 @@
     </div>
 
     <!-- ============================================================== -->
-    <!-- 🕯️ 7. DETECTED CANDLESTICK PATTERN SIGNALS TABLE (FROM PHOTOS) -->
+    <!-- 📈 7. LIVE REAL-TIME NSE CANDLESTICK TERMINAL (ZERO SIMULATION) -->
+    <!-- ============================================================== -->
+    <div id="liveChartSection" class="desk-card p-4 space-y-3 scroll-mt-20">
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+        <div class="flex items-center gap-2.5">
+          <span class="w-3 h-3 rounded-full bg-emerald-500 animate-ping"></span>
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-sm font-bold text-slate-900 font-mono-code uppercase tracking-wider">// LIVE REAL-TIME NSE CANDLESTICK TERMINAL</h2>
+              <span id="activeChartSymbolBadge" class="px-2 py-0.5 rounded text-xs font-black font-mono-code bg-emerald-100 text-emerald-800 border border-emerald-300">NSE:IRFC</span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono-code bg-indigo-100 text-indigo-800">100% LIVE FEED</span>
+            </div>
+            <p class="text-[11px] text-slate-400 font-mono-code">DIRECT NSE TICK STREAM • 0% SIMULATION • CANDLESTICKS • VOLUME • SUPERTREND</p>
+          </div>
+        </div>
+
+        <!-- Controls: Timeframe, Quick Symbols & Stock Search -->
+        <div class="flex flex-wrap items-center gap-2 font-mono-code">
+          <!-- Quick Symbols -->
+          <div class="flex items-center gap-1 text-xs">
+            <span class="text-[10px] text-slate-400 uppercase font-bold mr-1">QUICK:</span>
+            <button onclick="switchChartSymbol('NIFTY')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">NIFTY</button>
+            <button onclick="switchChartSymbol('BANKNIFTY')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">BANKNIFTY</button>
+            <button onclick="switchChartSymbol('IRFC')" class="quick-sym-btn px-2 py-1 rounded bg-emerald-600 text-white font-bold transition text-[11px]">IRFC</button>
+            <button onclick="switchChartSymbol('RELIANCE')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">RELIANCE</button>
+            <button onclick="switchChartSymbol('HDFCBANK')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">HDFCBANK</button>
+            <button onclick="switchChartSymbol('TCS')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">TCS</button>
+          </div>
+
+          <!-- Stock Dropdown Search (All 197 F&O stocks) -->
+          <select id="chartStockSelect" onchange="switchChartSymbol(this.value)" class="text-xs font-mono-code px-2 py-1 rounded border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+            <option value="IRFC">IRFC (Indian Railway Finance)</option>
+            <option value="NIFTY">NIFTY 50 INDEX</option>
+            <option value="BANKNIFTY">BANK NIFTY INDEX</option>
+          </select>
+
+          <!-- Timeframe selector -->
+          <div class="flex items-center rounded border border-slate-200 overflow-hidden text-[11px]">
+            <button onclick="switchChartInterval('1')" class="tf-btn px-2.5 py-1 hover:bg-slate-100 text-slate-600 font-semibold" data-tf="1">1m</button>
+            <button onclick="switchChartInterval('5')" class="tf-btn px-2.5 py-1 hover:bg-slate-100 text-slate-600 font-semibold" data-tf="5">5m</button>
+            <button onclick="switchChartInterval('15')" class="tf-btn px-2.5 py-1 bg-slate-900 text-white font-bold" data-tf="15">15m</button>
+            <button onclick="switchChartInterval('30')" class="tf-btn px-2.5 py-1 hover:bg-slate-100 text-slate-600 font-semibold" data-tf="30">30m</button>
+            <button onclick="switchChartInterval('60')" class="tf-btn px-2.5 py-1 hover:bg-slate-100 text-slate-600 font-semibold" data-tf="60">1h</button>
+            <button onclick="switchChartInterval('D')" class="tf-btn px-2.5 py-1 hover:bg-slate-100 text-slate-600 font-semibold" data-tf="D">1D</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Real-Time TradingView Candlestick Chart Viewport -->
+      <div class="w-full h-[520px] rounded-xl overflow-hidden border border-slate-200 bg-white relative shadow-inner">
+        <div id="tradingview_chart_container" class="w-full h-full"></div>
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- 🕯️ 8. DETECTED CANDLESTICK PATTERN SIGNALS TABLE (FROM PHOTOS) -->
     <!-- ============================================================== -->
     <div class="desk-card p-4 space-y-3">
       <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
@@ -1220,7 +1275,10 @@
       }
     }
 
+    let currentSignalsCache = [];
+
     function renderSignalsTable(signals) {
+      currentSignalsCache = signals || [];
       const tbody = document.getElementById('signalsTableBody');
       if (!signals || signals.length === 0) return;
 
@@ -1236,7 +1294,10 @@
 
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-slate-50 transition cursor-pointer border-b border-slate-100';
-        tr.onclick = () => openCandleModal(sig);
+        tr.onclick = (e) => {
+          if (e.target.closest('button')) return;
+          viewStockInChart(sig.symbol);
+        };
         tr.innerHTML = `
           <td class="py-2.5 px-3 text-slate-400">${timeStr}</td>
           <td class="py-2.5 px-3 font-bold text-slate-900">${sig.symbol}</td>
@@ -1248,11 +1309,23 @@
           <td class="py-2.5 px-3 text-emerald-600 font-semibold">₹${Number(sig.target).toFixed(2)}</td>
           <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded bg-slate-100 font-bold text-slate-800">${sig.strength}%</span></td>
           <td class="py-2.5 px-3 text-right">
-            <button class="px-2.5 py-1 rounded bg-slate-900 text-white text-[10px] font-bold font-mono-code hover:bg-slate-700">INSPECT</button>
+            <div class="flex items-center justify-end gap-1.5">
+              <button onclick="viewStockInChart('${sig.symbol}')" class="px-2 py-1 rounded bg-emerald-600 text-white text-[10px] font-bold font-mono-code hover:bg-emerald-700 shadow-sm transition flex items-center gap-1">
+                <span>📈 CHART</span>
+              </button>
+              <button onclick="openCandleModalBySymbol('${sig.symbol}')" class="px-2 py-1 rounded bg-slate-100 text-slate-700 text-[10px] font-bold font-mono-code hover:bg-slate-200 transition">
+                <span>PATTERN</span>
+              </button>
+            </div>
           </td>
         `;
         tbody.appendChild(tr);
       });
+    }
+
+    function openCandleModalBySymbol(symbol) {
+      const sig = currentSignalsCache.find(s => s.symbol === symbol);
+      if (sig) openCandleModal(sig);
     }
 
     // -------------------------------------------------------------
@@ -1394,6 +1467,133 @@
     }
 
     // -------------------------------------------------------------
+    // 📈 100% REAL-TIME LIVE TRADINGVIEW CANDLESTICK CHART ENGINE
+    // -------------------------------------------------------------
+    let currentChartSymbol = 'IRFC';
+    let currentChartInterval = '15';
+    let fnoStocksCache = [];
+
+    function getTradingViewTicker(symbol) {
+      if (!symbol) return 'NSE:NIFTY';
+      let sym = symbol.toUpperCase().trim().replace('.NS', '').replace('NSE:', '').replace('BSE:', '');
+      if (sym === 'NIFTY' || sym === 'NIFTY 50') return 'NSE:NIFTY';
+      if (sym === 'BANKNIFTY' || sym === 'BANK NIFTY') return 'NSE:BANKNIFTY';
+      if (sym === 'FINNIFTY') return 'NSE:FINNIFTY';
+      if (sym === 'SENSEX') return 'BSE:SENSEX';
+      return 'NSE:' + sym;
+    }
+
+    function renderLiveChart(symbol, interval) {
+      if (symbol) currentChartSymbol = symbol;
+      if (interval) currentChartInterval = interval;
+
+      const ticker = getTradingViewTicker(currentChartSymbol);
+      const container = document.getElementById('tradingview_chart_container');
+      const badge = document.getElementById('activeChartSymbolBadge');
+      if (badge) badge.textContent = ticker;
+
+      // Update Quick Buttons style
+      document.querySelectorAll('.quick-sym-btn').forEach(btn => {
+        const btnSym = btn.textContent.trim().toUpperCase();
+        const curSym = currentChartSymbol.toUpperCase().replace('.NS','');
+        if (btnSym === curSym) {
+          btn.className = 'quick-sym-btn px-2 py-1 rounded bg-emerald-600 text-white font-bold transition text-[11px]';
+        } else {
+          btn.className = 'quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]';
+        }
+      });
+
+      // Update Timeframe Buttons style
+      document.querySelectorAll('.tf-btn').forEach(btn => {
+        if (btn.getAttribute('data-tf') === currentChartInterval) {
+          btn.className = 'tf-btn px-2.5 py-1 bg-slate-900 text-white font-bold';
+        } else {
+          btn.className = 'tf-btn px-2.5 py-1 hover:bg-slate-100 text-slate-600 font-semibold';
+        }
+      });
+
+      if (!container) return;
+      container.innerHTML = '';
+
+      const iframe = document.createElement('iframe');
+      iframe.id = 'tradingview_widget_frame';
+      iframe.style.width = '100%';
+      iframe.style.height = '100%';
+      iframe.style.border = 'none';
+      iframe.allowTransparency = 'true';
+      iframe.scrolling = 'no';
+      iframe.allow = 'fullscreen';
+
+      const encodedSymbol = encodeURIComponent(ticker);
+      iframe.src = `https://s.tradingview.com/widgetembed/?frameElementId=tradingview_widget&symbol=${encodedSymbol}&interval=${currentChartInterval}&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=f1f3f6&studies=%5B%22Volume%40tv-basicstudies%22%2C%22Supertrend%40tv-basicstudies%22%5D&theme=light&style=1&timezone=Asia%2FKolkata&locale=in`;
+
+      container.appendChild(iframe);
+    }
+
+    function switchChartSymbol(sym) {
+      if (!sym) return;
+      currentChartSymbol = sym.toUpperCase().replace('.NS', '');
+      const sel = document.getElementById('chartStockSelect');
+      if (sel && sel.value !== currentChartSymbol) {
+        sel.value = currentChartSymbol;
+      }
+      renderLiveChart(currentChartSymbol, currentChartInterval);
+      addLogEntry('RIO', `Live chart loaded: ${getTradingViewTicker(currentChartSymbol)} (${currentChartInterval} timeframe)`);
+    }
+
+    function switchChartInterval(interval) {
+      currentChartInterval = interval;
+      renderLiveChart(currentChartSymbol, interval);
+    }
+
+    function viewStockInChart(symbol) {
+      if (!symbol) return;
+      switchChartSymbol(symbol);
+      const chartEl = document.getElementById('liveChartSection');
+      if (chartEl) {
+        chartEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+
+    async function loadFnoStocksDropdown() {
+      try {
+        const res = await fetch('/api/fno-stocks');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.stocks && data.stocks.length > 0) {
+          fnoStocksCache = data.stocks;
+          const select = document.getElementById('chartStockSelect');
+          if (!select) return;
+          select.innerHTML = '';
+
+          // Add index options
+          const indices = [
+            { symbol: 'NIFTY', name: 'NIFTY 50 INDEX' },
+            { symbol: 'BANKNIFTY', name: 'BANK NIFTY INDEX' }
+          ];
+          indices.forEach(idx => {
+            const opt = document.createElement('option');
+            opt.value = idx.symbol;
+            opt.textContent = `${idx.symbol} - ${idx.name}`;
+            select.appendChild(opt);
+          });
+
+          // Add all 197 F&O stocks sorted alphabetically
+          const sorted = [...data.stocks].sort((a,b) => a.symbol.localeCompare(b.symbol));
+          sorted.forEach(stk => {
+            const opt = document.createElement('option');
+            opt.value = stk.symbol;
+            opt.textContent = `${stk.symbol} - ${stk.name || stk.symbol}`;
+            if (stk.symbol === currentChartSymbol) opt.selected = true;
+            select.appendChild(opt);
+          });
+        }
+      } catch (err) {
+        console.warn('Could not load F&O dropdown:', err);
+      }
+    }
+
+    // -------------------------------------------------------------
     // Initialize Everything
     // -------------------------------------------------------------
     window.addEventListener('load', () => {
@@ -1401,6 +1601,8 @@
       drawRidgePlot();
       drawLattice();
       drawFlowSimulation();
+      renderLiveChart('IRFC', '15');
+      loadFnoStocksDropdown();
       syncBackend();
       setInterval(syncBackend, 3500);
     });

@@ -2461,6 +2461,14 @@ def trigger_options_scan():
     threading.Thread(target=run_options_scan, daemon=True).start()
     return jsonify({"success": True, "message": "Manual options scan triggered successfully"})
 
+@app.route("/api/fno-stocks", methods=["GET"])
+def get_fno_stocks():
+    return jsonify({
+        "success": True,
+        "count": len(active_scanning_list),
+        "stocks": [{"symbol": s["symbol"], "name": s.get("name", s["symbol"])} for s in active_scanning_list]
+    })
+
 @app.route("/api/health", methods=["GET"])
 def health_check():
     return jsonify({
