@@ -2469,6 +2469,101 @@ def get_fno_stocks():
         "stocks": [{"symbol": s["symbol"], "name": s.get("name", s["symbol"])} for s in active_scanning_list]
     })
 
+@app.route("/api/chart/candles", methods=["GET"])
+def get_chart_candles():
+    raw_sym = request.args.get("symbol", "IRFC").upper().strip()
+    clean_sym = raw_sym.replace(".NS", "").replace("NSE:", "").replace("BSE:", "").strip()
+    interval_req = request.args.get("interval", "15m").lower().strip()
+
+    range_map = {
+        "1m": ("1m", "1d"),
+        "5m": ("5m", "5d"),
+        "15m": ("15m", "5d"),
+        "30m": ("30m", "1mo"),
+        "60m": ("60m", "1mo"),
+        "1h": ("60m", "1mo"),
+        "1d": ("1d", "6mo"),
+        "d": ("1d", "6mo")
+    }
+    yf_interval, yf_range = range_map.get(interval_req, ("15m", "5d"))
+
+    ticker = f"{clean_sym}.NS"
+    if clean_sym in ["NIFTY", "NIFTY 50", "^NSEI"]: ticker = "^NSEI"
+    elif clean_sym in ["BANKNIFTY", "BANK NIFTY", "^NSEBANK"]: ticker = "^NSEBANK"
+    elif clean_sym in ["FINNIFTY", "^CNXFIN"]: ticker = "^CNXFIN"
+    elif clean_sym in ["SENSEX", "^BSESN"]: ticker = "^BSESN"
+    elif clean_sym.startswith("GOLD"): ticker = "GC=F"
+    elif clean_sym.startswith("SILVER"): ticker = "SI=F"
+    elif clean_sym.startswith("CRUDE"): ticker = "CL=F"
+
+    try:
+        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?interval={yf_interval}&range={yf_range}"
+        resp = requests.get(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}, timeout=8)
+        if resp.status_code != 200:
+            return jsonify({"success": False, "message": f"Data provider returned status {resp.status_code}"}), 502
+
+        json_data = resp.json()
+        chart_result = json_data.get("chart", {}).get("result")
+        if not chart_result or not isinstance(chart_result, list) or len(chart_result) == 0:
+            return jsonify({"success": False, "message": "No chart data found"}), 404
+
+        result = chart_result[0]
+        meta = result.get("meta", {})
+        quotes = result.get("indicators", {}).get("quote", [{}])[0]
+        timestamps = result.get("timestamp", [])
+
+        candles = []
+        volumes = []
+        for i in range(len(timestamps)):
+            ts = timestamps[i]
+            o = quotes.get("open", [])[i] if i < len(quotes.get("open", [])) else None
+            h = quotes.get("high", [])[i] if i < len(quotes.get("high", [])) else None
+            l = quotes.get("low", [])[i] if i < len(quotes.get("low", [])) else None
+            c = quotes.get("close", [])[i] if i < len(quotes.get("close", [])) else None
+            v = quotes.get("volume", [])[i] if i < len(quotes.get("volume", [])) else 0
+
+            if ts and o is not None and h is not None and l is not None and c is not None:
+                candles.append({
+                    "time": int(ts),
+                    "open": round(float(o), 2),
+                    "high": round(float(h), 2),
+                    "low": round(float(l), 2),
+                    "close": round(float(c), 2)
+                })
+                volumes.append({
+                    "time": int(ts),
+                    "value": float(v or 0),
+                    "color": "rgba(16, 185, 129, 0.45)" if c >= o else "rgba(239, 68, 68, 0.45)"
+                })
+
+        active_sig = next((s for s in active_signals if s["symbol"] == clean_sym), None)
+        levels = None
+        if active_sig:
+            levels = {
+                "type": active_sig.get("type"),
+                "entry": active_sig.get("entryPrice"),
+                "stopLoss": active_sig.get("stopLoss"),
+                "target": active_sig.get("target"),
+                "ratio": active_sig.get("ratio")
+            }
+
+        last_price = candles[-1]["close"] if candles else meta.get("regularMarketPrice", 0.0)
+
+        return jsonify({
+            "success": True,
+            "symbol": clean_sym,
+            "ticker": ticker,
+            "interval": yf_interval,
+            "currentPrice": last_price,
+            "previousClose": meta.get("previousClose", last_price),
+            "candles": candles,
+            "volumes": volumes,
+            "levels": levels
+        })
+    except Exception as e:
+        logger.error(f"[Chart API Error] {clean_sym}: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+
 @app.route("/api/health", methods=["GET"])
 def health_check():
     return jsonify({

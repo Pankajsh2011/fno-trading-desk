@@ -565,10 +565,10 @@
           <div>
             <div class="flex items-center gap-2">
               <h2 class="text-sm font-bold text-slate-900 font-mono-code uppercase tracking-wider">// LIVE REAL-TIME NSE CANDLESTICK TERMINAL</h2>
-              <span id="activeChartSymbolBadge" class="px-2 py-0.5 rounded text-xs font-black font-mono-code bg-emerald-100 text-emerald-800 border border-emerald-300">NSE:IRFC</span>
-              <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono-code bg-indigo-100 text-indigo-800">100% LIVE FEED</span>
+              <span id="activeChartSymbolBadge" class="px-2 py-0.5 rounded text-xs font-black font-mono-code bg-emerald-100 text-emerald-800 border border-emerald-300">IRFC.NS</span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono-code bg-indigo-100 text-indigo-800">100% UNRESTRICTED</span>
             </div>
-            <p class="text-[11px] text-slate-400 font-mono-code">DIRECT NSE TICK STREAM • 0% SIMULATION • CANDLESTICKS • VOLUME • SUPERTREND</p>
+            <p class="text-[11px] text-slate-400 font-mono-code">100% REAL NSE CANDLES • ZERO THIRD-PARTY POPUPS • OHLCV • ENTRY • SL • TARGET</p>
           </div>
         </div>
 
@@ -580,33 +580,86 @@
             <button onclick="switchChartSymbol('NIFTY')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">NIFTY</button>
             <button onclick="switchChartSymbol('BANKNIFTY')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">BANKNIFTY</button>
             <button onclick="switchChartSymbol('IRFC')" class="quick-sym-btn px-2 py-1 rounded bg-emerald-600 text-white font-bold transition text-[11px]">IRFC</button>
+            <button onclick="switchChartSymbol('VEDL')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">VEDL</button>
+            <button onclick="switchChartSymbol('TITAN')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">TITAN</button>
             <button onclick="switchChartSymbol('RELIANCE')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">RELIANCE</button>
             <button onclick="switchChartSymbol('HDFCBANK')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">HDFCBANK</button>
-            <button onclick="switchChartSymbol('TCS')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">TCS</button>
           </div>
 
           <!-- Stock Dropdown Search (All 197 F&O stocks) -->
-          <select id="chartStockSelect" onchange="switchChartSymbol(this.value)" class="text-xs font-mono-code px-2 py-1 rounded border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+          <select id="chartStockSelect" onchange="switchChartSymbol(this.value)" class="text-xs font-mono-code px-2 py-1 rounded border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-emerald-500 max-w-[200px]">
             <option value="IRFC">IRFC (Indian Railway Finance)</option>
+            <option value="VEDL">VEDL (Vedanta)</option>
+            <option value="TITAN">TITAN (Titan Company)</option>
             <option value="NIFTY">NIFTY 50 INDEX</option>
             <option value="BANKNIFTY">BANK NIFTY INDEX</option>
           </select>
 
           <!-- Timeframe selector -->
           <div class="flex items-center rounded border border-slate-200 overflow-hidden text-[11px]">
-            <button onclick="switchChartInterval('1')" class="tf-btn px-2.5 py-1 hover:bg-slate-100 text-slate-600 font-semibold" data-tf="1">1m</button>
-            <button onclick="switchChartInterval('5')" class="tf-btn px-2.5 py-1 hover:bg-slate-100 text-slate-600 font-semibold" data-tf="5">5m</button>
-            <button onclick="switchChartInterval('15')" class="tf-btn px-2.5 py-1 bg-slate-900 text-white font-bold" data-tf="15">15m</button>
-            <button onclick="switchChartInterval('30')" class="tf-btn px-2.5 py-1 hover:bg-slate-100 text-slate-600 font-semibold" data-tf="30">30m</button>
-            <button onclick="switchChartInterval('60')" class="tf-btn px-2.5 py-1 hover:bg-slate-100 text-slate-600 font-semibold" data-tf="60">1h</button>
-            <button onclick="switchChartInterval('D')" class="tf-btn px-2.5 py-1 hover:bg-slate-100 text-slate-600 font-semibold" data-tf="D">1D</button>
+            <button onclick="switchChartInterval('1m')" class="tf-btn px-2.5 py-1 hover:bg-slate-100 text-slate-600 font-semibold" data-tf="1m">1m</button>
+            <button onclick="switchChartInterval('5m')" class="tf-btn px-2.5 py-1 hover:bg-slate-100 text-slate-600 font-semibold" data-tf="5m">5m</button>
+            <button onclick="switchChartInterval('15m')" class="tf-btn px-2.5 py-1 bg-slate-900 text-white font-bold" data-tf="15m">15m</button>
+            <button onclick="switchChartInterval('30m')" class="tf-btn px-2.5 py-1 hover:bg-slate-100 text-slate-600 font-semibold" data-tf="30m">30m</button>
+            <button onclick="switchChartInterval('1h')" class="tf-btn px-2.5 py-1 hover:bg-slate-100 text-slate-600 font-semibold" data-tf="1h">1h</button>
+            <button onclick="switchChartInterval('1d')" class="tf-btn px-2.5 py-1 hover:bg-slate-100 text-slate-600 font-semibold" data-tf="1d">1D</button>
           </div>
         </div>
       </div>
 
-      <!-- Real-Time TradingView Candlestick Chart Viewport -->
-      <div class="w-full h-[520px] rounded-xl overflow-hidden border border-slate-200 bg-white relative shadow-inner">
-        <div id="tradingview_chart_container" class="w-full h-full"></div>
+      <!-- Real-Time Native Professional Candlestick Chart Viewport -->
+      <div class="w-full rounded-xl overflow-hidden border border-slate-200 bg-white relative shadow-sm">
+        
+        <!-- Live OHLCV Floating Telemetry Bar -->
+        <div class="px-4 py-2 bg-slate-50/80 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs font-mono-code">
+          <div class="flex items-center gap-3">
+            <span id="chartSymbolName" class="font-extrabold text-slate-900 text-sm">IRFC.NS</span>
+            <span id="chartLivePrice" class="font-black text-emerald-600 text-sm">₹79.95</span>
+            <span id="chartPriceChange" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">+0.85%</span>
+          </div>
+          
+          <div id="chartCandleMetrics" class="flex items-center gap-3 text-slate-500 text-[11px]">
+            <span>O: <b id="barOpen" class="text-slate-800">₹79.50</b></span>
+            <span>H: <b id="barHigh" class="text-slate-800">₹80.20</b></span>
+            <span>L: <b id="barLow" class="text-slate-800">₹79.20</b></span>
+            <span>C: <b id="barClose" class="text-slate-800">₹79.95</b></span>
+            <span>VOL: <b id="barVol" class="text-slate-800">1.45M</b></span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span id="chartSignalBadge" class="hidden px-2 py-0.5 rounded text-[10px] font-bold font-mono-code bg-emerald-100 text-emerald-800 border border-emerald-300">BULLISH ENGULFING</span>
+            <a id="externalTvLink" href="https://www.tradingview.com/chart/?symbol=NSE:IRFC" target="_blank" class="px-2 py-0.5 rounded text-[10px] font-mono-code text-slate-500 hover:text-slate-800 hover:bg-slate-200 transition flex items-center gap-1">
+              <span>↗ TradingView Web</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Canvas Container -->
+        <div class="relative w-full h-[460px] bg-white cursor-crosshair select-none">
+          <canvas id="nativeCandleCanvas" class="w-full h-full block"></canvas>
+          <div id="canvasCrosshairTooltip" class="absolute hidden bg-slate-900 text-white text-[10px] font-mono-code px-2 py-1 rounded shadow-lg pointer-events-none z-10"></div>
+          <div id="canvasLoadingOverlay" class="absolute inset-0 bg-white/70 backdrop-blur-xs flex items-center justify-center font-mono-code text-xs text-slate-500 gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+            <span>STREAMING REAL-TIME NSE CANDLES...</span>
+          </div>
+        </div>
+
+        <!-- Chart Bottom Legend Bar -->
+        <div class="px-4 py-2 bg-slate-50/60 border-t border-slate-100 flex flex-wrap items-center justify-between text-[11px] font-mono-code text-slate-500 gap-2">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span id="chartCandleCount">124 Real Candles Loaded</span>
+            <span>• 100% UNRESTRICTED CANVAS</span>
+          </div>
+          <div class="flex items-center gap-4">
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 bg-emerald-500 rounded-xs"></span> Bull Candle</span>
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 bg-rose-500 rounded-xs"></span> Bear Candle</span>
+            <span class="flex items-center gap-1"><span class="w-3 h-0.5 bg-blue-500"></span> Entry</span>
+            <span class="flex items-center gap-1"><span class="w-3 h-0.5 bg-rose-500"></span> Stop Loss</span>
+            <span class="flex items-center gap-1"><span class="w-3 h-0.5 bg-emerald-500"></span> Target (1:2 R:R)</span>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -1467,43 +1520,44 @@
     }
 
     // -------------------------------------------------------------
-    // 📈 100% REAL-TIME LIVE TRADINGVIEW CANDLESTICK CHART ENGINE
+    // 📈 100% UNRESTRICTED REAL-TIME CANDLESTICK CHART CANVAS ENGINE
     // -------------------------------------------------------------
     let currentChartSymbol = 'IRFC';
-    let currentChartInterval = '15';
+    let currentChartInterval = '15m';
+    let chartCandlesData = [];
+    let chartVolumesData = [];
+    let chartSignalLevels = null;
+    let chartHoverIndex = -1;
+    let chartZoomVisible = 65;
+    let chartPanOffset = 0;
     let fnoStocksCache = [];
 
-    function getTradingViewTicker(symbol) {
-      if (!symbol) return 'NSE:NIFTY';
-      let sym = symbol.toUpperCase().trim().replace('.NS', '').replace('NSE:', '').replace('BSE:', '');
-      if (sym === 'NIFTY' || sym === 'NIFTY 50') return 'NSE:NIFTY';
-      if (sym === 'BANKNIFTY' || sym === 'BANK NIFTY') return 'NSE:BANKNIFTY';
-      if (sym === 'FINNIFTY') return 'NSE:FINNIFTY';
-      if (sym === 'SENSEX') return 'BSE:SENSEX';
-      return 'NSE:' + sym;
-    }
+    const cCanvas = document.getElementById('nativeCandleCanvas');
+    const cCtx = cCanvas ? cCanvas.getContext('2d') : null;
 
-    function renderLiveChart(symbol, interval) {
-      if (symbol) currentChartSymbol = symbol;
+    async function loadCandleData(symbol, interval) {
+      if (symbol) currentChartSymbol = symbol.toUpperCase().replace('.NS', '').replace('NSE:', '').replace('BSE:', '').trim();
       if (interval) currentChartInterval = interval;
 
-      const ticker = getTradingViewTicker(currentChartSymbol);
-      const container = document.getElementById('tradingview_chart_container');
-      const badge = document.getElementById('activeChartSymbolBadge');
-      if (badge) badge.textContent = ticker;
+      const overlay = document.getElementById('canvasLoadingOverlay');
+      if (overlay) overlay.classList.remove('hidden');
 
-      // Update Quick Buttons style
+      const badge = document.getElementById('activeChartSymbolBadge');
+      if (badge) badge.textContent = `${currentChartSymbol}.NS`;
+      const nameEl = document.getElementById('chartSymbolName');
+      if (nameEl) nameEl.textContent = `${currentChartSymbol}.NS`;
+      const extLink = document.getElementById('externalTvLink');
+      if (extLink) extLink.href = `https://www.tradingview.com/chart/?symbol=NSE:${currentChartSymbol}`;
+
       document.querySelectorAll('.quick-sym-btn').forEach(btn => {
         const btnSym = btn.textContent.trim().toUpperCase();
-        const curSym = currentChartSymbol.toUpperCase().replace('.NS','');
-        if (btnSym === curSym) {
+        if (btnSym === currentChartSymbol) {
           btn.className = 'quick-sym-btn px-2 py-1 rounded bg-emerald-600 text-white font-bold transition text-[11px]';
         } else {
           btn.className = 'quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]';
         }
       });
 
-      // Update Timeframe Buttons style
       document.querySelectorAll('.tf-btn').forEach(btn => {
         if (btn.getAttribute('data-tf') === currentChartInterval) {
           btn.className = 'tf-btn px-2.5 py-1 bg-slate-900 text-white font-bold';
@@ -1512,38 +1566,368 @@
         }
       });
 
-      if (!container) return;
-      container.innerHTML = '';
+      try {
+        const res = await fetch(`/api/chart/candles?symbol=${encodeURIComponent(currentChartSymbol)}&interval=${encodeURIComponent(currentChartInterval)}`);
+        if (!res.ok) throw new Error('API status ' + res.status);
+        const data = await res.json();
+        if (data.success && data.candles && data.candles.length > 0) {
+          chartCandlesData = data.candles;
+          chartVolumesData = data.volumes || [];
+          chartSignalLevels = data.levels || null;
 
-      const iframe = document.createElement('iframe');
-      iframe.id = 'tradingview_widget_frame';
-      iframe.style.width = '100%';
-      iframe.style.height = '100%';
-      iframe.style.border = 'none';
-      iframe.allowTransparency = 'true';
-      iframe.scrolling = 'no';
-      iframe.allow = 'fullscreen';
+          const curP = data.currentPrice || chartCandlesData[chartCandlesData.length - 1].close;
+          const prevClose = data.previousClose || curP;
+          const chg = prevClose > 0 ? ((curP - prevClose) / prevClose) * 100 : 0;
 
-      const encodedSymbol = encodeURIComponent(ticker);
-      iframe.src = `https://s.tradingview.com/widgetembed/?frameElementId=tradingview_widget&symbol=${encodedSymbol}&interval=${currentChartInterval}&hidesidetoolbar=0&symboledit=1&saveimage=1&toolbarbg=f1f3f6&studies=%5B%22Volume%40tv-basicstudies%22%2C%22Supertrend%40tv-basicstudies%22%5D&theme=light&style=1&timezone=Asia%2FKolkata&locale=in`;
+          const pEl = document.getElementById('chartLivePrice');
+          if (pEl) pEl.textContent = `₹${curP.toFixed(2)}`;
 
-      container.appendChild(iframe);
+          const cEl = document.getElementById('chartPriceChange');
+          if (cEl) {
+            cEl.textContent = `${chg >= 0 ? '+' : ''}${chg.toFixed(2)}%`;
+            cEl.className = chg >= 0 
+              ? 'px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800'
+              : 'px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800';
+          }
+
+          const sigBadge = document.getElementById('chartSignalBadge');
+          if (sigBadge) {
+            if (chartSignalLevels && chartSignalLevels.type) {
+              sigBadge.textContent = `${chartSignalLevels.type} ENGULFING (R:R 1:2)`;
+              sigBadge.className = chartSignalLevels.type === 'BULLISH'
+                ? 'px-2 py-0.5 rounded text-[10px] font-bold font-mono-code bg-emerald-100 text-emerald-800 border border-emerald-300'
+                : 'px-2 py-0.5 rounded text-[10px] font-bold font-mono-code bg-rose-100 text-rose-800 border border-rose-300';
+              sigBadge.classList.remove('hidden');
+            } else {
+              sigBadge.classList.add('hidden');
+            }
+          }
+
+          const countEl = document.getElementById('chartCandleCount');
+          if (countEl) countEl.textContent = `${chartCandlesData.length} Real Candles Loaded (${currentChartInterval})`;
+
+          updateTopMetrics(chartCandlesData[chartCandlesData.length - 1], chartVolumesData[chartVolumesData.length - 1]);
+          chartPanOffset = 0;
+          drawNativeCandles();
+        }
+      } catch (err) {
+        console.error('Error fetching candles:', err);
+      } finally {
+        if (overlay) overlay.classList.add('hidden');
+      }
+    }
+
+    function updateTopMetrics(c, v) {
+      if (!c) return;
+      const bO = document.getElementById('barOpen');
+      const bH = document.getElementById('barHigh');
+      const bL = document.getElementById('barLow');
+      const bC = document.getElementById('barClose');
+      const bV = document.getElementById('barVol');
+
+      if (bO) bO.textContent = `₹${c.open.toFixed(2)}`;
+      if (bH) bH.textContent = `₹${c.high.toFixed(2)}`;
+      if (bL) bL.textContent = `₹${c.low.toFixed(2)}`;
+      if (bC) {
+        bC.textContent = `₹${c.close.toFixed(2)}`;
+        bC.className = c.close >= c.open ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold';
+      }
+      if (bV && v) {
+        const volVal = v.value || 0;
+        bV.textContent = volVal >= 1000000 ? `${(volVal / 1000000).toFixed(2)}M` : (volVal >= 1000 ? `${(volVal / 1000).toFixed(1)}K` : volVal);
+      }
+    }
+
+    function drawNativeCandles() {
+      if (!cCanvas || !chartCandlesData || chartCandlesData.length === 0) return;
+      const rect = cCanvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      cCanvas.width = rect.width * dpr;
+      cCanvas.height = rect.height * dpr;
+      cCtx.resetTransform();
+      cCtx.scale(dpr, dpr);
+
+      const W = rect.width;
+      const H = rect.height;
+      cCtx.clearRect(0, 0, W, H);
+
+      const rightMargin = 72;
+      const bottomMargin = 26;
+      const volHeight = 65;
+      const candleAreaH = H - bottomMargin - volHeight;
+      const chartW = W - rightMargin;
+
+      const totalCandles = chartCandlesData.length;
+      const visibleCount = Math.min(chartZoomVisible, totalCandles);
+      const endIndex = Math.min(totalCandles, totalCandles - chartPanOffset);
+      const startIndex = Math.max(0, endIndex - visibleCount);
+      const visibleCandles = chartCandlesData.slice(startIndex, endIndex);
+      const visibleVolumes = chartVolumesData.slice(startIndex, endIndex);
+
+      if (visibleCandles.length === 0) return;
+
+      let minPrice = Infinity;
+      let maxPrice = -Infinity;
+      visibleCandles.forEach(c => {
+        if (c.low < minPrice) minPrice = c.low;
+        if (c.high > maxPrice) maxPrice = c.high;
+      });
+
+      if (chartSignalLevels) {
+        if (chartSignalLevels.target) {
+          minPrice = Math.min(minPrice, chartSignalLevels.target);
+          maxPrice = Math.max(maxPrice, chartSignalLevels.target);
+        }
+        if (chartSignalLevels.stopLoss) {
+          minPrice = Math.min(minPrice, chartSignalLevels.stopLoss);
+          maxPrice = Math.max(maxPrice, chartSignalLevels.stopLoss);
+        }
+        if (chartSignalLevels.entry) {
+          minPrice = Math.min(minPrice, chartSignalLevels.entry);
+          maxPrice = Math.max(maxPrice, chartSignalLevels.entry);
+        }
+      }
+
+      const pricePadding = (maxPrice - minPrice) * 0.06 || 1.0;
+      minPrice -= pricePadding;
+      maxPrice += pricePadding;
+      const priceRange = maxPrice - minPrice || 1.0;
+
+      const getY = (price) => candleAreaH - ((price - minPrice) / priceRange) * candleAreaH;
+      const candleStep = chartW / visibleCandles.length;
+      const candleBodyW = Math.max(2, candleStep * 0.72);
+
+      let maxVol = 1;
+      visibleVolumes.forEach(v => { if (v.value > maxVol) maxVol = v.value; });
+
+      // 1. Gridlines & Price Scale
+      cCtx.strokeStyle = '#f1f5f9';
+      cCtx.lineWidth = 1;
+      cCtx.font = '10px "JetBrains Mono"';
+      cCtx.fillStyle = '#94a3b8';
+      cCtx.textAlign = 'left';
+
+      const priceSteps = 6;
+      for (let i = 0; i <= priceSteps; i++) {
+        const p = minPrice + (priceRange / priceSteps) * i;
+        const y = getY(p);
+        cCtx.beginPath();
+        cCtx.moveTo(0, y);
+        cCtx.lineTo(chartW, y);
+        cCtx.stroke();
+        cCtx.fillText(`₹${p.toFixed(2)}`, chartW + 8, y + 3.5);
+      }
+
+      // 2. Volume Bars
+      visibleVolumes.forEach((v, idx) => {
+        const xCenter = idx * candleStep + candleStep / 2;
+        const hNorm = (v.value / maxVol) * (volHeight - 10);
+        const yTop = H - bottomMargin - hNorm;
+        cCtx.fillStyle = v.color || 'rgba(16, 185, 129, 0.4)';
+        cCtx.fillRect(xCenter - candleBodyW / 2, yTop, candleBodyW, hNorm);
+      });
+
+      cCtx.strokeStyle = '#e2e8f0';
+      cCtx.beginPath();
+      cCtx.moveTo(0, H - bottomMargin - volHeight);
+      cCtx.lineTo(chartW, H - bottomMargin - volHeight);
+      cCtx.stroke();
+
+      // 3. Candlesticks (Wicks and Bodies)
+      visibleCandles.forEach((c, idx) => {
+        const xCenter = idx * candleStep + candleStep / 2;
+        const yOpen = getY(c.open);
+        const yClose = getY(c.close);
+        const yHigh = getY(c.high);
+        const yLow = getY(c.low);
+        const isBull = c.close >= c.open;
+        const color = isBull ? '#10b981' : '#f43f5e';
+
+        // Wick
+        cCtx.strokeStyle = color;
+        cCtx.lineWidth = 1.5;
+        cCtx.beginPath();
+        cCtx.moveTo(xCenter, yHigh);
+        cCtx.lineTo(xCenter, yLow);
+        cCtx.stroke();
+
+        // Body
+        const bodyTop = Math.min(yOpen, yClose);
+        const bodyH = Math.max(2, Math.abs(yClose - yOpen));
+        cCtx.fillStyle = color;
+        cCtx.fillRect(xCenter - candleBodyW / 2, bodyTop, candleBodyW, bodyH);
+      });
+
+      // 4. Bottom Time Labels
+      cCtx.fillStyle = '#94a3b8';
+      cCtx.textAlign = 'center';
+      const timeStep = Math.max(1, Math.floor(visibleCandles.length / 5));
+      for (let i = 0; i < visibleCandles.length; i += timeStep) {
+        const c = visibleCandles[i];
+        const xCenter = i * candleStep + candleStep / 2;
+        const d = new Date(c.time * 1000);
+        const timeLabel = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+        cCtx.fillText(timeLabel, xCenter, H - 8);
+      }
+
+      // 5. Signal Overlay Lines (Target, Entry, Stop Loss)
+      if (chartSignalLevels) {
+        if (chartSignalLevels.target) {
+          const yT = getY(chartSignalLevels.target);
+          cCtx.strokeStyle = '#10b981';
+          cCtx.setLineDash([5, 4]);
+          cCtx.lineWidth = 1.5;
+          cCtx.beginPath();
+          cCtx.moveTo(0, yT);
+          cCtx.lineTo(chartW, yT);
+          cCtx.stroke();
+          cCtx.setLineDash([]);
+
+          cCtx.fillStyle = '#10b981';
+          cCtx.fillRect(chartW + 2, yT - 8, 68, 16);
+          cCtx.fillStyle = '#ffffff';
+          cCtx.font = 'bold 9px "JetBrains Mono"';
+          cCtx.textAlign = 'center';
+          cCtx.fillText(`🎯 ₹${chartSignalLevels.target.toFixed(1)}`, chartW + 36, yT + 4);
+        }
+
+        if (chartSignalLevels.entry) {
+          const yE = getY(chartSignalLevels.entry);
+          cCtx.strokeStyle = '#3b82f6';
+          cCtx.lineWidth = 1.5;
+          cCtx.beginPath();
+          cCtx.moveTo(0, yE);
+          cCtx.lineTo(chartW, yE);
+          cCtx.stroke();
+
+          cCtx.fillStyle = '#3b82f6';
+          cCtx.fillRect(chartW + 2, yE - 8, 68, 16);
+          cCtx.fillStyle = '#ffffff';
+          cCtx.font = 'bold 9px "JetBrains Mono"';
+          cCtx.textAlign = 'center';
+          cCtx.fillText(`💰 ₹${chartSignalLevels.entry.toFixed(1)}`, chartW + 36, yE + 4);
+        }
+
+        if (chartSignalLevels.stopLoss) {
+          const ySL = getY(chartSignalLevels.stopLoss);
+          cCtx.strokeStyle = '#ef4444';
+          cCtx.setLineDash([5, 4]);
+          cCtx.lineWidth = 1.5;
+          cCtx.beginPath();
+          cCtx.moveTo(0, ySL);
+          cCtx.lineTo(chartW, ySL);
+          cCtx.stroke();
+          cCtx.setLineDash([]);
+
+          cCtx.fillStyle = '#ef4444';
+          cCtx.fillRect(chartW + 2, ySL - 8, 68, 16);
+          cCtx.fillStyle = '#ffffff';
+          cCtx.font = 'bold 9px "JetBrains Mono"';
+          cCtx.textAlign = 'center';
+          cCtx.fillText(`🛑 ₹${chartSignalLevels.stopLoss.toFixed(1)}`, chartW + 36, ySL + 4);
+        }
+      }
+
+      // 6. Current Live Price Marker
+      const lastCandle = visibleCandles[visibleCandles.length - 1];
+      if (lastCandle) {
+        const yCur = getY(lastCandle.close);
+        cCtx.strokeStyle = '#059669';
+        cCtx.lineWidth = 1;
+        cCtx.setLineDash([3, 3]);
+        cCtx.beginPath();
+        cCtx.moveTo(0, yCur);
+        cCtx.lineTo(chartW, yCur);
+        cCtx.stroke();
+        cCtx.setLineDash([]);
+
+        cCtx.fillStyle = '#059669';
+        cCtx.fillRect(chartW + 2, yCur - 8, 68, 16);
+        cCtx.fillStyle = '#ffffff';
+        cCtx.font = 'bold 9px "JetBrains Mono"';
+        cCtx.textAlign = 'center';
+        cCtx.fillText(`₹${lastCandle.close.toFixed(2)}`, chartW + 36, yCur + 4);
+      }
+
+      // 7. Crosshair
+      if (chartHoverIndex >= 0 && chartHoverIndex < visibleCandles.length) {
+        const hCandle = visibleCandles[chartHoverIndex];
+        const xPos = chartHoverIndex * candleStep + candleStep / 2;
+        const yPos = getY(hCandle.close);
+
+        cCtx.strokeStyle = '#64748b';
+        cCtx.lineWidth = 1;
+        cCtx.setLineDash([3, 3]);
+
+        cCtx.beginPath();
+        cCtx.moveTo(xPos, 0);
+        cCtx.lineTo(xPos, H - bottomMargin);
+        cCtx.stroke();
+
+        cCtx.beginPath();
+        cCtx.moveTo(0, yPos);
+        cCtx.lineTo(chartW, yPos);
+        cCtx.stroke();
+        cCtx.setLineDash([]);
+      }
+    }
+
+    // Attach Interactive Mouse Events
+    if (cCanvas) {
+      cCanvas.addEventListener('mousemove', (e) => {
+        const rect = cCanvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const rightMargin = 72;
+        const chartW = rect.width - rightMargin;
+
+        const totalCandles = chartCandlesData.length;
+        const visibleCount = Math.min(chartZoomVisible, totalCandles);
+        const endIndex = Math.min(totalCandles, totalCandles - chartPanOffset);
+        const startIndex = Math.max(0, endIndex - visibleCount);
+        const visibleCandles = chartCandlesData.slice(startIndex, endIndex);
+
+        if (mouseX >= 0 && mouseX <= chartW && visibleCandles.length > 0) {
+          const step = chartW / visibleCandles.length;
+          const idx = Math.min(visibleCandles.length - 1, Math.max(0, Math.floor(mouseX / step)));
+          chartHoverIndex = idx;
+          updateTopMetrics(visibleCandles[idx], chartVolumesData[startIndex + idx]);
+          drawNativeCandles();
+        }
+      });
+
+      cCanvas.addEventListener('mouseleave', () => {
+        chartHoverIndex = -1;
+        if (chartCandlesData.length > 0) {
+          updateTopMetrics(chartCandlesData[chartCandlesData.length - 1], chartVolumesData[chartVolumesData.length - 1]);
+        }
+        drawNativeCandles();
+      });
+
+      cCanvas.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        if (e.deltaY < 0) {
+          chartZoomVisible = Math.max(15, chartZoomVisible - 5);
+        } else {
+          chartZoomVisible = Math.min(chartCandlesData.length, chartZoomVisible + 5);
+        }
+        drawNativeCandles();
+      }, { passive: false });
     }
 
     function switchChartSymbol(sym) {
       if (!sym) return;
-      currentChartSymbol = sym.toUpperCase().replace('.NS', '');
+      currentChartSymbol = sym.toUpperCase().replace('.NS', '').replace('NSE:', '').replace('BSE:', '').trim();
       const sel = document.getElementById('chartStockSelect');
       if (sel && sel.value !== currentChartSymbol) {
         sel.value = currentChartSymbol;
       }
-      renderLiveChart(currentChartSymbol, currentChartInterval);
-      addLogEntry('RIO', `Live chart loaded: ${getTradingViewTicker(currentChartSymbol)} (${currentChartInterval} timeframe)`);
+      loadCandleData(currentChartSymbol, currentChartInterval);
+      addLogEntry('RIO', `Native real-time candle chart loaded: ${currentChartSymbol}.NS (${currentChartInterval} timeframe)`);
     }
 
     function switchChartInterval(interval) {
       currentChartInterval = interval;
-      renderLiveChart(currentChartSymbol, interval);
+      loadCandleData(currentChartSymbol, interval);
     }
 
     function viewStockInChart(symbol) {
@@ -1566,8 +1950,10 @@
           if (!select) return;
           select.innerHTML = '';
 
-          // Add index options
           const indices = [
+            { symbol: 'IRFC', name: 'Indian Railway Finance' },
+            { symbol: 'VEDL', name: 'Vedanta Limited' },
+            { symbol: 'TITAN', name: 'Titan Company' },
             { symbol: 'NIFTY', name: 'NIFTY 50 INDEX' },
             { symbol: 'BANKNIFTY', name: 'BANK NIFTY INDEX' }
           ];
@@ -1578,15 +1964,17 @@
             select.appendChild(opt);
           });
 
-          // Add all 197 F&O stocks sorted alphabetically
           const sorted = [...data.stocks].sort((a,b) => a.symbol.localeCompare(b.symbol));
           sorted.forEach(stk => {
-            const opt = document.createElement('option');
-            opt.value = stk.symbol;
-            opt.textContent = `${stk.symbol} - ${stk.name || stk.symbol}`;
-            if (stk.symbol === currentChartSymbol) opt.selected = true;
-            select.appendChild(opt);
+            if (!['IRFC', 'VEDL', 'TITAN'].includes(stk.symbol)) {
+              const opt = document.createElement('option');
+              opt.value = stk.symbol;
+              opt.textContent = `${stk.symbol} - ${stk.name || stk.symbol}`;
+              select.appendChild(opt);
+            }
           });
+
+          if (select) select.value = currentChartSymbol;
         }
       } catch (err) {
         console.warn('Could not load F&O dropdown:', err);
@@ -1601,7 +1989,7 @@
       drawRidgePlot();
       drawLattice();
       drawFlowSimulation();
-      renderLiveChart('IRFC', '15');
+      loadCandleData('IRFC', '15m');
       loadFnoStocksDropdown();
       syncBackend();
       setInterval(syncBackend, 3500);
@@ -1609,6 +1997,7 @@
 
     window.addEventListener('resize', () => {
       drawBalanceChart();
+      drawNativeCandles();
     });
   </script>
 </body>
