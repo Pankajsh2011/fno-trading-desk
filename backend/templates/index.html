@@ -575,15 +575,16 @@
         <!-- Controls: Timeframe, Quick Symbols & Stock Search -->
         <div class="flex flex-wrap items-center gap-2 font-mono-code">
           <!-- Quick Symbols -->
-          <div class="flex items-center gap-1 text-xs">
+          <div class="flex items-center gap-1 text-xs overflow-x-auto pb-1 max-w-full">
             <span class="text-[10px] text-slate-400 uppercase font-bold mr-1">QUICK:</span>
-            <button onclick="switchChartSymbol('NIFTY')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">NIFTY</button>
-            <button onclick="switchChartSymbol('BANKNIFTY')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">BANKNIFTY</button>
+            <button onclick="switchChartSymbol('RVNL')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">RVNL</button>
+            <button onclick="switchChartSymbol('BSE')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">BSE</button>
+            <button onclick="switchChartSymbol('COCHINSHIP')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">COCHINSHIP</button>
+            <button onclick="switchChartSymbol('KALYANKJIL')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">KALYAN</button>
+            <button onclick="switchChartSymbol('BIOCON')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">BIOCON</button>
             <button onclick="switchChartSymbol('IRFC')" class="quick-sym-btn px-2 py-1 rounded bg-emerald-600 text-white font-bold transition text-[11px]">IRFC</button>
-            <button onclick="switchChartSymbol('VEDL')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">VEDL</button>
-            <button onclick="switchChartSymbol('TITAN')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">TITAN</button>
             <button onclick="switchChartSymbol('RELIANCE')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">RELIANCE</button>
-            <button onclick="switchChartSymbol('HDFCBANK')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">HDFCBANK</button>
+            <button onclick="switchChartSymbol('NIFTY')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">NIFTY</button>
           </div>
 
           <!-- Stock Dropdown Search (All 197 F&O stocks) -->
@@ -746,11 +747,11 @@
         <div class="w-full grid grid-cols-2 gap-2 text-[11px] font-mono-code">
           <div class="p-2 rounded bg-white border border-slate-200 flex justify-between">
             <span class="text-slate-500">Body Engulf:</span>
-            <span id="modalBodyRatio" class="font-bold text-slate-900">142.5% (>= 120%)</span>
+            <span id="modalBodyRatio" class="font-bold text-slate-900">100% (Full Body)</span>
           </div>
           <div class="p-2 rounded bg-white border border-slate-200 flex justify-between">
             <span class="text-slate-500">Wick Limit:</span>
-            <span id="modalWickRatio" class="font-bold text-emerald-600">18.4% (<= 40%)</span>
+            <span id="modalWickRatio" class="font-bold text-emerald-600">&le; 20%</span>
           </div>
           <div class="p-2 rounded bg-white border border-slate-200 flex justify-between">
             <span class="text-slate-500">Entry:</span>
@@ -1399,7 +1400,8 @@
         ? '↘️ Appears after a decline, buyers step in (Photo 2 & 4)'
         : '↗️ Appears after a rise, sellers take over (Photo 2 & 4)';
 
-      document.getElementById('modalBodyRatio').textContent = `${sig.ratio || '142%'} (${sig.requiredRange || '>= 120%'})`;
+      document.getElementById('modalBodyRatio').textContent = `${sig.ratio || '100%'} (Full Body Engulf)`;
+      document.getElementById('modalWickRatio').textContent = `${sig.wickPct || '≤ 20%'} (Limit: ≤ 20%)`;
       document.getElementById('modalEntry').textContent = `₹${Number(sig.entryPrice).toFixed(2)}`;
       document.getElementById('modalSL').textContent = `₹${Number(sig.stopLoss).toFixed(2)}`;
 

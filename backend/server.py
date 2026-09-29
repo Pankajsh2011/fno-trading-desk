@@ -48,129 +48,8 @@ PORT = int(os.getenv("PORT", "3001"))
 DHAN_API_BASE = "https://api.dhan.co"
 IST = pytz.timezone("Asia/Kolkata")
 
-# Baseline Photo 1-4 Validated Real Market Signals
-INITIAL_VERIFIED_SIGNALS = [
-    {
-        "symbol": "TITAN",
-        "name": "Titan Company Ltd.",
-        "type": "BULLISH",
-        "entryPrice": 4884.0,
-        "stopLoss": 4856.0,
-        "target": 4936.0,
-        "ratio": "520.0%",
-        "requiredRange": ">= 200%",
-        "strength": 46,
-        "timestamp": datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S"),
-        "pattern": "Bullish Engulfing (Red ➔ Green)",
-        "trendContext": "Bullish Reversal Confirmed",
-        "status": "ACTIVE"
-    },
-    {
-        "symbol": "IRFC",
-        "name": "Indian Railway Finance Corp",
-        "type": "BULLISH",
-        "entryPrice": 79.95,
-        "stopLoss": 79.68,
-        "target": 80.31,
-        "ratio": "300.0%",
-        "requiredRange": ">= 200%",
-        "strength": 38,
-        "timestamp": datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S"),
-        "pattern": "Bullish Engulfing (Red ➔ Green)",
-        "trendContext": "Bullish Reversal Confirmed",
-        "status": "ACTIVE"
-    },
-    {
-        "symbol": "VEDL",
-        "name": "Vedanta Ltd.",
-        "type": "BULLISH",
-        "entryPrice": 266.35,
-        "stopLoss": 264.70,
-        "target": 268.45,
-        "ratio": "140.0%",
-        "requiredRange": ">= 120%",
-        "strength": 35,
-        "timestamp": datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S"),
-        "pattern": "Bullish Engulfing (Red ➔ Green)",
-        "trendContext": "Bullish Reversal Confirmed",
-        "status": "ACTIVE"
-    },
-    {
-        "symbol": "BPCL",
-        "name": "Bharat Petroleum Corp Ltd",
-        "type": "BULLISH",
-        "entryPrice": 308.50,
-        "stopLoss": 307.10,
-        "target": 310.40,
-        "ratio": "237.5%",
-        "requiredRange": ">= 175%",
-        "strength": 38,
-        "timestamp": datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S"),
-        "pattern": "Bullish Engulfing (Red ➔ Green)",
-        "trendContext": "Bullish Reversal Confirmed",
-        "status": "ACTIVE"
-    },
-    {
-        "symbol": "INDUSINDBK",
-        "name": "IndusInd Bank Ltd.",
-        "type": "BEARISH",
-        "entryPrice": 912.20,
-        "stopLoss": 915.20,
-        "target": 907.00,
-        "ratio": "1300.0%",
-        "requiredRange": ">= 200%",
-        "strength": 47,
-        "timestamp": datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S"),
-        "pattern": "Bearish Engulfing (Green ➔ Red)",
-        "trendContext": "Appears after a rise, sellers take over (Photo 2 & 4 Validated)",
-        "status": "ACTIVE"
-    },
-    {
-        "symbol": "SAIL",
-        "name": "Steel Authority of India Ltd.",
-        "type": "BEARISH",
-        "entryPrice": 185.00,
-        "stopLoss": 185.90,
-        "target": 183.52,
-        "ratio": "1480.0%",
-        "requiredRange": ">= 200%",
-        "strength": 38,
-        "timestamp": datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S"),
-        "pattern": "Bearish Engulfing (Green ➔ Red)",
-        "trendContext": "Appears after a rise, sellers take over (Photo 2 & 4 Validated)",
-        "status": "ACTIVE"
-    },
-    {
-        "symbol": "PIDILITIND",
-        "name": "Pidilite Industries Ltd.",
-        "type": "BULLISH",
-        "entryPrice": 1517.20,
-        "stopLoss": 1507.40,
-        "target": 1534.00,
-        "ratio": "400.0%",
-        "requiredRange": ">= 150%",
-        "strength": 42,
-        "timestamp": datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S"),
-        "pattern": "Bullish Engulfing (Red ➔ Green)",
-        "trendContext": "Bullish Reversal Confirmed",
-        "status": "ACTIVE"
-    },
-    {
-        "symbol": "EICHERMOT",
-        "name": "Eicher Motors Ltd.",
-        "type": "BULLISH",
-        "entryPrice": 7360.00,
-        "stopLoss": 7335.50,
-        "target": 7409.00,
-        "ratio": "272.2%",
-        "requiredRange": ">= 175%",
-        "strength": 50,
-        "timestamp": datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S"),
-        "pattern": "Bullish Engulfing (Red ➔ Green)",
-        "trendContext": "Bullish Reversal Confirmed",
-        "status": "ACTIVE"
-    }
-]
+# No pre-seeded signals - fresh scan will detect with strict wick ≤ 20% and full body engulf
+INITIAL_VERIFIED_SIGNALS = []
 
 active_signals: List[Dict[str, Any]] = list(INITIAL_VERIFIED_SIGNALS)
 trade_book: List[Dict[str, Any]] = []
@@ -180,8 +59,8 @@ scanner_status: Dict[str, Any] = {
     "isRunning": False,
     "lastScan": datetime.utcnow().isoformat(),
     "nextScan": (datetime.utcnow() + timedelta(minutes=1)).isoformat(),
-    "stocksScanned": 197,
-    "signalsFound": len(INITIAL_VERIFIED_SIGNALS)
+    "stocksScanned": 0,
+    "signalsFound": 0
 }
 
 OPENALGO_APP_NAME = os.getenv("OPENALGO_APP_NAME", "openalgobot")
@@ -1097,46 +976,38 @@ def calculate_strength(body: float, total_wick: float, volume: float) -> int:
     return max(1, min(strength, 100))
 
 def check_perfect_engulfing(current: Dict[str, float], previous: Dict[str, float], avg_body: float) -> Dict[str, Any]:
+    """
+    Full body-to-body engulf check per user's Dhan configuration:
+    - Current candle body must FULLY cover previous candle body
+    - No complex tier system - just full engulf required
+    """
     prev_body = abs(previous["close"] - previous["open"])
     curr_body = abs(current["close"] - current["open"])
 
-    if prev_body == 0 or avg_body == 0:
-        return {"isPerfect": False, "reason": "Zero body size"}
+    if prev_body == 0:
+        return {"isPerfect": False, "reason": "Zero previous body size"}
 
-    pct_of_avg = prev_body / avg_body
     ratio = curr_body / prev_body
 
-    is_perfect = False
-    category = ""
-    required_range = ""
+    # Current body top/bottom
+    curr_top = max(current["open"], current["close"])
+    curr_bottom = min(current["open"], current["close"])
+    prev_top = max(previous["open"], previous["close"])
+    prev_bottom = min(previous["open"], previous["close"])
 
-    # Relaxed rules: No upper bound limit, only minimum threshold!
-    if pct_of_avg >= 0.90:
-        category = "100% (Standard)"
-        required_range = ">= 120%"
-        if ratio >= 1.20:
-            is_perfect = True
-    elif pct_of_avg >= 0.75:
-        category = "80% (Smaller)"
-        required_range = ">= 150%"
-        if ratio >= 1.50:
-            is_perfect = True
-    elif pct_of_avg >= 0.65:
-        category = "70% (Very Small)"
-        required_range = ">= 175%"
-        if ratio >= 1.75:
-            is_perfect = True
-    else:
-        category = "60% (Micro)"
-        required_range = ">= 200%"
-        if ratio >= 2.00:
-            is_perfect = True
+    # Full body-to-body engulf: current body must completely cover previous body
+    is_full_engulf = (curr_top >= prev_top and curr_bottom <= prev_bottom)
+
+    is_perfect = is_full_engulf and ratio >= 1.0  # At minimum 100% coverage
+
+    category = f"Full Body Engulf ({ratio*100:.0f}%)" if is_perfect else "Incomplete"
+    required_range = ">= 100%"
 
     return {
         "isPerfect": is_perfect,
         "category": category,
         "requiredRange": required_range,
-        "pctOfAvg": f"{(pct_of_avg * 100):.1f}%",
+        "pctOfAvg": f"{(prev_body / (avg_body or 1.0) * 100):.1f}%",
         "ratio": f"{(ratio * 100):.1f}%"
     }
 
@@ -1158,52 +1029,68 @@ def detect_prior_trend(history: Optional[List[Dict[str, float]]] = None) -> str:
     return "CONFIRMED_REVERSAL"
 
 def analyze_engulfing_pattern(symbol: str, name: str, current: Dict[str, float], previous: Dict[str, float], avg_body: float, history: Optional[List[Dict[str, float]]] = None) -> Optional[Dict[str, Any]]:
-    body = abs(current["close"] - current["open"])
-    upper_wick = current["high"] - max(current["open"], current["close"])
-    lower_wick = min(current["open"], current["close"]) - current["low"]
-    total_wick = upper_wick + lower_wick
-    overall_size = current["high"] - current["low"]
+    c_open = round(float(current["open"]), 2)
+    c_close = round(float(current["close"]), 2)
+    c_high = round(float(current["high"]), 2)
+    c_low = round(float(current["low"]), 2)
 
-    # Relaxed wick condition: up to 40% of overall candle size
-    wick_condition = overall_size > 0 and (total_wick <= 0.40 * overall_size)
+    p_open = round(float(previous["open"]), 2)
+    p_close = round(float(previous["close"]), 2)
+    p_high = round(float(previous["high"]), 2)
+    p_low = round(float(previous["low"]), 2)
 
-    current_top = max(current["open"], current["close"])
-    current_bottom = min(current["open"], current["close"])
-    previous_top = max(previous["open"], previous["close"])
-    previous_bottom = min(previous["open"], previous["close"])
+    c_body = round(abs(c_close - c_open), 2)
+    p_body = round(abs(p_close - p_open), 2)
+    overall_size = round(c_high - c_low, 2)
 
-    perfect_engulf_info = check_perfect_engulfing(current, previous, avg_body or body)
+    if overall_size <= 0 or c_body <= 0 or p_body <= 0:
+        return None
 
-    # Photo 1, 3: Dense body engulfing condition
-    bullish_engulf = (
-        current["close"] > current["open"] and
-        previous["close"] < previous["open"] and
-        current_top >= previous_top and
-        current_bottom <= previous_bottom and
-        (current_top > previous_top or current_bottom < previous_bottom) and
-        perfect_engulf_info["isPerfect"]
+    # Wick size: Upper wick + Lower wick of the engulfing candle
+    upper_wick = round(c_high - max(c_open, c_close), 2)
+    lower_wick = round(min(c_open, c_close) - c_low, 2)
+    total_wick = round(upper_wick + lower_wick, 2)
+    wick_pct = round((total_wick / overall_size) * 100, 1)
+
+    # STRICT CONDITION 1: Wick size ≤ 20% of total candle size
+    if wick_pct > 20.0:
+        return None
+
+    # Ratio of current body to previous body
+    ratio = round(c_body / p_body, 2)
+
+    # STRICT CONDITION 2: Full body-to-body engulf
+    # Bullish: Previous is RED, Current is GREEN, and Current Green body completely engulfs Previous Red body
+    is_bullish = (
+        p_close < p_open and
+        c_close > c_open and
+        c_close >= p_open and
+        c_open <= p_close and
+        (c_close > p_open or c_open < p_close)
     )
 
-    bearish_engulf = (
-        current["close"] < current["open"] and
-        previous["close"] > previous["open"] and
-        current_top >= previous_top and
-        current_bottom <= previous_bottom and
-        (current_top > previous_top or current_bottom < previous_bottom) and
-        perfect_engulf_info["isPerfect"]
+    # Bearish: Previous is GREEN, Current is RED, and Current Red body completely engulfs Previous Green body
+    is_bearish = (
+        p_close > p_open and
+        c_close < c_open and
+        c_open >= p_close and
+        c_close <= p_open and
+        (c_open > p_close or c_close < p_open)
     )
 
-    # Photo 2, 4: Prior trend validation (Decline for Bullish, Rise for Bearish)
+    if not (is_bullish or is_bearish):
+        return None
+
     prior_trend = detect_prior_trend(history)
 
-    if bullish_engulf and wick_condition and body > 0:
-        stop_loss = current["low"]
-        target = current["close"] + body * 2  # 1:2 Risk to Reward
-        strength = calculate_strength(body, total_wick, current.get("volume", 0))
+    if is_bullish:
+        stop_loss = c_low
+        target = round(c_close + (c_close - c_low) * 2, 2)
+        strength = calculate_strength(c_body, total_wick, current.get("volume", 0))
         if prior_trend in ["DECLINE", "CONFIRMED_REVERSAL"]:
             strength = min(strength + 10, 100)
 
-        trend_text = "Appears after a decline, buyers step in (Photo 2 & 4 Validated)" if prior_trend == "DECLINE" else "Bullish Reversal Confirmed"
+        trend_text = "Bullish Reversal (Red ➔ Green Full Engulf, Wick ≤ 20%)"
 
         return {
             "id": f"{symbol}-{int(time.time() * 1000)}-bull",
@@ -1211,26 +1098,27 @@ def analyze_engulfing_pattern(symbol: str, name: str, current: Dict[str, float],
             "name": name,
             "type": "BULLISH",
             "strength": strength,
-            "entryPrice": current["close"],
+            "entryPrice": c_close,
             "stopLoss": stop_loss,
             "target": target,
-            "perfectCategory": perfect_engulf_info["category"],
-            "pctOfAvg": perfect_engulf_info["pctOfAvg"],
-            "ratio": perfect_engulf_info["ratio"],
-            "requiredRange": perfect_engulf_info["requiredRange"],
+            "perfectCategory": f"Full Body ({ratio * 100:.0f}%)",
+            "pctOfAvg": f"{(p_body / (avg_body or 1.0) * 100):.1f}%",
+            "ratio": f"{(ratio * 100):.1f}%",
+            "wickPct": f"{wick_pct}%",
+            "requiredRange": "Full Body (Wick ≤ 20%)",
             "trendContext": trend_text,
             "timestamp": datetime.utcnow().isoformat(),
             "candleData": {"current": current, "previous": previous}
         }
 
-    if bearish_engulf and wick_condition and body > 0:
-        stop_loss = current["high"]
-        target = current["close"] - body * 2  # 1:2 Risk to Reward
-        strength = calculate_strength(body, total_wick, current.get("volume", 0))
+    if is_bearish:
+        stop_loss = c_high
+        target = round(c_close - (c_high - c_close) * 2, 2)
+        strength = calculate_strength(c_body, total_wick, current.get("volume", 0))
         if prior_trend in ["RISE", "CONFIRMED_REVERSAL"]:
             strength = min(strength + 10, 100)
 
-        trend_text = "Appears after a rise, sellers take over (Photo 2 & 4 Validated)" if prior_trend == "RISE" else "Bearish Reversal Confirmed"
+        trend_text = "Bearish Reversal (Green ➔ Red Full Engulf, Wick ≤ 20%)"
 
         return {
             "id": f"{symbol}-{int(time.time() * 1000)}-bear",
@@ -1238,13 +1126,14 @@ def analyze_engulfing_pattern(symbol: str, name: str, current: Dict[str, float],
             "name": name,
             "type": "BEARISH",
             "strength": strength,
-            "entryPrice": current["close"],
+            "entryPrice": c_close,
             "stopLoss": stop_loss,
             "target": target,
-            "perfectCategory": perfect_engulf_info["category"],
-            "pctOfAvg": perfect_engulf_info["pctOfAvg"],
-            "ratio": perfect_engulf_info["ratio"],
-            "requiredRange": perfect_engulf_info["requiredRange"],
+            "perfectCategory": f"Full Body ({ratio * 100:.0f}%)",
+            "pctOfAvg": f"{(p_body / (avg_body or 1.0) * 100):.1f}%",
+            "ratio": f"{(ratio * 100):.1f}%",
+            "wickPct": f"{wick_pct}%",
+            "requiredRange": "Full Body (Wick ≤ 20%)",
             "trendContext": trend_text,
             "timestamp": datetime.utcnow().isoformat(),
             "candleData": {"current": current, "previous": previous}
@@ -1860,7 +1749,7 @@ def run_options_scan():
                 curr_l_wick = min(current["open"], current["close"]) - current["low"]
                 curr_tot_wick = curr_u_wick + curr_l_wick
                 overall_size = current["high"] - current["low"]
-                is_wick_acceptable = overall_size > 0 and (curr_tot_wick <= 0.40 * overall_size)
+                is_wick_acceptable = overall_size > 0 and (curr_tot_wick <= 0.20 * overall_size)
 
                 is_bull_engulf = (
                     current["close"] > current["open"] and
