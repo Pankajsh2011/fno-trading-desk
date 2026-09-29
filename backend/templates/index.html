@@ -1469,7 +1469,7 @@
       btn.disabled = true;
       spinner.classList.remove('hidden');
       label.textContent = 'SCANNING 10%...';
-      addLogEntry('TOKYO', 'Manual scan sweep triggered: Scanning 197 NSE F&O equities...');
+      addLogEntry('TOKYO', 'Manual scan sweep triggered: Scanning 227 NSE F&O equities (Dhan 25m criteria)...');
 
       try {
         await fetch('/api/scanner/trigger', { method: 'POST' });
@@ -1659,6 +1659,8 @@
         const volVal = v.value || 0;
         bV.textContent = volVal >= 1000000 ? `${(volVal / 1000000).toFixed(2)}M` : (volVal >= 1000 ? `${(volVal / 1000).toFixed(1)}K` : volVal);
       }
+    }
+
     function togglePatternMarkers() {
       showEngulfMarkers = !showEngulfMarkers;
       const btn = document.getElementById('togglePatternMarkersBtn');
