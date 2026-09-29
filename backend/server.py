@@ -2520,7 +2520,7 @@ _chart_endpoint_lock = threading.Lock()
 def get_chart_candles():
     raw_sym = request.args.get("symbol", "IRFC").upper().strip()
     clean_sym = raw_sym.replace(".NS", "").replace("NSE:", "").replace("BSE:", "").strip()
-    interval_req = request.args.get("interval", "15m").lower().strip()
+    interval_req = request.args.get("interval", "25m").lower().strip()
 
     range_map = {
         "1m": ("1m", "1d"),

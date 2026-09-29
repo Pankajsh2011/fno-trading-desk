@@ -1935,6 +1935,110 @@
         }
       }
 
+      // 3.6. DEDICATED ACTIVE SIGNAL MARKER (Guarantee marking for any detected signal from scanner)
+      if (showEngulfMarkers && chartSignalLevels && chartSignalLevels.entry && visibleCandles.length > 0) {
+        const sigEntry = Number(chartSignalLevels.entry);
+        const isBullSig = chartSignalLevels.type === 'BULLISH';
+
+        // Find candle closest to entry price
+        let bestIdx = -1;
+        let minDiff = Infinity;
+        for (let i = 0; i < visibleCandles.length; i++) {
+          const c = visibleCandles[i];
+          const diff = Math.min(Math.abs(c.close - sigEntry), Math.abs(c.open - sigEntry), Math.abs(c.low - sigEntry), Math.abs(c.high - sigEntry));
+          if (diff < minDiff) {
+            minDiff = diff;
+            bestIdx = i;
+          }
+        }
+
+        if (bestIdx >= 0 && minDiff <= (sigEntry * 0.025)) {
+          const curr = visibleCandles[bestIdx];
+          const prev = bestIdx > 0 ? visibleCandles[bestIdx - 1] : curr;
+          const xCurr = bestIdx * candleStep + candleStep / 2;
+          const xPrev = (bestIdx > 0 ? (bestIdx - 1) : bestIdx) * candleStep + candleStep / 2;
+          const xCenter = (xPrev + xCurr) / 2;
+
+          const pairHigh = Math.max(curr.high, prev.high);
+          const pairLow = Math.min(curr.low, prev.low);
+          const yTop = getY(pairHigh);
+          const yBottom = getY(pairLow);
+          const yCenter = (yTop + yBottom) / 2;
+          const radiusX = Math.max(candleBodyW * 2.2, candleStep * 1.3);
+          const radiusY = Math.max(26, (yBottom - yTop) / 2 + 14);
+
+          cCtx.save();
+          const markColor = isBullSig ? '#10b981' : '#f43f5e';
+          const glowColor = isBullSig ? 'rgba(16, 185, 129, 0.28)' : 'rgba(244, 63, 94, 0.28)';
+
+          // 1. Vertical Beacon line on signal candle
+          cCtx.strokeStyle = markColor;
+          cCtx.setLineDash([4, 4]);
+          cCtx.lineWidth = 1.5;
+          cCtx.beginPath();
+          cCtx.moveTo(xCurr, 0);
+          cCtx.lineTo(xCurr, candleAreaH);
+          cCtx.stroke();
+          cCtx.setLineDash([]);
+
+          // 2. High-visibility pulsing ellipse ring
+          cCtx.fillStyle = glowColor;
+          cCtx.beginPath();
+          cCtx.ellipse(xCenter, yCenter, radiusX, radiusY, 0, 0, Math.PI * 2);
+          cCtx.fill();
+
+          cCtx.strokeStyle = markColor;
+          cCtx.lineWidth = 3;
+          cCtx.beginPath();
+          cCtx.ellipse(xCenter, yCenter, radiusX, radiusY, 0, 0, Math.PI * 2);
+          cCtx.stroke();
+
+          // 3. Signal Badge Tag
+          cCtx.font = 'bold 10px "JetBrains Mono"';
+          cCtx.textAlign = 'center';
+
+          if (isBullSig) {
+            const tagY = yBottom + 22;
+            cCtx.fillStyle = markColor;
+            cCtx.beginPath();
+            cCtx.moveTo(xCenter, yBottom + 7);
+            cCtx.lineTo(xCenter - 6, yBottom + 14);
+            cCtx.lineTo(xCenter + 6, yBottom + 14);
+            cCtx.closePath();
+            cCtx.fill();
+
+            cCtx.fillStyle = '#064e3b';
+            cCtx.fillRect(xCenter - 68, tagY - 6, 136, 20);
+            cCtx.strokeStyle = '#10b981';
+            cCtx.lineWidth = 1.5;
+            cCtx.strokeRect(xCenter - 68, tagY - 6, 136, 20);
+
+            cCtx.fillStyle = '#6ee7b7';
+            cCtx.fillText(`▲ SIGNAL: ₹${sigEntry.toFixed(2)}`, xCenter, tagY + 8);
+          } else {
+            const tagY = yTop - 22;
+            cCtx.fillStyle = markColor;
+            cCtx.beginPath();
+            cCtx.moveTo(xCenter, yTop - 7);
+            cCtx.lineTo(xCenter - 6, yTop - 14);
+            cCtx.lineTo(xCenter + 6, yTop - 14);
+            cCtx.closePath();
+            cCtx.fill();
+
+            cCtx.fillStyle = '#4c0519';
+            cCtx.fillRect(xCenter - 68, tagY - 14, 136, 20);
+            cCtx.strokeStyle = '#f43f5e';
+            cCtx.lineWidth = 1.5;
+            cCtx.strokeRect(xCenter - 68, tagY - 14, 136, 20);
+
+            cCtx.fillStyle = '#fca5a5';
+            cCtx.fillText(`▼ SIGNAL: ₹${sigEntry.toFixed(2)}`, xCenter, tagY);
+          }
+
+          cCtx.restore();
+        }
+      }
+
       // 4. Bottom Time Labels
       cCtx.fillStyle = '#94a3b8';
       cCtx.textAlign = 'center';
@@ -2105,12 +2209,27 @@
 
     function switchChartInterval(interval) {
       currentChartInterval = interval;
+      document.querySelectorAll('.tf-btn').forEach(btn => {
+        if (btn.getAttribute('data-tf') === interval) {
+          btn.className = 'tf-btn px-2.5 py-1 bg-slate-900 text-white font-bold';
+        } else {
+          btn.className = 'tf-btn px-2 py-1 hover:bg-slate-100 text-slate-600 font-semibold';
+        }
+      });
       loadCandleData(currentChartSymbol, interval);
       startChartStreaming();
     }
 
     function viewStockInChart(symbol) {
       if (!symbol) return;
+      currentChartInterval = '25m';
+      document.querySelectorAll('.tf-btn').forEach(btn => {
+        if (btn.getAttribute('data-tf') === '25m') {
+          btn.className = 'tf-btn px-2.5 py-1 bg-slate-900 text-white font-bold';
+        } else {
+          btn.className = 'tf-btn px-2 py-1 hover:bg-slate-100 text-slate-600 font-semibold';
+        }
+      });
       switchChartSymbol(symbol);
       const chartEl = document.getElementById('liveChartSection');
       if (chartEl) {
