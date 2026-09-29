@@ -1814,17 +1814,43 @@
 
           if (overallH <= 0 || cBody <= 0 || pBody <= 0) continue;
 
-          // Wick size <= 20% of total candle size (Exact Dhan criteria)
+          // FILTER 1: Minimum body size (Reject micro-doji noise)
+          const minBody = Math.max(pC * 0.0008, 0.20);
+          if (pBody < minBody || cBody < minBody) continue;
+
+          // FILTER 2: Wick size <= 20% of total candle size (Exact Dhan criteria)
           const upperWick = cH - Math.max(cO, cC);
           const lowerWick = Math.min(cO, cC) - cL;
           const totalWick = upperWick + lowerWick;
           const wickPct = (totalWick / overallH) * 100;
-
           if (wickPct > 20.05) continue;
 
-          // Full body-to-body engulf
-          const isBull = (pC < pO && cC > cO && cC >= pO && cO <= pC && (cC > pO || cO < pC));
-          const isBear = (pC > pO && cC < cO && cO >= pC && cC <= pO && (cO > pC || cC < pO));
+          // Ratio check (engulfing body must be larger)
+          if ((cBody / pBody) < 1.05) continue;
+
+          // CANDLE SHAPE: Full body-to-body engulf
+          const isBullShape = (pC < pO && cC > cO && cC >= pO && cO <= pC && (cC > pO || cO < pC));
+          const isBearShape = (pC > pO && cC < cO && cO >= pC && cC <= pO && (cO > pC || cC < pO));
+          if (!isBullShape && !isBearShape) continue;
+
+          // FILTER 3: STRICT PRIOR TREND & LOCATION REVERSAL CHECK
+          // Prevents false Bullish at top of rally, and false Bearish at bottom of dump!
+          const priorSlice = visibleCandles.slice(Math.max(0, idx - 6), idx - 1);
+          let priorNet = 0;
+          let priorLow = Infinity;
+          let priorHigh = -Infinity;
+          if (priorSlice.length > 0) {
+            priorNet = pC - priorSlice[0].open;
+            priorSlice.forEach(c => {
+              if (c.low < priorLow) priorLow = c.low;
+              if (c.high > priorHigh) priorHigh = c.high;
+            });
+          }
+
+          // Bullish Engulfing MUST follow a decline / be at support. If at top of rally -> REJECT!
+          const isBull = isBullShape && (priorSlice.length === 0 || priorNet < 0 || prev.low <= priorLow * 1.002);
+          // Bearish Engulfing MUST follow a rise / be at resistance. If at bottom of dump -> REJECT!
+          const isBear = isBearShape && (priorSlice.length === 0 || priorNet > 0 || prev.high >= priorHigh * 0.998);
 
           if (!isBull && !isBear) continue;
 

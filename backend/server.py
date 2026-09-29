@@ -1011,22 +1011,34 @@ def check_perfect_engulfing(current: Dict[str, float], previous: Dict[str, float
         "ratio": f"{(ratio * 100):.1f}%"
     }
 
-def detect_prior_trend(history: Optional[List[Dict[str, float]]] = None) -> str:
+def detect_prior_trend(history: Optional[List[Dict[str, float]]] = None, previous: Optional[Dict[str, float]] = None) -> str:
     """
-    Evaluates prior 3-5 candles to check if pattern follows a valid Decline or Rise
-    as shown in Photo 2 & 4:
-    - Bullish Engulfing: "Appears after a decline, buyers step in"
-    - Bearish Engulfing: "Appears after a rise, sellers take over"
+    Evaluates prior 3-8 candles to check if pattern follows a valid Decline or Rise.
+    - Bullish Engulfing MUST follow a DECLINE (reversal from bottom).
+    - Bearish Engulfing MUST follow a RISE (reversal from top).
     """
     if not history or len(history) < 2:
-        return "CONFIRMED_REVERSAL"
-    subset = history[-4:]
+        return "UNKNOWN"
+
+    subset = history[-6:]
     net_change = subset[-1]["close"] - subset[0]["open"]
-    if net_change < 0:
+    highs = [c["high"] for c in subset]
+    lows = [c["low"] for c in subset]
+    recent_high = max(highs)
+    recent_low = min(lows)
+
+    prev_p = previous["close"] if previous else subset[-1]["close"]
+    prev_l = previous["low"] if previous else subset[-1]["low"]
+    prev_h = previous["high"] if previous else subset[-1]["high"]
+
+    # If recent net change is negative or previous candle is at the recent swing low:
+    if net_change < 0 or prev_l <= (recent_low * 1.002):
         return "DECLINE"
-    elif net_change > 0:
+    # If recent net change is positive or previous candle is at the recent swing high:
+    elif net_change > 0 or prev_h >= (recent_high * 0.998):
         return "RISE"
-    return "CONFIRMED_REVERSAL"
+
+    return "SIDEWAYS"
 
 def analyze_engulfing_pattern(symbol: str, name: str, current: Dict[str, float], previous: Dict[str, float], avg_body: float, history: Optional[List[Dict[str, float]]] = None) -> Optional[Dict[str, Any]]:
     c_open = round(float(current["open"]), 2)
@@ -1046,22 +1058,27 @@ def analyze_engulfing_pattern(symbol: str, name: str, current: Dict[str, float],
     if overall_size <= 0 or c_body <= 0 or p_body <= 0:
         return None
 
-    # Wick size: Upper wick + Lower wick of the engulfing candle
+    # FILTER 1: Minimum Candle Body Size (Filter out micro-dojis & flat lunchtime noise)
+    min_body_threshold = max(p_close * 0.0008, (avg_body or 1.0) * 0.25)
+    if p_body < min_body_threshold or c_body < min_body_threshold:
+        return None
+
+    # FILTER 2: Wick size ≤ 20% of total candle size (Exact Dhan criteria)
     upper_wick = round(c_high - max(c_open, c_close), 2)
     lower_wick = round(min(c_open, c_close) - c_low, 2)
     total_wick = round(upper_wick + lower_wick, 2)
     wick_pct = round((total_wick / overall_size) * 100, 1)
 
-    # STRICT CONDITION 1: Wick size ≤ 20% of total candle size
     if wick_pct > 20.0:
         return None
 
-    # Ratio of current body to previous body
+    # Ratio of current body to previous body (must be meaningfully larger)
     ratio = round(c_body / p_body, 2)
+    if ratio < 1.05:
+        return None
 
-    # STRICT CONDITION 2: Full body-to-body engulf
-    # Bullish: Previous is RED, Current is GREEN, and Current Green body completely engulfs Previous Red body
-    is_bullish = (
+    # CANDLE SHAPE: Full body-to-body engulf
+    is_bull_shape = (
         p_close < p_open and
         c_close > c_open and
         c_close >= p_open and
@@ -1069,8 +1086,7 @@ def analyze_engulfing_pattern(symbol: str, name: str, current: Dict[str, float],
         (c_close > p_open or c_open < p_close)
     )
 
-    # Bearish: Previous is GREEN, Current is RED, and Current Red body completely engulfs Previous Green body
-    is_bearish = (
+    is_bear_shape = (
         p_close > p_open and
         c_close < c_open and
         c_open >= p_close and
@@ -1078,19 +1094,26 @@ def analyze_engulfing_pattern(symbol: str, name: str, current: Dict[str, float],
         (c_open > p_close or c_close < p_open)
     )
 
-    if not (is_bullish or is_bearish):
+    if not (is_bull_shape or is_bear_shape):
         return None
 
-    prior_trend = detect_prior_trend(history)
+    # FILTER 3: STRICT PRIOR TREND & LOCATION REVERSAL CHECK
+    # Prevents buying Bullish Engulfing at the top of a rally, or selling Bearish Engulfing at the bottom of a dump!
+    prior_trend = detect_prior_trend(history, previous)
 
-    if is_bullish:
+    if is_bull_shape:
+        # A valid Bullish Engulfing MUST follow a DECLINE.
+        # If the prior trend was a RISE, it is NOT a reversal — it's buying the top!
+        if prior_trend == "RISE":
+            return None
+
         stop_loss = c_low
         target = round(c_close + (c_close - c_low) * 2, 2)
         strength = calculate_strength(c_body, total_wick, current.get("volume", 0))
-        if prior_trend in ["DECLINE", "CONFIRMED_REVERSAL"]:
-            strength = min(strength + 10, 100)
+        if prior_trend == "DECLINE":
+            strength = min(strength + 15, 100)
 
-        trend_text = "Bullish Reversal (Red ➔ Green Full Engulf, Wick ≤ 20%)"
+        trend_text = "High Accuracy Reversal (Formed after decline at support, buyers take control)"
 
         return {
             "id": f"{symbol}-{int(time.time() * 1000)}-bull",
@@ -1111,14 +1134,19 @@ def analyze_engulfing_pattern(symbol: str, name: str, current: Dict[str, float],
             "candleData": {"current": current, "previous": previous}
         }
 
-    if is_bearish:
+    if is_bear_shape:
+        # A valid Bearish Engulfing MUST follow a RISE.
+        # If the prior trend was a DECLINE, it is NOT a reversal — it's selling the bottom!
+        if prior_trend == "DECLINE":
+            return None
+
         stop_loss = c_high
         target = round(c_close - (c_high - c_close) * 2, 2)
         strength = calculate_strength(c_body, total_wick, current.get("volume", 0))
-        if prior_trend in ["RISE", "CONFIRMED_REVERSAL"]:
-            strength = min(strength + 10, 100)
+        if prior_trend == "RISE":
+            strength = min(strength + 15, 100)
 
-        trend_text = "Bearish Reversal (Green ➔ Red Full Engulf, Wick ≤ 20%)"
+        trend_text = "High Accuracy Reversal (Formed after rise at resistance, sellers take control)"
 
         return {
             "id": f"{symbol}-{int(time.time() * 1000)}-bear",
