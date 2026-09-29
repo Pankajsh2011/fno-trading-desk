@@ -629,6 +629,9 @@
           </div>
 
           <div class="flex items-center gap-2">
+            <button id="togglePatternMarkersBtn" onclick="togglePatternMarkers()" class="px-2 py-0.5 rounded text-[10px] font-bold font-mono-code bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition">
+              🎯 ENGULF MARKERS: ON
+            </button>
             <span id="chartSignalBadge" class="hidden px-2 py-0.5 rounded text-[10px] font-bold font-mono-code bg-emerald-100 text-emerald-800 border border-emerald-300">BULLISH ENGULFING</span>
             <a id="externalTvLink" href="https://www.tradingview.com/chart/?symbol=NSE:IRFC" target="_blank" class="px-2 py-0.5 rounded text-[10px] font-mono-code text-slate-500 hover:text-slate-800 hover:bg-slate-200 transition flex items-center gap-1">
               <span>↗ TradingView Web</span>
@@ -1550,6 +1553,7 @@
     let chartZoomVisible = 65;
     let chartPanOffset = 0;
     let fnoStocksCache = [];
+    let showEngulfMarkers = true;
 
     const cCanvas = document.getElementById('nativeCandleCanvas');
     const cCtx = cCanvas ? cCanvas.getContext('2d') : null;
@@ -1655,6 +1659,16 @@
         const volVal = v.value || 0;
         bV.textContent = volVal >= 1000000 ? `${(volVal / 1000000).toFixed(2)}M` : (volVal >= 1000 ? `${(volVal / 1000).toFixed(1)}K` : volVal);
       }
+    function togglePatternMarkers() {
+      showEngulfMarkers = !showEngulfMarkers;
+      const btn = document.getElementById('togglePatternMarkersBtn');
+      if (btn) {
+        btn.textContent = showEngulfMarkers ? '🎯 ENGULF MARKERS: ON' : '⚪ ENGULF MARKERS: OFF';
+        btn.className = showEngulfMarkers 
+          ? 'px-2 py-0.5 rounded text-[10px] font-bold font-mono-code bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition'
+          : 'px-2 py-0.5 rounded text-[10px] font-bold font-mono-code bg-slate-100 text-slate-500 border border-slate-200 hover:bg-slate-200 transition';
+      }
+      drawNativeCandles();
     }
 
     function drawNativeCandles() {
@@ -1776,6 +1790,122 @@
         cCtx.fillStyle = color;
         cCtx.fillRect(xCenter - candleBodyW / 2, bodyTop, candleBodyW, bodyH);
       });
+
+      // 3.5. ENGULFING PATTERN MARKERS (Photo 1-5 Exact: Distinct Rings & Directional Badges)
+      let markedCount = 0;
+      if (showEngulfMarkers && visibleCandles.length >= 2) {
+        for (let idx = 1; idx < visibleCandles.length; idx++) {
+          const curr = visibleCandles[idx];
+          const prev = visibleCandles[idx - 1];
+
+          const cO = curr.open;
+          const cC = curr.close;
+          const cH = curr.high;
+          const cL = curr.low;
+
+          const pO = prev.open;
+          const pC = prev.close;
+
+          const cBody = Math.abs(cC - cO);
+          const pBody = Math.abs(pC - pO);
+          const overallH = cH - cL;
+
+          if (overallH <= 0 || cBody <= 0 || pBody <= 0) continue;
+
+          // Wick size <= 20% of total candle size (Exact Dhan criteria)
+          const upperWick = cH - Math.max(cO, cC);
+          const lowerWick = Math.min(cO, cC) - cL;
+          const totalWick = upperWick + lowerWick;
+          const wickPct = (totalWick / overallH) * 100;
+
+          if (wickPct > 20.05) continue;
+
+          // Full body-to-body engulf
+          const isBull = (pC < pO && cC > cO && cC >= pO && cO <= pC && (cC > pO || cO < pC));
+          const isBear = (pC > pO && cC < cO && cO >= pC && cC <= pO && (cO > pC || cC < pO));
+
+          if (!isBull && !isBear) continue;
+
+          markedCount++;
+
+          const xPrev = (idx - 1) * candleStep + candleStep / 2;
+          const xCurr = idx * candleStep + candleStep / 2;
+          const xCenter = (xPrev + xCurr) / 2;
+
+          const pairHigh = Math.max(cH, prev.high);
+          const pairLow = Math.min(cL, prev.low);
+          const yTop = getY(pairHigh);
+          const yBottom = getY(pairLow);
+          const yCenter = (yTop + yBottom) / 2;
+          const radiusX = Math.max(candleBodyW * 1.8, candleStep * 1.15);
+          const radiusY = Math.max(22, (yBottom - yTop) / 2 + 10);
+
+          cCtx.save();
+          const color = isBull ? '#10b981' : '#f43f5e';
+          const glowColor = isBull ? 'rgba(16, 185, 129, 0.15)' : 'rgba(244, 63, 94, 0.15)';
+
+          // 1. Shaded highlight ellipse around the 2 candles (Photo 1-5 exact)
+          cCtx.fillStyle = glowColor;
+          cCtx.beginPath();
+          cCtx.ellipse(xCenter, yCenter, radiusX, radiusY, 0, 0, Math.PI * 2);
+          cCtx.fill();
+
+          // 2. Bold distinct circle / ring border
+          cCtx.strokeStyle = color;
+          cCtx.lineWidth = 2.5;
+          cCtx.beginPath();
+          cCtx.ellipse(xCenter, yCenter, radiusX, radiusY, 0, 0, Math.PI * 2);
+          cCtx.stroke();
+
+          // 3. Arrow & Pill Tag Label
+          cCtx.font = 'bold 9px "JetBrains Mono"';
+          cCtx.textAlign = 'center';
+
+          if (isBull) {
+            const tagY = yBottom + 20;
+            // Arrow pointing UP
+            cCtx.fillStyle = color;
+            cCtx.beginPath();
+            cCtx.moveTo(xCenter, yBottom + 7);
+            cCtx.lineTo(xCenter - 5, yBottom + 13);
+            cCtx.lineTo(xCenter + 5, yBottom + 13);
+            cCtx.closePath();
+            cCtx.fill();
+
+            // Tag Pill
+            cCtx.fillStyle = '#064e3b';
+            cCtx.fillRect(xCenter - 46, tagY - 6, 92, 16);
+            cCtx.strokeStyle = '#10b981';
+            cCtx.lineWidth = 1;
+            cCtx.strokeRect(xCenter - 46, tagY - 6, 92, 16);
+
+            cCtx.fillStyle = '#6ee7b7';
+            cCtx.fillText('▲ BULL ENGULF', xCenter, tagY + 6);
+          } else {
+            const tagY = yTop - 20;
+            // Arrow pointing DOWN
+            cCtx.fillStyle = color;
+            cCtx.beginPath();
+            cCtx.moveTo(xCenter, yTop - 7);
+            cCtx.lineTo(xCenter - 5, yTop - 13);
+            cCtx.lineTo(xCenter + 5, yTop - 13);
+            cCtx.closePath();
+            cCtx.fill();
+
+            // Tag Pill
+            cCtx.fillStyle = '#4c0519';
+            cCtx.fillRect(xCenter - 46, tagY - 8, 92, 16);
+            cCtx.strokeStyle = '#f43f5e';
+            cCtx.lineWidth = 1;
+            cCtx.strokeRect(xCenter - 46, tagY - 8, 92, 16);
+
+            cCtx.fillStyle = '#fca5a5';
+            cCtx.fillText('▼ BEAR ENGULF', xCenter, tagY + 4);
+          }
+
+          cCtx.restore();
+        }
+      }
 
       // 4. Bottom Time Labels
       cCtx.fillStyle = '#94a3b8';
