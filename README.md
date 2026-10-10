@@ -1,6 +1,6 @@
 # 🚀 F&O Algorithmic Trading Desk & Cyberpunk Cockpit (100% Python)
 
-A high-performance, **100% Python-based** algorithmic trading platform and live interactive dashboard designed for the **Indian National Stock Exchange (NSE)** F&O market (197 equities) with real-time multi-threaded scanning, strict candlestick engulfing validation, multi-agent telemetry, and live Render cloud deployment.
+A high-performance, **100% Python-based** algorithmic trading platform and live interactive dashboard designed for the **Indian National Stock Exchange (NSE)** F&O market (213 equities + indices) with real-time multi-threaded scanning, strict candlestick engulfing validation, multi-agent telemetry, and live Render cloud deployment.
 
 ---
 
@@ -12,7 +12,7 @@ A high-performance, **100% Python-based** algorithmic trading platform and live 
 * **Instant Cloud Deployment:** Native support for **Render.com**, Heroku, Railway, and VPS through `render.yaml` and `Procfile`.
 
 ### 2. High-Speed Multi-Threaded F&O Scanner
-* Scans all **197 NSE F&O Stocks** concurrently using `ThreadPoolExecutor` (14 worker threads) in ~25–30 seconds.
+* Scans all **213 NSE F&O Stocks** concurrently using `ThreadPoolExecutor` (14 worker threads) in ~25–30 seconds.
 * Dual data ingestion:
   * **Dhan HQ v2 Market API** (Direct live broker ticks).
   * **Real-time NSE fallback** (Zero disruption if Dhan token expires).
@@ -26,7 +26,7 @@ Strictly validates patterns according to Photos 1–4 criteria:
 
 ### 4. 10 Operator Agent Command Deck
 Live telemetry and status monitoring for 10 autonomous agents:
-* 🧑‍🚀 **TOKYO** — Scout Engine (197 F&O scrips master).
+* 🧑‍🚀 **TOKYO** — Scout Engine (213 F&O scrips master).
 * 🛡️ **PALERMO** — Approval Gate & Risk Manager (1.0% capital risk limit).
 * ⚡ **DENVER** — Execution Striker (Rapid order execution).
 * 🌊 **STOCKHOLM** — Liquidity Sentinel (Volume surges & order book depth).
@@ -104,7 +104,7 @@ fno-trading-desk/
 ├── backend/
 │   ├── templates/
 │   │   └── index.html        # Animated Cyberpunk Cockpit UI
-│   ├── fno_stocks_master.csv # Master list of 197 NSE F&O Equities
+│   ├── fno_stocks_master.csv # Master list of 213 NSE F&O Equities + Indices & Lot Sizes
 │   ├── server.py             # Flask Core, Scanning Daemon, Alert Engines
 │   └── requirements.txt      # Backend dependencies mirror
 ├── .env.example              # Configuration template

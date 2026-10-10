@@ -876,7 +876,8 @@ def sync_fno_stocks_list():
                         "status": parts[3] or "ACTIVE",
                         "securityId": parts[4],
                         "exchangeSegment": parts[5],
-                        "instrument": parts[6]
+                        "instrument": parts[6],
+                        "lotSize": parts[7] if len(parts) > 7 else ""
                     })
             logger.info(f"[F&O Sync Service] Loaded {len(local_fno_list)} F&O stocks from local CSV database.")
         except Exception as e:
@@ -889,7 +890,7 @@ def sync_fno_stocks_list():
     active_scanning_list = [s for s in local_fno_list if s.get("status") == "ACTIVE" and s.get("exchangeSegment") == "NSE_EQ"]
     logger.info(f"[F&O Sync Service] Active scanning list size: {len(active_scanning_list)} F&O equity stocks.")
 
-# Pre-load all 197 F&O stocks immediately
+# Pre-load all F&O stocks immediately
 sync_fno_stocks_list()
 
 
@@ -1634,7 +1635,7 @@ def run_automatic_scan(manual_trigger: bool = False):
         scanner_status["stocksScanned"],
         new_signals_count,
         "SUCCESS",
-        f"Scan complete. 197 F&O stocks scanned. Found {new_signals_count} signals."
+        f"Scan complete. {scanner_status['stocksScanned']} F&O stocks scanned. Found {new_signals_count} signals."
     ])
 
 # ----------------------------------------------------
@@ -2510,7 +2511,7 @@ def get_fno_stocks():
     return jsonify({
         "success": True,
         "count": len(active_scanning_list),
-        "stocks": [{"symbol": s["symbol"], "name": s.get("name", s["symbol"])} for s in active_scanning_list]
+        "stocks": [{"symbol": s["symbol"], "name": s.get("name", s["symbol"]), "sector": s.get("sector", ""), "lotSize": s.get("lotSize", "")} for s in active_scanning_list]
     })
 
 _chart_endpoint_cache: Dict[str, Any] = {}
@@ -2769,7 +2770,7 @@ def start():
     logger.info("==================================================")
     logger.info("  PRO-AUTOMATION ALGOTRADER PYTHON BACKEND READY! ")
     logger.info(f"  Port: {PORT} | URL: http://localhost:{PORT}")
-    logger.info("  Services: 197 NSE F&O Equities, 25-Min Rolling Candles")
+    logger.info(f"  Services: {len(active_scanning_list)} NSE F&O Equities, 25-Min Rolling Candles")
     logger.info("==================================================")
     ensure_services_running()
     app.run(host="0.0.0.0", port=PORT, debug=False, use_reloader=False, threaded=True)
