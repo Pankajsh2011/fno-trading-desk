@@ -148,9 +148,9 @@ def get_openalgo_client():
         return None
 
 risk_settings: Dict[str, Any] = {
-    "autoTrading": False,
+    "autoTrading": True,  # Activated by default for paper trading
     "riskPercent": 1.0,
-    "maxDailyTrades": 5,
+    "maxDailyTrades": 10,
     "currentDailyTrades": 0
 }
 
@@ -173,8 +173,8 @@ options_scanner_status: Dict[str, Any] = {
 }
 
 virtual_portfolio: Dict[str, Any] = {
-    "cash": 100000.0,
-    "initialCash": 100000.0,
+    "cash": 2000000.0,
+    "initialCash": 2000000.0,
     "totalTrades": 0,
     "winningTrades": 0,
     "netProfit": 0.0
@@ -503,9 +503,16 @@ def load_paper_trades_db():
                     paper_trades = db["paperTrades"]
                 if "virtualPortfolio" in db:
                     virtual_portfolio = db["virtualPortfolio"]
+                    if virtual_portfolio.get("initialCash") != 2000000.0:
+                        virtual_portfolio["cash"] = 2000000.0
+                        virtual_portfolio["initialCash"] = 2000000.0
+                        virtual_portfolio["totalTrades"] = 0
+                        virtual_portfolio["winningTrades"] = 0
+                        virtual_portfolio["netProfit"] = 0.0
+                        paper_trades = []
                 if "optionsSignals" in db:
                     options_signals = db["optionsSignals"]
-            logger.info("[Paper Trade DB] Loaded historical virtual portfolios successfully.")
+            logger.info("[Paper Trade DB] Loaded virtual portfolio successfully with ₹20,00,000 capital.")
         except Exception as e:
             logger.error(f"[Paper Trade DB] Error loading DB: {e}")
 
@@ -623,14 +630,16 @@ def open_point_track(candles: List[Dict[str, float]]) -> float:
 # ----------------------------------------------------
 def execute_paper_trade(signal: Dict[str, Any]):
     active_trades = [t for t in paper_trades if t.get("status") == "ACTIVE"]
-    if len(active_trades) >= 1:
-        logger.info(f"[Paper Trade Engine] Bypassed entry. Only 1 active position is allowed at a time. Active: {active_trades[0]['symbol']}")
+    if len(active_trades) >= 5:
+        logger.info(f"[Paper Trade Engine] Max active concurrent positions (5) reached. Active count: {len(active_trades)}")
         return
 
-    lot_sizes = {"NIFTY": 75, "BANKNIFTY": 15, "FINNIFTY": 40, "SENSEX": 10}
+    lot_sizes = {"NIFTY": 65, "BANKNIFTY": 30, "FINNIFTY": 60, "MIDCPNIFTY": 120, "SENSEX": 10}
     lot_size = lot_sizes.get(signal.get("index"), 50)
 
-    lots_to_buy = 4
+    # Scale position size sensibly for 20 Lakh capital (allocate up to ~5% per trade)
+    max_trade_capital = virtual_portfolio["cash"] * 0.05
+    lots_to_buy = max(1, min(10, int(max_trade_capital / (signal["price"] * lot_size or 1.0))))
     total_cost = signal["price"] * (lots_to_buy * lot_size)
 
     while lots_to_buy > 0 and virtual_portfolio["cash"] < total_cost:
@@ -1353,7 +1362,7 @@ def place_bracket_order(signal: Dict[str, Any]):
 
     logger.info(f"[Order Execution Engine] Attempting order placement for: {signal['symbol']}")
 
-    available_balance = 100000.0
+    available_balance = virtual_portfolio.get("cash", 2000000.0)
     try:
         res = dhan_api_call("/v2/profile")
         if res["status"] == 200 and res.get("data") and res["data"].get("marginAvailable"):
@@ -2217,7 +2226,7 @@ def get_agents_status():
             "emoji": "👮",
             "badgeColor": "emerald",
             "duty": "NSE Circuit & Risk Gate",
-            "metric": f"TRADES: {risk_settings.get('currentDailyTrades', 0)}/{risk_settings.get('maxDailyTrades', 5)}",
+            "metric": f"TRADES: {risk_settings.get('currentDailyTrades', 0)}/{risk_settings.get('maxDailyTrades', 10)}",
             "status": "PASS (0 VETOES)",
             "statusClass": "text-emerald-700 bg-emerald-50 border-emerald-200",
             "dotClass": "bg-emerald-500",
@@ -2490,8 +2499,8 @@ def reset_paper_trades():
     global paper_trades, virtual_portfolio
     paper_trades = []
     virtual_portfolio = {
-        "cash": 100000.0,
-        "initialCash": 100000.0,
+        "cash": 2000000.0,
+        "initialCash": 2000000.0,
         "totalTrades": 0,
         "winningTrades": 0,
         "netProfit": 0.0

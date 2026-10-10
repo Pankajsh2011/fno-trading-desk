@@ -100,9 +100,9 @@
         </button>
 
         <!-- Auto Trading Toggle -->
-        <button id="autoTradeBtn" onclick="toggleAutoTrading()" class="px-3 py-1.5 rounded-lg border border-amber-300 bg-amber-50 hover:bg-amber-100 text-xs font-bold text-amber-800 font-mono-code flex items-center gap-1.5 transition">
+        <button id="autoTradeBtn" onclick="toggleAutoTrading()" class="px-3 py-1.5 rounded-lg border border-emerald-400 bg-emerald-50 hover:bg-emerald-100 text-xs font-bold text-emerald-800 font-mono-code flex items-center gap-1.5 transition">
           <span>⚡</span>
-          <span id="autoTradeText">AUTO: OFF (PAPER)</span>
+          <span id="autoTradeText">AUTO: ON (PAPER)</span>
         </button>
 
         <!-- Manual Sweep Button -->
@@ -125,9 +125,9 @@
       <div class="desk-card p-4 space-y-1 relative overflow-hidden">
         <div class="text-[11px] font-bold text-slate-400 font-mono-code uppercase tracking-wider">// BALANCE / PORTFOLIO</div>
         <div class="flex items-baseline gap-2">
-          <span id="displayBalance" class="text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono-code">₹1,00,000.00</span>
+          <span id="displayBalance" class="text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono-code">₹20,00,000.00</span>
         </div>
-        <div class="text-[11px] text-slate-400 font-mono-code">FROM ₹1,00,000.00 INITIAL CAPITAL</div>
+        <div id="displayInitialCapital" class="text-[11px] text-slate-400 font-mono-code">FROM ₹20,00,000.00 INITIAL CAPITAL</div>
         <div class="absolute right-3 top-3 w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 text-xs font-mono-code">01</div>
       </div>
 
@@ -947,7 +947,7 @@
     // -------------------------------------------------------------
     const bCanvas = document.getElementById('balanceChart');
     const bCtx = bCanvas.getContext('2d');
-    let balancePoints = [100000, 100450, 100320, 101200, 101100, 102450, 103200, 104100, 105600];
+    let balancePoints = [2000000, 2004500, 2003200, 2012000, 2011000, 2024500, 2032000, 2041000, 2056000];
 
     function drawBalanceChart() {
       const rect = bCanvas.getBoundingClientRect();
@@ -1488,11 +1488,40 @@
           const riskData = await riskRes.json();
           const autoBtn = document.getElementById('autoTradeText');
           if (riskData.autoTrading) {
-            autoBtn.textContent = 'AUTO: LIVE ORDERS';
+            autoBtn.textContent = 'AUTO: ON (PAPER)';
             autoBtn.parentElement.className = 'px-3 py-1.5 rounded-lg border border-emerald-400 bg-emerald-50 text-emerald-800 text-xs font-bold font-mono-code flex items-center gap-1.5 transition';
           } else {
-            autoBtn.textContent = 'AUTO: OFF (PAPER)';
+            autoBtn.textContent = 'AUTO: OFF (MANUAL)';
             autoBtn.parentElement.className = 'px-3 py-1.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-800 text-xs font-bold font-mono-code flex items-center gap-1.5 transition';
+          }
+        }
+
+        // 4. Fetch Paper Trading Portfolio Balance (₹20 Lakhs Dynamic Sync)
+        const paperRes = await fetch('/api/options/paper-trades');
+        if (paperRes.ok) {
+          const paperData = await paperRes.json();
+          const vp = paperData.virtualPortfolio;
+          if (vp) {
+            const balEl = document.getElementById('displayBalance');
+            if (balEl) {
+              balEl.textContent = '₹' + Number(vp.cash).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            }
+            const initEl = document.getElementById('displayInitialCapital');
+            if (initEl && vp.initialCash) {
+              initEl.textContent = 'FROM ₹' + Number(vp.initialCash).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' INITIAL CAPITAL';
+            }
+            const pnlEl = document.getElementById('displayPnl');
+            const pnlPctEl = document.getElementById('displayPnlPct');
+            const netPnl = Number(vp.netProfit !== undefined ? vp.netProfit : (vp.cash - (vp.initialCash || 2000000)));
+            const pnlPct = (vp.initialCash || 2000000) > 0 ? (netPnl / (vp.initialCash || 2000000)) * 100 : 0;
+            if (pnlEl) {
+              pnlEl.textContent = (netPnl >= 0 ? '+' : '') + '₹' + netPnl.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+              pnlEl.className = 'text-2xl sm:text-3xl font-extrabold font-mono-code ' + (netPnl >= 0 ? 'text-emerald-600' : 'text-rose-600');
+            }
+            if (pnlPctEl) {
+              pnlPctEl.textContent = (pnlPct >= 0 ? '+' : '') + pnlPct.toFixed(2) + '%';
+              pnlPctEl.className = 'text-xs font-bold font-mono-code px-2 py-0.5 rounded ' + (pnlPct >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700');
+            }
           }
         }
       } catch (e) {
@@ -1701,7 +1730,7 @@
           body: JSON.stringify({ autoTrading: nextState })
         });
 
-        addLogEntry('PROFESSOR', `Auto trading switched to: ${nextState ? 'LIVE ORDERS (OPENALGO/DHAN)' : 'PAPER SIMULATION'}`);
+        addLogEntry('PROFESSOR', `Auto trading switched to: ${nextState ? 'ACTIVE (AUTO PAPER TRADES)' : 'OFF (MANUAL ONLY)'}`);
         syncBackend();
       } catch (e) {
         console.error("Auto trade toggle error:", e);
