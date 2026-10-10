@@ -37,13 +37,23 @@ Live telemetry and status monitoring for 10 autonomous agents:
 * ⚔️ **BERLIN** — Volatility Sweeper (India VIX & ATR bands).
 * 🎯 **LISBON** — Exit Coordinator (Trailing stops & profit harvest).
 
-### 5. Advanced Cockpit Visualizations
+### 5. Real-Time Dhan & TradingView Webhook Engine (0-Sec Latency)
+* **Instant Signal Ingestion:** Webhook endpoint `/api/webhook/dhan` (and `/api/webhook/tradingview`) captures alerts sent directly from Dhan or TradingView in real time.
+* **Photo-Validated Pine Script v5:** Includes `perfect_engulfing_pro.pine` running directly on TradingView or Dhan Web charts with exact Photo 2 criteria:
+  * 25-minute timeframe for all 213 F&O stocks.
+  * Full body-to-body engulfing ($\ge 110\%$).
+  * Total wick $\le 20\%$ of candle range ($\ge 80\%$ directional body).
+  * Anti-doji and anti-top/bottom trend reversal filtering.
+  * Automatic 1:2 R:R target and stop loss levels.
+* **Dual Execution:** Incoming webhooks appear instantaneously in the dashboard, trigger live audio chimes, dispatch Telegram alerts, and fire automated Dhan bracket orders if auto-trading is enabled.
+
+### 6. Advanced Cockpit Visualizations
 * **Balance History / Equity Curve:** Real-time intraday equity curve canvas.
 * **Tail Probability Ridge / Strike Landscape:** Multi-layer statistical distribution canvas.
 * **5D Strategy Lattice (Penteract):** 3D-projected rotating 32-vertex hypercube strategy graph.
 * **Relationship Graph & Signal Flow Pipeline:** 90-node, 134-edge liquidity flow network displaying $P(\text{UP})$ vs $P(\text{DOWN})$ swing probabilities and cluster convergence.
 * **Live Audio Alert Synthesizer:** Real-time Web Audio API sound alerts for Buy/Sell signals.
-* **1-Click Dhan Access Token Modal:** Update 24-hr broker access tokens directly from the top bar without server restarts.
+* **1-Click Dhan & Webhook Cockpit:** Configure 24-hr broker access tokens and live webhook alerts directly from the top bar without server restarts.
 
 ---
 

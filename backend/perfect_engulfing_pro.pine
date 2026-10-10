@@ -1,0 +1,158 @@
+//@version=5
+indicator("Perfect Engulfing Reversal Pro [25m NSE F&O - Photo Validated]", shorttitle="Engulf Pro 25m", overlay=true, max_labels_count=500, max_lines_count=500)
+
+// ==============================================================================
+// 🎯 PHOTO-VALIDATED PARAMETERS & USER SPECIFICATIONS
+// Inventory : NSE 213 F&O Stocks (Dhan App Watchlist)
+// Timeframe : 25 Minutes
+// Engulf Type: Both Sides (Bullish = Red ➔ Green, Bearish = Green ➔ Red)
+// Conditions : Full body-to-body engulf | Wick size ≤ 20% | 1:2 R:R Target
+// ==============================================================================
+
+// --- 1. SETTINGS & INPUTS ---
+grp_engulf = "1. Engulfing Rules (Photo 2 Validated)"
+min_body_ratio   = input.float(1.10, "Min Body Expansion Ratio (1.10 = 110%)", minval=1.0, maxval=3.0, step=0.05, group=grp_engulf, tooltip="Current body must be at least this multiple of previous body")
+max_wick_pct     = input.float(20.0, "Max Total Wick % of Candle (Strict ≤ 20%)", minval=5.0, maxval=40.0, step=1.0, group=grp_engulf, tooltip="Sum of upper and lower wicks divided by total candle size")
+min_body_pct     = input.float(0.08, "Min Prev Body % of Price (Anti-Doji Trap)", minval=0.01, maxval=1.0, step=0.01, group=grp_engulf, tooltip="Filters out flat micro-dojis (ABB trap filter)")
+
+grp_trend = "2. Prior Trend Reversal (Anti-Top/Bottom Traps)"
+use_trend_filter = input.bool(true, "Enable Trend Reversal Filter (Photos 1 & 4)", group=grp_trend, tooltip="Bullish MUST occur after decline; Bearish MUST occur after rally")
+trend_lookback   = input.int(5, "Trend Lookback Candles", minval=3, maxval=15, group=grp_trend)
+
+grp_targets = "3. Risk : Reward Management"
+rr_ratio         = input.float(2.0, "Target Risk-Reward Ratio (Default 1:2)", minval=1.0, maxval=5.0, step=0.5, group=grp_targets)
+show_targets     = input.bool(true, "Show Entry / SL / Target Lines on Chart", group=grp_targets)
+
+grp_alerts = "4. Dhan Webhook & Bot Integration"
+webhook_secret   = input.string("dhan_fno_secret", "Webhook Secret Key", group=grp_alerts)
+bot_webhook_url  = input.string("https://fno-trading-desk.onrender.com/api/webhook/dhan", "Bot Webhook URL (For Reference)", group=grp_alerts)
+
+// --- 2. CANDLE ANATOMY CALCULATIONS ---
+c_open   = open
+c_close  = close
+c_high   = high
+c_low    = low
+
+p_open   = open[1]
+p_close  = close[1]
+p_high   = high[1]
+p_low    = low[1]
+
+c_body   = math.abs(c_close - c_open)
+p_body   = math.abs(p_close - p_open)
+c_range  = c_high - c_low
+
+// Wick calculation
+upper_wick = c_high - math.max(c_open, c_close)
+lower_wick = math.min(c_open, c_close) - c_low
+tot_wick   = upper_wick + lower_wick
+wick_pct   = c_range > 0 ? (tot_wick / c_range) * 100.0 : 100.0
+
+// Filters
+wick_valid    = wick_pct <= max_wick_pct
+ratio_valid   = p_body > 0 and (c_body / p_body) >= min_body_ratio
+prev_not_doji = p_body >= (p_close * (min_body_pct / 100.0))
+
+// --- 3. PRIOR TREND & LOCATION REVERSAL EVALUATION ---
+// Bullish Engulfing MUST follow a DECLINE (reversal from bottom / support)
+// Bearish Engulfing MUST follow a RISE (reversal from top / resistance)
+highest_prior = ta.highest(high[1], trend_lookback)
+lowest_prior  = ta.lowest(low[1], trend_lookback)
+prior_net_chg = close[1] - open[trend_lookback]
+
+is_prior_decline = not use_trend_filter or (prior_net_chg < 0 or low[1] <= (lowest_prior * 1.002))
+is_prior_rise    = not use_trend_filter or (prior_net_chg > 0 or high[1] >= (highest_prior * 0.998))
+
+// --- 4. EXACT PHOTO-VALIDATED CANDLE ENGULF PATTERN ---
+// Bullish Engulfing: Red candle followed by solid Green candle
+is_bull_shape = (p_close < p_open) and (c_close > c_open) and (c_close >= p_open) and (c_open <= p_close) and (c_close > p_open or c_open < p_close)
+
+// Bearish Engulfing: Green candle followed by solid Red candle
+is_bear_shape = (p_close > p_open) and (c_close < c_open) and (c_open >= p_close) and (c_close <= p_open) and (c_open > p_close or c_close < p_open)
+
+// Final Confirmed Signals
+bull_signal = is_bull_shape and wick_valid and ratio_valid and prev_not_doji and is_prior_decline
+bear_signal = is_bear_shape and wick_valid and ratio_valid and prev_not_doji and is_prior_rise
+
+// --- 5. ENTRY, STOP LOSS & 1:2 R:R TARGET CALCULATION ---
+var float trade_entry  = na
+var float trade_sl     = na
+var float trade_target = na
+var string trade_dir   = ""
+
+if bull_signal
+    trade_entry  := c_close
+    trade_sl     := c_low
+    float risk   = c_close - trade_sl
+    trade_target := c_close + (risk * rr_ratio)
+    trade_dir    := "BULLISH"
+
+if bear_signal
+    trade_entry  := c_close
+    trade_sl     := c_high
+    float risk   = trade_sl - c_close
+    trade_target := c_close - (risk * rr_ratio)
+    trade_dir    := "BEARISH"
+
+// --- 6. CHART VISUALIZATION & HIGHLIGHTING ---
+// Bar color highlighting
+barcolor(bull_signal ? color.new(#10b981, 0) : bear_signal ? color.new(#ef4444, 0) : na, title="Engulfing Candle Color")
+
+// Visual markers below/above candles
+plotshape(bull_signal, title="Bullish Engulfing Marker", style=shape.triangleup, location=location.belowbar, color=#10b981, size=size.normal, text="▲ BULL ENGULF\nWick ≤ 20%")
+plotshape(bear_signal, title="Bearish Engulfing Marker", style=shape.triangledown, location=location.abovebar, color=#ef4444, size=size.normal, text="▼ BEAR ENGULF\nWick ≤ 20%")
+
+// Price level lines
+plot(show_targets and trade_dir == "BULLISH" ? trade_entry : na, title="Bull Entry", color=color.blue, style=plot.style_linebr, linewidth=1)
+plot(show_targets and trade_dir == "BULLISH" ? trade_sl : na, title="Bull StopLoss", color=color.red, style=plot.style_linebr, linewidth=1)
+plot(show_targets and trade_dir == "BULLISH" ? trade_target : na, title="Bull Target (1:2)", color=color.green, style=plot.style_linebr, linewidth=2)
+
+plot(show_targets and trade_dir == "BEARISH" ? trade_entry : na, title="Bear Entry", color=color.blue, style=plot.style_linebr, linewidth=1)
+plot(show_targets and trade_dir == "BEARISH" ? trade_sl : na, title="Bear StopLoss", color=color.red, style=plot.style_linebr, linewidth=1)
+plot(show_targets and trade_dir == "BEARISH" ? trade_target : na, title="Bear Target (1:2)", color=color.green, style=plot.style_linebr, linewidth=2)
+
+// Invisible plot outputs for Webhook placeholder variables
+plot(trade_target, title="Target_Output", display=display.none)
+plot(wick_pct, title="WickPct_Output", display=display.none)
+plot(p_body > 0 ? (c_body / p_body) * 100.0 : 0.0, title="Ratio_Output", display=display.none)
+
+// --- 7. ON-SCREEN TELEMETRY TABLE ---
+var table status_table = table.new(position.top_right, 2, 5, bgcolor=color.new(color.black, 20), border_color=color.gray, border_width=1)
+if barstate.islast
+    table.cell(status_table, 0, 0, "ENGINE", bgcolor=color.new(color.blue, 70), text_color=color.white, text_size=size.small)
+    table.cell(status_table, 1, 0, "DHAN BOT PRO 25m", bgcolor=color.new(color.blue, 70), text_color=color.white, text_size=size.small)
+    
+    table.cell(status_table, 0, 1, "Wick %", text_color=color.white, text_size=size.small)
+    table.cell(status_table, 1, 1, str.format("{0,number,#.#}% ({1})", wick_pct, wick_valid ? "✔ ≤20%" : "❌ >20%"), 
+               text_color=wick_valid ? color.green : color.red, text_size=size.small)
+               
+    table.cell(status_table, 0, 2, "Body Ratio", text_color=color.white, text_size=size.small)
+    table.cell(status_table, 1, 2, str.format("{0,number,#.#}%", p_body > 0 ? (c_body/p_body)*100.0 : 0.0), 
+               text_color=ratio_valid ? color.green : color.orange, text_size=size.small)
+
+    table.cell(status_table, 0, 3, "Trend State", text_color=color.white, text_size=size.small)
+    table.cell(status_table, 1, 3, is_prior_decline ? "DECLINE (Support)" : is_prior_rise ? "RISE (Resistance)" : "SIDEWAYS", 
+               text_color=color.yellow, text_size=size.small)
+
+    table.cell(status_table, 0, 4, "Last Signal", text_color=color.white, text_size=size.small)
+    table.cell(status_table, 1, 4, trade_dir != "" ? str.format("{0} @ ₹{1,number,#.##}", trade_dir, trade_entry) : "WAITING", 
+               text_color=trade_dir == "BULLISH" ? color.green : trade_dir == "BEARISH" ? color.red : color.gray, text_size=size.small)
+
+// --- 8. DHAN & TRADINGVIEW WEBHOOK ALERTS GENERATION ---
+// Sends pre-formatted JSON directly to the Python Bot webhook URL
+if bull_signal
+    string bull_json = str.format('{{\"symbol\":\"{0}\",\"timeframe\":\"{1}\",\"type\":\"BULLISH\",\"pattern\":\"BULLISH_ENGULFING\",\"entry\":{2,number,#.##},\"sl\":{3,number,#.##},\"target\":{4,number,#.##},\"wickPct\":\"{5,number,#.#}%\",\"ratio\":\"{6,number,#.#}%\",\"secret\":\"{7}\"}}', 
+        syminfo.ticker, timeframe.period, c_close, trade_sl, trade_target, wick_pct, (c_body/p_body)*100.0, webhook_secret)
+    alert(bull_json, alert.freq_once_per_bar_close)
+
+if bear_signal
+    string bear_json = str.format('{{\"symbol\":\"{0}\",\"timeframe\":\"{1}\",\"type\":\"BEARISH\",\"pattern\":\"BEARISH_ENGULFING\",\"entry\":{2,number,#.##},\"sl\":{3,number,#.##},\"target\":{4,number,#.##},\"wickPct\":\"{5,number,#.#}%\",\"ratio\":\"{6,number,#.#}%\",\"secret\":\"{7}\"}}', 
+        syminfo.ticker, timeframe.period, c_close, trade_sl, trade_target, wick_pct, (c_body/p_body)*100.0, webhook_secret)
+    alert(bear_json, alert.freq_once_per_bar_close)
+
+// Legacy alertcondition for manual TradingView alert creation
+alertcondition(bull_signal, title="Bullish Engulfing Alert (Photo Validated)", 
+    message='{"symbol":"{{ticker}}","timeframe":"{{interval}}","type":"BULLISH","entry":{{close}},"sl":{{low}},"target":{{plot_0}},"secret":"dhan_fno_secret"}')
+
+alertcondition(bear_signal, title="Bearish Engulfing Alert (Photo Validated)", 
+    message='{"symbol":"{{ticker}}","timeframe":"{{interval}}","type":"BEARISH","entry":{{close}},"sl":{{high}},"target":{{plot_0}},"secret":"dhan_fno_secret"}')

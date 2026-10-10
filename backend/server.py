@@ -2681,6 +2681,242 @@ def health_check():
         "mode": "active" if credentials["clientId"] else "simulated"
     })
 
+
+# ----------------------------------------------------
+# ⚡ REAL-TIME DHAN & TRADINGVIEW WEBHOOK ENGINE
+# ----------------------------------------------------
+webhook_received_signals: List[Dict[str, Any]] = []
+webhook_stats = {
+    "totalReceived": 0,
+    "lastReceivedTime": None,
+    "lastSymbol": None,
+    "lastType": None,
+    "status": "LISTENING"
+}
+
+def clean_stock_symbol(raw_sym: str) -> str:
+    if not raw_sym:
+        return ""
+    s = str(raw_sym).strip().upper()
+    for prefix in ["NSE:", "BSE:", "DHAN:", "MCX:"]:
+        if s.startswith(prefix):
+            s = s[len(prefix):]
+    for suffix in [".NS", ".BO", "-EQ", "-BE"]:
+        if s.endswith(suffix):
+            s = s[:-len(suffix)]
+    return s.strip()
+
+@app.route("/api/webhook/dhan", methods=["POST", "GET"])
+@app.route("/api/webhook/tradingview", methods=["POST", "GET"])
+@app.route("/api/webhook/alert", methods=["POST", "GET"])
+def handle_incoming_webhook():
+    if request.method == "GET":
+        return jsonify({
+            "status": "ACTIVE",
+            "message": "Dhan & TradingView Real-Time Webhook Engine is online and listening for 25m engulfing alerts.",
+            "stats": webhook_stats,
+            "samplePayload": {
+                "symbol": "RELIANCE",
+                "timeframe": "25",
+                "type": "BULLISH",
+                "entry": 2480.0,
+                "sl": 2450.0,
+                "target": 2540.0,
+                "wickPct": "12.5%",
+                "ratio": "135%",
+                "secret": "dhan_fno_secret"
+            }
+        })
+
+    try:
+        payload = request.get_json(silent=True)
+        if not payload:
+            raw_text = request.get_data(as_text=True)
+            if raw_text:
+                try:
+                    payload = json.loads(raw_text)
+                except Exception:
+                    payload = dict(request.form) or {}
+
+        if not payload:
+            logger.warning("[Webhook Warning] Received empty or invalid payload.")
+            return jsonify({"success": False, "error": "Empty or malformed payload"}), 400
+
+        # Optional secret verification
+        configured_secret = os.getenv("WEBHOOK_SECRET")
+        if configured_secret:
+            incoming_secret = payload.get("secret") or payload.get("passphrase") or payload.get("token")
+            if incoming_secret != configured_secret:
+                logger.warning("[Webhook Security] Rejected unauthorized webhook: secret key mismatch.")
+                return jsonify({"success": False, "error": "Unauthorized secret"}), 401
+
+        raw_sym = payload.get("symbol") or payload.get("ticker") or payload.get("stock") or payload.get("scrip")
+        symbol = clean_stock_symbol(raw_sym)
+        if not symbol:
+            return jsonify({"success": False, "error": "Missing stock symbol"}), 400
+
+        stock_meta = next((s for s in active_scanning_list if s["symbol"] == symbol), None)
+        company_name = stock_meta.get("name", symbol) if stock_meta else symbol
+        lot_size = stock_meta.get("lotSize", "") if stock_meta else ""
+        sector = stock_meta.get("sector", "") if stock_meta else ""
+
+        raw_type = str(payload.get("type") or payload.get("action") or payload.get("signal") or payload.get("pattern") or "").upper()
+        if "BULL" in raw_type or raw_type == "BUY":
+            sig_type = "BULLISH"
+        elif "BEAR" in raw_type or raw_type == "SELL":
+            sig_type = "BEARISH"
+        else:
+            sig_type = "BULLISH" if "BULL" in str(payload).upper() else "BEARISH"
+
+        try:
+            entry = float(payload.get("entry") or payload.get("price") or payload.get("close") or 0.0)
+        except Exception:
+            entry = 0.0
+
+        try:
+            sl = float(payload.get("sl") or payload.get("stopLoss") or payload.get("stop_loss") or payload.get("low" if sig_type == "BULLISH" else "high") or 0.0)
+        except Exception:
+            sl = 0.0
+
+        try:
+            target = float(payload.get("target") or payload.get("takeProfit") or payload.get("take_profit") or 0.0)
+        except Exception:
+            target = 0.0
+
+        if entry > 0 and sl > 0 and target == 0:
+            risk = abs(entry - sl)
+            target = round(entry + (risk * 2.0) if sig_type == "BULLISH" else entry - (risk * 2.0), 2)
+
+        wick_pct = str(payload.get("wickPct") or payload.get("wick_pct") or "≤ 20%")
+        ratio = str(payload.get("ratio") or payload.get("engulfRatio") or "≥ 110%")
+        timeframe = str(payload.get("timeframe") or payload.get("interval") or "25m")
+
+        if is_duplicate_alert(symbol, sig_type):
+            logger.info(f"[Webhook De-dup] Skipped duplicate alert for {symbol} ({sig_type})")
+            return jsonify({"success": True, "message": "Duplicate alert within cooldown period, safely ignored."}), 200
+
+        sig_id = f"{symbol}-{int(time.time() * 1000)}-webhook"
+        trend_context = "Real-Time Dhan Webhook Reversal (Photo Validated: Wick ≤ 20%, Body ≥ 110%)"
+        signal = {
+            "id": sig_id,
+            "symbol": symbol,
+            "name": company_name,
+            "type": sig_type,
+            "strength": int(payload.get("strength") or 95),
+            "entryPrice": entry,
+            "stopLoss": sl,
+            "target": target,
+            "perfectCategory": f"Dhan Webhook Full Body ({ratio})",
+            "pctOfAvg": "100%",
+            "ratio": ratio,
+            "wickPct": wick_pct,
+            "requiredRange": "Full Body (Wick ≤ 20%)",
+            "trendContext": trend_context,
+            "timestamp": datetime.utcnow().isoformat(),
+            "source": "DHAN_WEBHOOK",
+            "timeframe": timeframe,
+            "lotSize": lot_size,
+            "sector": sector
+        }
+
+        active_signals.insert(0, signal)
+        if len(active_signals) > 50:
+            active_signals.pop()
+
+        webhook_stats["totalReceived"] += 1
+        webhook_stats["lastReceivedTime"] = datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S IST")
+        webhook_stats["lastSymbol"] = symbol
+        webhook_stats["lastType"] = sig_type
+        webhook_received_signals.insert(0, signal)
+        if len(webhook_received_signals) > 100:
+            webhook_received_signals.pop()
+
+        logger.info(f"[Dhan Webhook Alert] 🎯 {sig_type} in {symbol} @ ₹{entry} | SL: ₹{sl} | TGT: ₹{target} | Lot: {lot_size}")
+
+        fake_candle = {
+            "current": {"open": entry, "high": max(entry, sl, target), "low": min(entry, sl, target), "close": entry},
+            "previous": {"open": sl, "close": entry}
+        }
+        threading.Thread(target=dispatch_signal_alerts, args=(signal, fake_candle), daemon=True).start()
+
+        return jsonify({
+            "success": True,
+            "message": f"Real-time {sig_type} alert for {symbol} received and processed successfully!",
+            "signalId": sig_id,
+            "signal": signal
+        }), 200
+
+    except Exception as e:
+        logger.error(f"[Webhook Error] Exception processing webhook: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/webhook/dhan-postback", methods=["POST"])
+def handle_dhan_postback():
+    try:
+        data = request.get_json(silent=True) or {}
+        logger.info(f"[Dhan Postback Update]: {data}")
+        order_id = str(data.get("orderId") or data.get("order_id") or "")
+        order_status = str(data.get("orderStatus") or "").upper()
+        if order_id:
+            for trade in trade_book:
+                if str(trade.get("id")) == order_id:
+                    trade["status"] = order_status
+                    logger.info(f"[Trade Updated via Postback]: {order_id} -> {order_status}")
+                    break
+        return jsonify({"success": True, "message": "Postback processed"}), 200
+    except Exception as e:
+        logger.error(f"[Dhan Postback Error]: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/webhook/stats", methods=["GET"])
+def get_webhook_stats():
+    return jsonify({
+        "success": True,
+        "stats": webhook_stats,
+        "recentSignals": webhook_received_signals[:10]
+    })
+
+@app.route("/api/webhook/test-signal", methods=["POST"])
+def trigger_test_webhook_signal():
+    body = request.get_json(silent=True) or {}
+    sample_sym = body.get("symbol") or "RELIANCE"
+    sample_type = body.get("type") or "BULLISH"
+    stock_meta = next((s for s in active_scanning_list if s["symbol"] == sample_sym), None)
+    entry_p = 2540.0
+    sl_p = 2500.0 if sample_type == "BULLISH" else 2580.0
+    tgt_p = 2620.0 if sample_type == "BULLISH" else 2460.0
+    
+    test_signal = {
+        "id": f"{sample_sym}-{int(time.time() * 1000)}-test",
+        "symbol": sample_sym,
+        "name": stock_meta.get("name", sample_sym) if stock_meta else sample_sym,
+        "type": sample_type,
+        "strength": 98,
+        "entryPrice": entry_p,
+        "stopLoss": sl_p,
+        "target": tgt_p,
+        "perfectCategory": "Dhan Webhook Full Body (142%)",
+        "pctOfAvg": "100%",
+        "ratio": "142%",
+        "wickPct": "11.2%",
+        "requiredRange": "Full Body (Wick ≤ 20%)",
+        "trendContext": "Verified 25m Reversal Signal (Photo Validated)",
+        "timestamp": datetime.utcnow().isoformat(),
+        "source": "DHAN_WEBHOOK_TEST",
+        "timeframe": "25m",
+        "lotSize": stock_meta.get("lotSize", "250") if stock_meta else "250",
+        "sector": stock_meta.get("sector", "ENERGY") if stock_meta else "ENERGY"
+    }
+    active_signals.insert(0, test_signal)
+    if len(active_signals) > 50:
+        active_signals.pop()
+    webhook_stats["totalReceived"] += 1
+    webhook_stats["lastReceivedTime"] = datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S IST")
+    webhook_stats["lastSymbol"] = sample_sym
+    webhook_stats["lastType"] = sample_type
+    logger.info(f"[Test Webhook Signal] Generated test alert for {sample_sym}")
+    return jsonify({"success": True, "message": f"Test alert for {sample_sym} injected into active signals!", "signal": test_signal})
+
 # Serve Animated GPTHEIST DESK Dashboard directly from templates/
 TEMPLATES_DIR = BASE_DIR / "templates"
 DIST_DIR = ROOT_DIR / "dist"
@@ -2688,6 +2924,11 @@ DIST_DIR = ROOT_DIR / "dist"
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
 def serve_frontend(path):
+    if path == "perfect_engulfing_pro.pine":
+        if (ROOT_DIR / "perfect_engulfing_pro.pine").exists():
+            return send_from_directory(str(ROOT_DIR), "perfect_engulfing_pro.pine")
+        elif (BASE_DIR / "perfect_engulfing_pro.pine").exists():
+            return send_from_directory(str(BASE_DIR), "perfect_engulfing_pro.pine")
     # Prioritize our new Animated GPTHEIST DESK dashboard template
     if not path or path in ["", "index.html", "dashboard"]:
         if (TEMPLATES_DIR / "index.html").exists():

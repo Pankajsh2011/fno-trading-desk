@@ -83,6 +83,7 @@
           <span id="engineStatusDot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
           <span id="engineStatusText" class="font-bold">NSE REAL-TIME (213 F&O)</span>
           <button onclick="openDhanTokenModal()" class="ml-1 px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 hover:bg-amber-200 text-[10px] font-bold font-mono-code transition">DHAN TOKEN</button>
+          <button onclick="openWebhookModal()" class="ml-1 px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-900 hover:bg-emerald-200 text-[10px] font-bold font-mono-code transition">⚡ WEBHOOK</button>
         </div>
 
         <!-- Live Status Pill -->
@@ -823,6 +824,76 @@
   </div>
 
   <!-- ============================================================== -->
+  <!-- ⚡ 10. MODAL: DHAN & TRADINGVIEW WEBHOOK REAL-TIME INTEGRATION -->
+  <!-- ============================================================== -->
+  <div id="webhookModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="desk-card max-w-xl w-full p-6 space-y-4 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+      <button onclick="closeWebhookModal()" class="absolute right-4 top-4 text-slate-400 hover:text-slate-700 text-xl font-bold font-mono-code">&times;</button>
+      
+      <div class="border-b border-slate-100 pb-3">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <h3 class="text-base font-extrabold text-slate-900 font-mono-code uppercase">DHAN & TRADINGVIEW WEBHOOK ENGINE</h3>
+        </div>
+        <p class="text-xs text-slate-500 font-mono-code mt-0.5">Real-time instant alert ingestion (0-sec latency, all 213 F&O stocks)</p>
+      </div>
+
+      <div class="space-y-4 font-mono-code text-xs">
+        <!-- Webhook URL Box -->
+        <div>
+          <label class="block text-slate-700 font-bold mb-1">Your Live Webhook URL:</label>
+          <div class="flex items-center gap-2">
+            <input id="displayWebhookUrl" type="text" readonly class="w-full px-3 py-2 rounded-lg border border-slate-300 bg-slate-50 text-slate-800 font-bold text-[11px] select-all" />
+            <button onclick="copyWebhookUrl()" id="copyWebhookUrlBtn" class="px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shrink-0">COPY URL</button>
+          </div>
+          <span class="text-[10px] text-slate-400">Paste this URL into TradingView or Dhan Alert Webhook URL field</span>
+        </div>
+
+        <!-- Alert JSON Template -->
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="text-slate-700 font-bold">TradingView Alert Message (JSON Template):</label>
+            <button onclick="copyWebhookJson()" id="copyWebhookJsonBtn" class="text-[10px] font-bold text-emerald-700 hover:underline">COPY JSON</button>
+          </div>
+          <textarea id="webhookJsonTemplate" readonly rows="7" class="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-900 text-emerald-400 font-mono-code text-[11px] leading-relaxed select-all">{
+  "symbol": "{{ticker}}",
+  "timeframe": "{{interval}}",
+  "type": "BULLISH",
+  "entry": {{close}},
+  "sl": {{low}},
+  "target": {{plot_0}},
+  "wickPct": "{{plot_1}}",
+  "ratio": "{{plot_2}}",
+  "secret": "dhan_fno_secret"
+}</textarea>
+        </div>
+
+        <!-- Pine Script Info -->
+        <div class="p-3 rounded-lg bg-emerald-50 border border-emerald-200 space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-emerald-900">📜 Pine Script v5 (25m Engulfing Reversal Pro)</span>
+            <button onclick="copyPineScript()" id="copyPineScriptBtn" class="px-2 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold">COPY PINE SCRIPT</button>
+          </div>
+          <p class="text-[11px] text-emerald-800">
+            Pre-built Pine Script with exact Photo 2 parameters (Full body engulf, Wick ≤ 20%, Body ≥ 110%, anti-doji, anti-top/bottom reversal). Open in TradingView / Dhan Web Pine Editor ➔ Save ➔ Add Alert with Webhook!
+          </p>
+        </div>
+
+        <div id="webhookAlertStatus" class="hidden p-2.5 rounded-lg text-xs font-mono-code"></div>
+      </div>
+
+      <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+        <button onclick="sendTestWebhookSignal()" id="testWebhookBtn" class="px-4 py-2 rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 text-xs font-bold font-mono-code">
+          ⚡ SEND TEST ALERT (RELIANCE)
+        </button>
+        <button onclick="closeWebhookModal()" class="px-4 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-bold font-mono-code">
+          DONE
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
   <!-- 💻 JAVASCRIPT: CANVASES, ANIMATIONS, WEBAUDIO & BACKEND SYNC -->
   <!-- ============================================================== -->
   <script>
@@ -1238,6 +1309,102 @@
       } finally {
         btn.disabled = false;
         btn.textContent = 'SAVE & CONNECT';
+      }
+    }
+
+    // -------------------------------------------------------------
+    // Webhook Modal & Integration Controllers
+    // -------------------------------------------------------------
+    function openWebhookModal() {
+      const modal = document.getElementById('webhookModal');
+      const urlInput = document.getElementById('displayWebhookUrl');
+      if (urlInput) {
+        urlInput.value = window.location.origin + '/api/webhook/dhan';
+      }
+      modal.classList.remove('hidden');
+    }
+
+    function closeWebhookModal() {
+      document.getElementById('webhookModal').classList.add('hidden');
+    }
+
+    function copyWebhookUrl() {
+      const urlInput = document.getElementById('displayWebhookUrl');
+      if (urlInput) {
+        navigator.clipboard.writeText(urlInput.value).then(() => {
+          const btn = document.getElementById('copyWebhookUrlBtn');
+          btn.textContent = 'COPIED! ✔';
+          setTimeout(() => btn.textContent = 'COPY URL', 2000);
+        });
+      }
+    }
+
+    function copyWebhookJson() {
+      const jsonArea = document.getElementById('webhookJsonTemplate');
+      if (jsonArea) {
+        navigator.clipboard.writeText(jsonArea.value).then(() => {
+          const btn = document.getElementById('copyWebhookJsonBtn');
+          btn.textContent = 'COPIED! ✔';
+          setTimeout(() => btn.textContent = 'COPY JSON', 2000);
+        });
+      }
+    }
+
+    async function copyPineScript() {
+      const btn = document.getElementById('copyPineScriptBtn');
+      btn.textContent = 'FETCHING...';
+      try {
+        const res = await fetch('/perfect_engulfing_pro.pine');
+        let text = '';
+        if (res.ok) {
+          text = await res.text();
+        } else {
+          text = `//@version=5\nindicator("Perfect Engulfing Reversal Pro [25m NSE F&O - Photo Validated]", shorttitle="Engulf Pro 25m", overlay=true)\n// Script available at perfect_engulfing_pro.pine`;
+        }
+        await navigator.clipboard.writeText(text);
+        btn.textContent = 'COPIED PINE SCRIPT! ✔';
+        setTimeout(() => btn.textContent = 'COPY PINE SCRIPT', 2500);
+      } catch (e) {
+        btn.textContent = 'COPY FAILED';
+        setTimeout(() => btn.textContent = 'COPY PINE SCRIPT', 2000);
+      }
+    }
+
+    async function sendTestWebhookSignal() {
+      const btn = document.getElementById('testWebhookBtn');
+      const alertBox = document.getElementById('webhookAlertStatus');
+      btn.disabled = true;
+      btn.textContent = 'DISPATCHING TEST...';
+      alertBox.className = 'p-2.5 rounded-lg text-xs font-mono-code bg-slate-100 text-slate-700';
+      alertBox.textContent = 'Sending sample 25m Bullish Engulfing webhook for RELIANCE...';
+      alertBox.classList.remove('hidden');
+
+      try {
+        const res = await fetch('/api/webhook/test-signal', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ symbol: 'RELIANCE', type: 'BULLISH' })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alertBox.className = 'p-2.5 rounded-lg text-xs font-mono-code bg-emerald-100 text-emerald-800 border border-emerald-300';
+          alertBox.textContent = '✔ ' + data.message;
+          playBreakoutChime();
+          addLogEntry('DENVER', 'Webhook test signal accepted: RELIANCE 25m Bullish Engulfing!');
+          setTimeout(() => {
+            closeWebhookModal();
+            syncBackend();
+          }, 1500);
+        } else {
+          alertBox.className = 'p-2.5 rounded-lg text-xs font-mono-code bg-rose-100 text-rose-800';
+          alertBox.textContent = 'Error: ' + data.error;
+        }
+      } catch (err) {
+        alertBox.className = 'p-2.5 rounded-lg text-xs font-mono-code bg-rose-100 text-rose-800';
+        alertBox.textContent = 'Connection error: ' + err.message;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '⚡ SEND TEST ALERT (RELIANCE)';
       }
     }
 
