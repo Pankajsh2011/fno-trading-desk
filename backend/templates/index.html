@@ -157,10 +157,10 @@
         <div class="text-[11px] font-bold text-slate-400 font-mono-code uppercase tracking-wider">// APPROVAL GATE / RISK</div>
         <div class="flex items-center justify-between">
           <span class="text-xl sm:text-2xl font-black text-slate-900 font-mono-code">PALERMO</span>
-          <span class="text-[10px] font-bold font-mono-code px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">DEPTH SCAN</span>
+          <span id="palermoStatusBadge" class="text-[10px] font-bold font-mono-code px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">RISK SHIELD</span>
         </div>
         <!-- Stepper indicator -->
-        <div class="flex items-center gap-1 pt-1.5">
+        <div id="palermoBars" class="flex items-center gap-1 pt-1.5">
           <div class="h-1.5 flex-1 rounded-full bg-emerald-500"></div>
           <div class="h-1.5 flex-1 rounded-full bg-emerald-500"></div>
           <div class="h-1.5 flex-1 rounded-full bg-emerald-500"></div>
@@ -171,7 +171,7 @@
           <div class="h-1.5 flex-1 rounded-full bg-slate-200"></div>
           <div class="h-1.5 flex-1 rounded-full bg-slate-200"></div>
         </div>
-        <div class="text-[10px] text-slate-400 font-mono-code pt-0.5">CHECK 09 / EXIT DEPTH • RISK 1.0%</div>
+        <div id="palermoAuditText" class="text-[10px] text-slate-400 font-mono-code pt-0.5 truncate">VETOES: 0 | TRAPS: 0 | RISK 1.0%</div>
       </div>
 
     </div>
@@ -258,28 +258,28 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
-          <!-- Stats column -->
+          <!-- Live Option Chain & Volatility Telemetry Column -->
           <div class="md:col-span-4 space-y-1.5 font-mono-code text-xs">
-            <div class="text-[10px] text-slate-400 uppercase">TAIL SCANNER / LIVE</div>
+            <div class="text-[10px] text-slate-400 uppercase">OPTION CHAIN & VIX / LIVE</div>
             <div class="flex justify-between py-1 border-b border-slate-100">
-              <span class="text-slate-500">SESSIONS</span>
-              <span class="font-bold text-slate-900">1180</span>
+              <span class="text-slate-500">INDIA VIX</span>
+              <span id="vizVixVal" class="font-bold text-slate-900">17.56</span>
             </div>
             <div class="flex justify-between py-1 border-b border-slate-100">
-              <span class="text-slate-500">TAIL MASS</span>
-              <span class="font-bold text-emerald-600">2.40%</span>
+              <span class="text-slate-500">EXP MOVE</span>
+              <span id="vizExpMove" class="font-bold text-emerald-600">±0.00%</span>
             </div>
             <div class="flex justify-between py-1 border-b border-slate-100">
-              <span class="text-slate-500">IMPLIED MULT</span>
-              <span class="font-bold text-slate-900">x52.6</span>
+              <span class="text-slate-500">MAX PAIN</span>
+              <span id="vizMaxPain" class="font-bold text-slate-900">--</span>
             </div>
             <div class="flex justify-between py-1 border-b border-slate-100">
-              <span class="text-slate-500">AVG ENTRY</span>
-              <span class="font-bold text-slate-900">₹1.10</span>
+              <span class="text-slate-500">CALL WALL</span>
+              <span id="vizCallWall" class="font-bold text-rose-600">--</span>
             </div>
             <div class="flex justify-between py-1">
-              <span class="text-slate-500">BEST HIT</span>
-              <span class="font-bold text-emerald-600">+81.2%</span>
+              <span class="text-slate-500">PUT WALL</span>
+              <span id="vizPutWall" class="font-bold text-emerald-600">--</span>
             </div>
           </div>
 
@@ -383,9 +383,9 @@
             <span>Catalyst</span>
           </div>
           <div class="pt-2 border-t border-slate-100 space-y-1 text-[10px]">
-            <div class="flex justify-between text-slate-500"><span>BEAR PATHS</span><span class="font-bold text-slate-900">500</span></div>
-            <div class="flex justify-between text-slate-500"><span>BULL PATHS</span><span class="font-bold text-slate-900">1569</span></div>
-            <div class="flex justify-between text-slate-500"><span>CONVERGENCE</span><span class="font-bold text-emerald-600">97%</span></div>
+            <div class="flex justify-between text-slate-500"><span>BEAR SIGNALS</span><span id="flowBearCnt" class="font-bold text-rose-600">0</span></div>
+            <div class="flex justify-between text-slate-500"><span>BULL SIGNALS</span><span id="flowBullCnt" class="font-bold text-emerald-600">0</span></div>
+            <div class="flex justify-between text-slate-500"><span>NIFTY VWAP</span><span id="flowVwapPos" class="font-bold text-slate-900">--</span></div>
           </div>
         </div>
 
@@ -394,19 +394,19 @@
           <canvas id="flowCanvas" class="w-full h-full"></canvas>
         </div>
 
-        <!-- Confidence Gauge & Direction -->
+        <!-- Live Macro Regime & Consensus Gauge -->
         <div class="lg:col-span-2 space-y-2 font-mono-code text-[11px] text-right">
           <div>
-            <div class="text-slate-400 text-[10px]">P(UP) / P(DOWN)</div>
-            <div class="text-base font-extrabold text-emerald-600">0.79 / 0.21</div>
+            <div class="text-slate-400 text-[10px]">OI PCR CONSENSUS</div>
+            <div id="flowPcrRatio" class="text-base font-extrabold text-emerald-600">1.00</div>
           </div>
           <div>
-            <div class="text-slate-400 text-[10px]">CONFIDENCE</div>
-            <div class="text-lg font-black text-slate-900">94.0%</div>
+            <div class="text-slate-400 text-[10px]">NEWS SENTIMENT AI</div>
+            <div id="flowNewsScore" class="text-lg font-black text-slate-900">NEUTRAL</div>
           </div>
           <div>
-            <div class="text-slate-400 text-[10px]">PREDICTED</div>
-            <div class="text-xs font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 inline-block">▲ UPWARD SWING</div>
+            <div class="text-slate-400 text-[10px]">BERLIN REGIME</div>
+            <div id="flowRegimeBadge" class="text-xs font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 inline-block">CALIBRATING</div>
           </div>
         </div>
       </div>
@@ -554,6 +554,278 @@
         </div>
 
       </div>
+
+      <!-- Focused Agent Live Telemetry Banner (click any agent above to inspect) -->
+      <div id="agentDetailBanner" class="desk-card px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2 bg-slate-50/70 border-slate-200 font-mono-code text-xs">
+        <div class="flex items-center gap-2">
+          <span id="focusedAgentBadge" class="px-2 py-0.5 rounded bg-slate-900 text-white font-bold text-[10px]">TOKYO • 01</span>
+          <span id="focusedAgentDuty" class="font-bold text-slate-800">F&O Momentum & RVOL Sniper</span>
+        </div>
+        <div id="focusedAgentDetails" class="text-[11px] text-slate-600 truncate max-w-3xl">Click any operator card above to pin live telemetry, status, and rules.</div>
+        <span id="focusedAgentStatus" class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">ACTIVE</span>
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- 🧠 6.5 MARKET INTELLIGENCE COMMAND CENTER (BERLIN / STOCKHOLM / TOKYO / NAIROBI / BACKTEST) -->
+    <!-- ============================================================== -->
+    <div id="intelCommandCenter" class="desk-card p-4 space-y-3">
+      <!-- Live 5-Index & India VIX Ribbon (BERLIN) -->
+      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></span>
+          <h2 class="text-xs sm:text-sm font-bold text-slate-900 font-mono-code uppercase tracking-wider">// INDIAN MARKET INTELLIGENCE COMMAND CENTER</h2>
+          <span id="macroRegimePill" class="px-2 py-0.5 rounded text-[10px] font-bold font-mono-code bg-emerald-100 text-emerald-800 border border-emerald-200">REGIME: CALIBRATING</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-1.5 font-mono-code text-[11px]">
+          <button onclick="switchIntelTab('options')" id="tabBtnOptions" class="intel-tab-btn px-2.5 py-1 rounded-lg bg-slate-900 text-white font-bold transition">🎯 OPTION CHAIN & STRIKES</button>
+          <button onclick="switchIntelTab('momentum')" id="tabBtnMomentum" class="intel-tab-btn px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition">🚀 MOMENTUM & NEWS AI</button>
+          <button onclick="switchIntelTab('backtest')" id="tabBtnBacktest" class="intel-tab-btn px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition">🧪 BACKTEST & PAPER BOOK</button>
+        </div>
+      </div>
+
+      <!-- 5-Index + India VIX Live Ticker Strip -->
+      <div id="indexTickerStrip" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 font-mono-code">
+        <button onclick="selectOptionChainIndex('NIFTY')" data-idx="NIFTY" class="idx-spot-card text-left p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:border-blue-400 transition">
+          <div class="flex items-center justify-between text-[10px] text-slate-500 font-bold"><span>NIFTY 50</span><span id="spotChgNIFTY" class="text-emerald-600">+0.00%</span></div>
+          <div id="spotValNIFTY" class="text-sm sm:text-base font-extrabold text-slate-900 mt-0.5">--</div>
+          <div id="spotPtsNIFTY" class="text-[10px] text-slate-400">VWAP --</div>
+        </button>
+        <button onclick="selectOptionChainIndex('BANKNIFTY')" data-idx="BANKNIFTY" class="idx-spot-card text-left p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:border-blue-400 transition">
+          <div class="flex items-center justify-between text-[10px] text-slate-500 font-bold"><span>BANK NIFTY</span><span id="spotChgBANKNIFTY" class="text-emerald-600">+0.00%</span></div>
+          <div id="spotValBANKNIFTY" class="text-sm sm:text-base font-extrabold text-slate-900 mt-0.5">--</div>
+          <div id="spotPtsBANKNIFTY" class="text-[10px] text-slate-400">PCR --</div>
+        </button>
+        <button onclick="selectOptionChainIndex('SENSEX')" data-idx="SENSEX" class="idx-spot-card text-left p-2.5 rounded-xl border-2 border-blue-500 bg-blue-50/40 hover:border-blue-600 transition">
+          <div class="flex items-center justify-between text-[10px] text-blue-700 font-bold"><span>BSE SENSEX ★</span><span id="spotChgSENSEX" class="text-emerald-600">+0.00%</span></div>
+          <div id="spotValSENSEX" class="text-sm sm:text-base font-extrabold text-slate-900 mt-0.5">--</div>
+          <div id="spotPtsSENSEX" class="text-[10px] text-slate-500">PCR --</div>
+        </button>
+        <button onclick="selectOptionChainIndex('FINNIFTY')" data-idx="FINNIFTY" class="idx-spot-card text-left p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:border-blue-400 transition">
+          <div class="flex items-center justify-between text-[10px] text-slate-500 font-bold"><span>FIN NIFTY</span><span id="spotChgFINNIFTY" class="text-emerald-600">+0.00%</span></div>
+          <div id="spotValFINNIFTY" class="text-sm sm:text-base font-extrabold text-slate-900 mt-0.5">--</div>
+          <div id="spotPtsFINNIFTY" class="text-[10px] text-slate-400">PCR --</div>
+        </button>
+        <div class="p-2.5 rounded-xl border border-rose-200 bg-rose-50/40">
+          <div class="flex items-center justify-between text-[10px] text-rose-700 font-bold"><span>INDIA VIX</span><span id="spotChgINDIA_VIX" class="text-rose-600">+0.00%</span></div>
+          <div id="spotValINDIA_VIX" class="text-sm sm:text-base font-extrabold text-slate-900 mt-0.5">--</div>
+          <div id="vixZoneLabel" class="text-[10px] text-rose-600 font-semibold truncate">MODERATE VOL</div>
+        </div>
+      </div>
+
+      <!-- TAB 1: INDEX OPTION CHAIN & STRIKE MOMENTUM RADAR (STOCKHOLM) -->
+      <div id="intelTabOptions" class="space-y-3">
+        <!-- Selected Index OC Telemetry Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono-code text-[11px]">
+          <div class="flex flex-wrap items-center gap-3">
+            <span id="ocSelectedLabel" class="px-2 py-0.5 rounded bg-blue-600 text-white font-bold">SENSEX CHAIN</span>
+            <span>EXPIRY: <b id="ocExpiryVal" class="text-slate-800">--</b></span>
+            <span>PCR: <b id="ocPcrVal" class="text-slate-900">--</b></span>
+            <span>COI PCR: <b id="ocCoiPcrVal" class="text-indigo-700">--</b></span>
+            <span>MAX PAIN: <b id="ocMaxPainVal" class="text-slate-900">--</b></span>
+            <span>CALL WALL: <b id="ocCallWallVal" class="text-rose-600">--</b></span>
+            <span>PUT WALL: <b id="ocPutWallVal" class="text-emerald-600">--</b></span>
+            <span>EXP MOVE: <b id="ocExpMoveVal" class="text-amber-700">--</b></span>
+          </div>
+          <button id="scanOptionsBtn" onclick="triggerOptionsSweep()" class="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] transition">
+            ⚡ SCAN OPTIONS NOW
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
+          <!-- Hot Strike Velocity Board -->
+          <div class="lg:col-span-5 border border-slate-200 rounded-xl p-3 bg-white space-y-2">
+            <div class="flex items-center justify-between font-mono-code text-xs border-b border-slate-100 pb-2">
+              <span class="font-bold text-slate-800">🔥 HOT STRIKE MOMENTUM LEADERBOARD</span>
+              <span class="text-[10px] text-slate-400">OI BUILDUP + VWAP + GREEKS</span>
+            </div>
+            <div class="overflow-x-auto max-h-[280px] overflow-y-auto">
+              <table class="w-full text-left font-mono-code text-[11px]">
+                <thead>
+                  <tr class="text-slate-400 border-b border-slate-100 text-[10px]">
+                    <th class="py-1.5 pr-2">CONTRACT</th>
+                    <th class="py-1.5 px-1">LTP</th>
+                    <th class="py-1.5 px-1">CHG%</th>
+                    <th class="py-1.5 px-1">BUILDUP</th>
+                    <th class="py-1.5 pl-1 text-right">SCORE</th>
+                  </tr>
+                </thead>
+                <tbody id="hotStrikesBody" class="divide-y divide-slate-100">
+                  <tr><td colspan="5" class="py-6 text-center text-slate-400">Loading strike momentum...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- ATM ±6 Option Chain Ladder -->
+          <div class="lg:col-span-7 border border-slate-200 rounded-xl p-3 bg-white space-y-2">
+            <div class="flex items-center justify-between font-mono-code text-xs border-b border-slate-100 pb-2">
+              <span class="font-bold text-slate-800">🎯 ATM ±6 OPTION CHAIN OI & BUILDUP LADDER</span>
+              <span id="ocLadderBias" class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-bold">BIAS: NEUTRAL</span>
+            </div>
+            <div class="overflow-x-auto max-h-[280px] overflow-y-auto">
+              <table class="w-full text-center font-mono-code text-[11px]">
+                <thead>
+                  <tr class="text-slate-400 border-b border-slate-100 text-[10px]">
+                    <th class="py-1.5 text-left">CE BUILDUP</th>
+                    <th class="py-1.5">CE OI</th>
+                    <th class="py-1.5">CE LTP</th>
+                    <th class="py-1.5 bg-slate-100 text-slate-800 px-2">STRIKE</th>
+                    <th class="py-1.5">PE LTP</th>
+                    <th class="py-1.5">PE OI</th>
+                    <th class="py-1.5 text-right">PE BUILDUP</th>
+                  </tr>
+                </thead>
+                <tbody id="ocLadderBody" class="divide-y divide-slate-100">
+                  <tr><td colspan="7" class="py-6 text-center text-slate-400">Syncing DhanHQ Option Chain...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: F&O MOMENTUM SCANNER & INDIAN MARKET NEWS AI (TOKYO + NAIROBI) -->
+      <div id="intelTabMomentum" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-3">
+        <!-- TOKYO Momentum Stocks -->
+        <div class="lg:col-span-6 border border-slate-200 rounded-xl p-3 bg-white space-y-2">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2 font-mono-code text-xs">
+            <span class="font-bold text-slate-800">🚀 TOKYO: F&O MOMENTUM & RVOL LEADERS</span>
+            <div class="flex items-center gap-1 text-[10px]">
+              <button onclick="setMomFilter('rvol')" id="momBtnRvol" class="px-2 py-0.5 rounded bg-amber-500 text-white font-bold">RVOL</button>
+              <button onclick="setMomFilter('gainers')" id="momBtnGainers" class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-bold">GAINERS</button>
+              <button onclick="setMomFilter('losers')" id="momBtnLosers" class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-bold">LOSERS</button>
+            </div>
+          </div>
+          <div class="overflow-x-auto max-h-[300px] overflow-y-auto">
+            <table class="w-full text-left font-mono-code text-[11px]">
+              <thead>
+                <tr class="text-slate-400 border-b border-slate-100 text-[10px]">
+                  <th class="py-1.5">SYMBOL</th>
+                  <th class="py-1.5">LTP</th>
+                  <th class="py-1.5">CHG%</th>
+                  <th class="py-1.5">RVOL</th>
+                  <th class="py-1.5">RSI</th>
+                  <th class="py-1.5 text-right">VWAP</th>
+                </tr>
+              </thead>
+              <tbody id="momentumStocksBody" class="divide-y divide-slate-100">
+                <tr><td colspan="6" class="py-6 text-center text-slate-400">Syncing F&O stock quotes...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- NAIROBI News AI -->
+        <div class="lg:col-span-6 border border-slate-200 rounded-xl p-3 bg-white space-y-2">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2 font-mono-code text-xs">
+            <span class="font-bold text-slate-800">📰 NAIROBI: INDIAN MARKET NEWS AI</span>
+            <div class="flex items-center gap-1.5 text-[10px]">
+              <span id="newsSentimentBadge" class="px-2 py-0.5 rounded bg-slate-100 text-slate-800 font-bold">NEUTRAL (0)</span>
+              <span id="newsSectorBadge" class="px-2 py-0.5 rounded bg-rose-50 text-rose-700 font-bold">INDEX</span>
+            </div>
+          </div>
+          <div id="newsFeedList" class="space-y-2 max-h-[300px] overflow-y-auto pr-1 font-mono-code text-[11px]">
+            <div class="py-6 text-center text-slate-400">Fetching ET, Moneycontrol & LiveMint feeds...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: REAL HISTORICAL BACKTESTER & LIVE PAPER TRADE BOOK (HELSINKI + PROFESSOR) -->
+      <div id="intelTabBacktest" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-3">
+        <!-- Backtester -->
+        <div class="lg:col-span-6 border border-slate-200 rounded-xl p-3 bg-white space-y-3 font-mono-code">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
+            <span class="text-xs font-bold text-slate-800">🧪 REAL HISTORICAL BACKTEST ENGINE (DHAN / NSE)</span>
+            <span id="btSourceTag" class="text-[10px] px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 font-bold">READY</span>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-6 gap-2 text-[11px]">
+            <input id="btSymbolInput" list="btSymbolSuggestions" value="SENSEX" placeholder="Symbol" class="col-span-2 sm:col-span-1 px-2 py-1.5 rounded border border-slate-300 font-bold uppercase" />
+            <datalist id="btSymbolSuggestions">
+              <option value="SENSEX"><option value="NIFTY"><option value="BANKNIFTY"><option value="RELIANCE"><option value="SBIN"><option value="M&M"><option value="TRENT"><option value="HDFCBANK"><option value="TATAMOTORS">
+            </datalist>
+            <select id="btTimeframeSelect" class="px-2 py-1.5 rounded border border-slate-300">
+              <option value="25m" selected>25m ★</option>
+              <option value="15m">15m</option>
+              <option value="5m">5m</option>
+              <option value="1h">1h</option>
+            </select>
+            <select id="btDaysSelect" class="px-2 py-1.5 rounded border border-slate-300">
+              <option value="15">15D</option>
+              <option value="30" selected>30D</option>
+              <option value="45">45D</option>
+            </select>
+            <select id="btRrSelect" class="px-2 py-1.5 rounded border border-slate-300">
+              <option value="1.5">1:1.5</option>
+              <option value="2.0" selected>1:2.0</option>
+              <option value="2.5">1:2.5</option>
+              <option value="3.0">1:3.0</option>
+            </select>
+            <label class="flex items-center gap-1 px-2 py-1 rounded border border-slate-200 bg-slate-50 text-[10px] font-bold cursor-pointer">
+              <input id="btTrailingCheck" type="checkbox" checked class="accent-emerald-600" />
+              <span>TRAIL SL</span>
+            </label>
+            <button id="runBacktestBtn" onclick="runRealBacktest()" class="px-3 py-1.5 rounded bg-slate-900 hover:bg-slate-800 text-white font-bold text-[11px] transition">RUN TEST</button>
+          </div>
+
+          <div id="btMetricsGrid" class="grid grid-cols-3 sm:grid-cols-6 gap-1.5 text-[10px]">
+            <div class="p-2 rounded bg-slate-50 border border-slate-100"><div class="text-slate-400">TRADES</div><div id="btTotalTrades" class="font-extrabold text-slate-900 text-xs">--</div></div>
+            <div class="p-2 rounded bg-slate-50 border border-slate-100"><div class="text-slate-400">WIN RATE</div><div id="btWinRate" class="font-extrabold text-emerald-600 text-xs">--</div></div>
+            <div class="p-2 rounded bg-slate-50 border border-slate-100"><div class="text-slate-400">NET P&L</div><div id="btNetPnl" class="font-extrabold text-slate-900 text-xs">--</div></div>
+            <div class="p-2 rounded bg-slate-50 border border-slate-100"><div class="text-slate-400">PF</div><div id="btProfitFactor" class="font-extrabold text-slate-900 text-xs">--</div></div>
+            <div class="p-2 rounded bg-slate-50 border border-slate-100"><div class="text-slate-400">MAX DD</div><div id="btMaxDd" class="font-extrabold text-rose-600 text-xs">--</div></div>
+            <div class="p-2 rounded bg-slate-50 border border-slate-100"><div class="text-slate-400">BE/LOCK</div><div id="btBeSaves" class="font-extrabold text-indigo-600 text-xs">--</div></div>
+          </div>
+
+          <div class="overflow-x-auto max-h-[210px] overflow-y-auto">
+            <table class="w-full text-left text-[10px]">
+              <thead>
+                <tr class="text-slate-400 border-b border-slate-100">
+                  <th class="py-1">ENTRY TIME</th>
+                  <th class="py-1">DIR</th>
+                  <th class="py-1">ENTRY</th>
+                  <th class="py-1">EXIT</th>
+                  <th class="py-1">STATUS</th>
+                  <th class="py-1 text-right">P&L</th>
+                </tr>
+              </thead>
+              <tbody id="btTradesBody" class="divide-y divide-slate-100">
+                <tr><td colspan="6" class="py-5 text-center text-slate-400">Select symbol & click RUN TEST to backtest on real historical bars.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- HELSINKI Paper Trades Book -->
+        <div class="lg:col-span-6 border border-slate-200 rounded-xl p-3 bg-white space-y-2 font-mono-code">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2 text-xs">
+            <span class="font-bold text-slate-800">💼 HELSINKI: PAPER TRADE BOOK & TRAILING SL</span>
+            <div class="flex items-center gap-2">
+              <span id="paperOpenPnlBadge" class="text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-bold">OPEN MTM: ₹0</span>
+              <button onclick="resetPaperAccount()" class="px-2 py-0.5 rounded bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[10px] font-bold">RESET ₹20L</button>
+            </div>
+          </div>
+          <div class="overflow-x-auto max-h-[285px] overflow-y-auto">
+            <table class="w-full text-left text-[10px]">
+              <thead>
+                <tr class="text-slate-400 border-b border-slate-100">
+                  <th class="py-1.5">CONTRACT</th>
+                  <th class="py-1.5">QTY</th>
+                  <th class="py-1.5">ENTRY</th>
+                  <th class="py-1.5">LTP/EXIT</th>
+                  <th class="py-1.5">SL (TRAIL)</th>
+                  <th class="py-1.5">STATUS</th>
+                  <th class="py-1.5 text-right">P&L</th>
+                </tr>
+              </thead>
+              <tbody id="paperTradesBody" class="divide-y divide-slate-100">
+                <tr><td colspan="7" class="py-8 text-center text-slate-400">No paper trades executed yet. Auto-trades trigger on verified signals.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- ============================================================== -->
@@ -567,9 +839,9 @@
             <div class="flex items-center gap-2">
               <h2 class="text-sm font-bold text-slate-900 font-mono-code uppercase tracking-wider">// LIVE REAL-TIME NSE CANDLESTICK TERMINAL</h2>
               <span id="activeChartSymbolBadge" class="px-2 py-0.5 rounded text-xs font-black font-mono-code bg-emerald-100 text-emerald-800 border border-emerald-300">IRFC.NS</span>
-              <span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono-code bg-indigo-100 text-indigo-800">100% UNRESTRICTED</span>
+              <span id="chartSourceBadge" class="px-2 py-0.5 rounded text-[10px] font-bold font-mono-code bg-indigo-100 text-indigo-800">DHAN / NSE</span>
             </div>
-            <p class="text-[11px] text-slate-400 font-mono-code">100% REAL NSE CANDLES • ZERO THIRD-PARTY POPUPS • OHLCV • ENTRY • SL • TARGET</p>
+            <p class="text-[11px] text-slate-400 font-mono-code">NATIVE 25M CANDLES • SESSION VWAP • RSI(14) • ATR(14) • PDH/PDL • ENTRY / SL / TARGET</p>
           </div>
         </div>
 
@@ -578,23 +850,24 @@
           <!-- Quick Symbols -->
           <div class="flex items-center gap-1 text-xs overflow-x-auto pb-1 max-w-full">
             <span class="text-[10px] text-slate-400 uppercase font-bold mr-1">QUICK:</span>
-            <button onclick="switchChartSymbol('RVNL')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">RVNL</button>
-            <button onclick="switchChartSymbol('BSE')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">BSE</button>
-            <button onclick="switchChartSymbol('COCHINSHIP')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">COCHINSHIP</button>
-            <button onclick="switchChartSymbol('KALYANKJIL')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">KALYAN</button>
-            <button onclick="switchChartSymbol('BIOCON')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">BIOCON</button>
-            <button onclick="switchChartSymbol('IRFC')" class="quick-sym-btn px-2 py-1 rounded bg-emerald-600 text-white font-bold transition text-[11px]">IRFC</button>
-            <button onclick="switchChartSymbol('RELIANCE')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">RELIANCE</button>
             <button onclick="switchChartSymbol('NIFTY')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">NIFTY</button>
+            <button onclick="switchChartSymbol('BANKNIFTY')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">BANKNIFTY</button>
+            <button onclick="switchChartSymbol('SENSEX')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">SENSEX</button>
+            <button onclick="switchChartSymbol('RELIANCE')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">RELIANCE</button>
+            <button onclick="switchChartSymbol('SBIN')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">SBIN</button>
+            <button onclick="switchChartSymbol('IRFC')" class="quick-sym-btn px-2 py-1 rounded bg-emerald-600 text-white font-bold transition text-[11px]">IRFC</button>
+            <button onclick="switchChartSymbol('M&M')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">M&M</button>
+            <button onclick="switchChartSymbol('TRENT')" class="quick-sym-btn px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]">TRENT</button>
           </div>
 
           <!-- Stock Dropdown Search (All 213 F&O stocks) -->
           <select id="chartStockSelect" onchange="switchChartSymbol(this.value)" class="text-xs font-mono-code px-2 py-1 rounded border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-emerald-500 max-w-[200px]">
             <option value="IRFC">IRFC (Indian Railway Finance)</option>
-            <option value="VEDL">VEDL (Vedanta)</option>
-            <option value="TITAN">TITAN (Titan Company)</option>
+            <option value="RELIANCE">RELIANCE</option>
             <option value="NIFTY">NIFTY 50 INDEX</option>
             <option value="BANKNIFTY">BANK NIFTY INDEX</option>
+            <option value="SENSEX">BSE SENSEX INDEX</option>
+            <option value="FINNIFTY">FIN NIFTY INDEX</option>
           </select>
 
           <!-- Timeframe selector -->
@@ -622,11 +895,11 @@
           </div>
           
           <div id="chartCandleMetrics" class="flex items-center gap-3 text-slate-500 text-[11px]">
-            <span>O: <b id="barOpen" class="text-slate-800">₹79.50</b></span>
-            <span>H: <b id="barHigh" class="text-slate-800">₹80.20</b></span>
-            <span>L: <b id="barLow" class="text-slate-800">₹79.20</b></span>
-            <span>C: <b id="barClose" class="text-slate-800">₹79.95</b></span>
-            <span>VOL: <b id="barVol" class="text-slate-800">1.45M</b></span>
+            <span>O: <b id="barOpen" class="text-slate-800">--</b></span>
+            <span>H: <b id="barHigh" class="text-slate-800">--</b></span>
+            <span>L: <b id="barLow" class="text-slate-800">--</b></span>
+            <span>C: <b id="barClose" class="text-slate-800">--</b></span>
+            <span>VOL: <b id="barVol" class="text-slate-800">--</b></span>
           </div>
 
           <div class="flex items-center gap-2">
@@ -638,6 +911,19 @@
               <span>↗ TradingView Web</span>
             </a>
           </div>
+        </div>
+
+        <!-- RIO Quantitative Indicator Overlay Bar -->
+        <div class="px-4 py-1.5 bg-white border-b border-slate-100 flex flex-wrap items-center justify-between gap-3 text-[10px] font-mono-code text-slate-500">
+          <div class="flex flex-wrap items-center gap-3">
+            <span>VWAP: <b id="indVwap" class="text-slate-900">--</b></span>
+            <span>RSI(14): <b id="indRsi" class="text-slate-900">--</b></span>
+            <span>RVOL: <b id="indRvol" class="text-slate-900">--</b></span>
+            <span>ATR(14): <b id="indAtr" class="text-slate-900">--</b></span>
+            <span>EMA9/21: <b id="indEmas" class="text-slate-900">--</b></span>
+            <span>PDH/PDL: <b id="indPdhPdl" class="text-slate-700">--</b></span>
+          </div>
+          <span id="indFeedSource" class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-bold">FEED: SYNCING</span>
         </div>
 
         <!-- Canvas Container -->
@@ -705,7 +991,7 @@
             <!-- Populated via Javascript -->
             <tr id="emptySignalRow">
               <td colspan="10" class="py-8 text-center text-slate-400">
-                Scanning 213 F&O scrips... Patterns matching Photos 1-4 will appear here instantly.
+                Scanning active NSE F&O universe on strict 25m confluence (VWAP + RVOL + RSI + Anti-Trap)... Patterns will appear here instantly.
               </td>
             </tr>
           </tbody>
@@ -947,7 +1233,7 @@
     // -------------------------------------------------------------
     const bCanvas = document.getElementById('balanceChart');
     const bCtx = bCanvas.getContext('2d');
-    let balancePoints = [2000000, 2004500, 2003200, 2012000, 2011000, 2024500, 2032000, 2041000, 2056000];
+    let balancePoints = [2000000, 2000000];
 
     function drawBalanceChart() {
       const rect = bCanvas.getBoundingClientRect();
@@ -1409,30 +1695,481 @@
     }
 
     // -------------------------------------------------------------
-    // Agent Operator Cards Renderer (10 Active Roles)
+    // Security Helper & Interactive Agent Command Team Renderer
     // -------------------------------------------------------------
+    function escHtml(v) {
+      return String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    let focusedAgentId = 'TOKYO';
+    let latestAgentsCache = [];
+
+    function focusAgent(agentId) {
+      focusedAgentId = agentId;
+      const ag = latestAgentsCache.find(a => a.id === agentId) || latestAgentsCache[0];
+      if (!ag) return;
+
+      const badge = document.getElementById('focusedAgentBadge');
+      const duty = document.getElementById('focusedAgentDuty');
+      const details = document.getElementById('focusedAgentDetails');
+      const status = document.getElementById('focusedAgentStatus');
+      if (badge) badge.textContent = `${ag.name} • ${ag.number}`;
+      if (duty) duty.textContent = ag.duty || ag.role;
+      if (details) details.textContent = ag.details || ag.metric;
+      if (status) {
+        status.textContent = ag.status || 'ACTIVE';
+        status.className = `px-2 py-0.5 rounded text-[10px] font-bold ${ag.statusClass || 'bg-emerald-100 text-emerald-800'}`;
+      }
+      renderAgentCards(latestAgentsCache);
+    }
+
     function renderAgentCards(agents) {
       const container = document.getElementById('agentsGridContainer');
       if (!container || !agents || agents.length === 0) return;
+      latestAgentsCache = agents;
 
-      container.innerHTML = agents.map(ag => `
-        <div class="desk-card p-2 sm:p-2.5 flex flex-col items-center text-center space-y-1.5 border border-slate-200 bg-white hover:border-slate-300 hover:shadow-md transition">
+      container.innerHTML = agents.map(ag => {
+        const isSel = ag.id === focusedAgentId;
+        const borderCls = isSel ? 'border-2 border-slate-900 ring-2 ring-slate-200 bg-slate-50/70' : 'border border-slate-200 bg-white hover:border-slate-300';
+        return `
+        <div onclick="focusAgent('${escHtml(ag.id)}')" class="desk-card p-2 sm:p-2.5 flex flex-col items-center text-center space-y-1 ${borderCls} hover:shadow-md transition cursor-pointer">
           <div class="w-full flex items-center justify-between text-[9px] font-mono-code text-slate-400">
-            <span>${ag.number}</span>
+            <span>${escHtml(ag.number)}</span>
             <span class="w-1.5 h-1.5 rounded-full ${ag.dotClass}"></span>
           </div>
-          <div class="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-base shadow-inner">
+          <div class="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-sm shadow-inner">
             ${ag.emoji}
           </div>
           <div class="w-full">
-            <div class="text-[11px] font-extrabold font-mono-code text-slate-900 truncate">${ag.name}</div>
-            <div class="text-[9px] font-bold text-slate-500 uppercase tracking-tight truncate">${ag.role}</div>
+            <div class="text-[11px] font-extrabold font-mono-code text-slate-900 truncate">${escHtml(ag.name)}</div>
+            <div class="text-[9px] font-bold text-slate-500 uppercase tracking-tight truncate">${escHtml(ag.role)}</div>
           </div>
-          <span class="px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-bold font-mono-code ${ag.statusClass} truncate w-full text-center">
-            ${ag.metric}
+          <span class="px-1.5 py-0.5 rounded text-[8px] font-bold font-mono-code ${ag.statusClass} truncate w-full text-center">
+            ${escHtml(ag.metric)}
           </span>
+          <div class="text-[8px] font-mono-code font-bold text-slate-400 truncate w-full">${escHtml(ag.status || '')}</div>
         </div>
-      `).join('');
+      `;
+      }).join('');
+
+      // Sync banner details for currently selected agent
+      const activeAg = agents.find(a => a.id === focusedAgentId) || agents[0];
+      if (activeAg) {
+        const badge = document.getElementById('focusedAgentBadge');
+        const duty = document.getElementById('focusedAgentDuty');
+        const details = document.getElementById('focusedAgentDetails');
+        const status = document.getElementById('focusedAgentStatus');
+        if (badge) badge.textContent = `${activeAg.name} • ${activeAg.number}`;
+        if (duty) duty.textContent = activeAg.duty || activeAg.role;
+        if (details) details.textContent = activeAg.details || activeAg.metric;
+        if (status) {
+          status.textContent = activeAg.status || 'ACTIVE';
+          status.className = `px-2 py-0.5 rounded text-[10px] font-bold ${activeAg.statusClass || 'bg-emerald-100 text-emerald-800'}`;
+        }
+      }
+    }
+
+    // -------------------------------------------------------------
+    // Market Intelligence Command Center State & Renderers
+    // -------------------------------------------------------------
+    let selectedOptionIndex = 'SENSEX';
+    let activeIntelTab = 'options';
+    let momentumFilter = 'rvol';
+    let lastIntelData = null;
+
+    function switchIntelTab(tabName) {
+      activeIntelTab = tabName;
+      ['options', 'momentum', 'backtest'].forEach(t => {
+        const el = document.getElementById(`intelTab${t.charAt(0).toUpperCase() + t.slice(1)}`);
+        const btn = document.getElementById(`tabBtn${t.charAt(0).toUpperCase() + t.slice(1)}`);
+        if (el) el.classList.toggle('hidden', t !== tabName);
+        if (btn) {
+          btn.className = t === tabName
+            ? 'intel-tab-btn px-2.5 py-1 rounded-lg bg-slate-900 text-white font-bold transition'
+            : 'intel-tab-btn px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition';
+        }
+      });
+    }
+
+    function selectOptionChainIndex(idxName) {
+      selectedOptionIndex = idxName;
+      document.querySelectorAll('.idx-spot-card').forEach(btn => {
+        const isSel = btn.getAttribute('data-idx') === idxName;
+        btn.className = isSel
+          ? 'idx-spot-card text-left p-2.5 rounded-xl border-2 border-blue-500 bg-blue-50/40 hover:border-blue-600 transition'
+          : 'idx-spot-card text-left p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:border-blue-400 transition';
+      });
+      syncMarketIntelligence();
+    }
+
+    function setMomFilter(mode) {
+      momentumFilter = mode;
+      ['Rvol', 'Gainers', 'Losers'].forEach(k => {
+        const btn = document.getElementById(`momBtn${k}`);
+        if (!btn) return;
+        const active = k.toLowerCase() === mode;
+        btn.className = active
+          ? 'px-2 py-0.5 rounded bg-amber-500 text-white font-bold'
+          : 'px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-bold';
+      });
+      if (lastIntelData) renderMomentumTable(lastIntelData.momentumSnapshot);
+    }
+
+    function renderMomentumTable(mom) {
+      const tbody = document.getElementById('momentumStocksBody');
+      if (!tbody || !mom) return;
+      const list = momentumFilter === 'gainers'
+        ? (mom.topGainers || [])
+        : (momentumFilter === 'losers' ? (mom.topLosers || []) : (mom.rvolBreakouts || []));
+
+      if (!list.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-400">Run SWEEP SCAN F&O or connect DhanHQ token for live F&O momentum.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = list.map(row => {
+        const chg = Number(row.dayChangePct || 0);
+        const chgCls = chg >= 0 ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold';
+        const rvol = Number(row.rvol || 1.0);
+        const rvolCls = rvol >= 1.5 ? 'bg-amber-100 text-amber-900 font-extrabold px-1.5 py-0.5 rounded' : 'text-slate-600';
+        const vwapTag = row.vwapAligned
+          ? '<span class="text-emerald-700 font-bold">ABOVE</span>'
+          : '<span class="text-rose-600 font-bold">BELOW</span>';
+        return `
+          <tr onclick="viewStockInChart('${escHtml(row.symbol)}')" class="hover:bg-slate-50 cursor-pointer">
+            <td class="py-1.5 font-bold text-slate-900">${escHtml(row.symbol)} <span class="text-[9px] text-slate-400 font-normal">${escHtml((row.sector || '').slice(0, 6))}</span></td>
+            <td class="py-1.5 font-semibold text-slate-800">₹${Number(row.ltp || 0).toFixed(1)}</td>
+            <td class="py-1.5 ${chgCls}">${chg >= 0 ? '+' : ''}${chg.toFixed(2)}%</td>
+            <td class="py-1.5"><span class="${rvolCls}">${rvol.toFixed(1)}x</span></td>
+            <td class="py-1.5 text-slate-700">${Number(row.rsi || 50).toFixed(0)}</td>
+            <td class="py-1.5 text-right">${vwapTag}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderNewsFeed(newsIntel, headlines) {
+      const sBadge = document.getElementById('newsSentimentBadge');
+      const secBadge = document.getElementById('newsSectorBadge');
+      const listEl = document.getElementById('newsFeedList');
+      if (sBadge && newsIntel) {
+        const lbl = newsIntel.sentimentLabel || 'NEUTRAL';
+        const sc = Number(newsIntel.sentimentScore || 0);
+        sBadge.textContent = `${lbl} (${sc >= 0 ? '+' : ''}${sc})`;
+        sBadge.className = lbl === 'BULLISH'
+          ? 'px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold'
+          : (lbl === 'BEARISH' ? 'px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-bold' : 'px-2 py-0.5 rounded bg-slate-100 text-slate-800 font-bold');
+      }
+      if (secBadge && newsIntel && newsIntel.impactSectors && newsIntel.impactSectors.length) {
+        secBadge.textContent = newsIntel.impactSectors.slice(0, 2).join(' • ');
+      }
+      if (!listEl || !headlines) return;
+      if (!headlines.length) {
+        listEl.innerHTML = '<div class="py-6 text-center text-slate-400">No headlines fetched yet.</div>';
+        return;
+      }
+      listEl.innerHTML = headlines.map(h => {
+        const sent = h.sentiment || 'NEUTRAL';
+        const sentCls = sent === 'BULLISH'
+          ? 'bg-emerald-100 text-emerald-800'
+          : (sent === 'BEARISH' ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-600');
+        const syms = (h.relatedSymbols || []).map(s => `<button onclick="viewStockInChart('${escHtml(s)}')" class="px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 text-[9px] font-bold">${escHtml(s)}</button>`).join(' ');
+        return `
+          <div class="p-2 rounded-lg border border-slate-100 hover:border-slate-300 bg-slate-50/50 space-y-1">
+            <div class="flex items-center justify-between gap-2 text-[9px]">
+              <div class="flex items-center gap-1.5">
+                <span class="px-1.5 py-0.5 rounded font-bold ${sentCls}">${escHtml(sent)}</span>
+                <span class="px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 font-bold">${escHtml(h.impactSector || 'MARKET')}</span>
+                <span class="text-slate-400">${escHtml(h.source || '')}</span>
+              </div>
+              <div class="flex items-center gap-1">${syms}</div>
+            </div>
+            <a href="${escHtml(h.link || '#')}" target="_blank" rel="noopener" class="block text-slate-800 font-semibold hover:text-blue-700 leading-snug">${escHtml(h.title || '')}</a>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderOptionChainPanel(intel) {
+      const spots = intel.indexSpots || {};
+      const anaMap = intel.optionAnalytics || {};
+      const regime = intel.indexRegime || {};
+
+      ['NIFTY', 'BANKNIFTY', 'FINNIFTY', 'SENSEX', 'INDIA_VIX'].forEach(k => {
+        const sp = spots[k] || {};
+        const vEl = document.getElementById(`spotVal${k}`);
+        const cEl = document.getElementById(`spotChg${k}`);
+        const pEl = document.getElementById(`spotPts${k}`);
+        const val = Number(sp.spot || 0);
+        const chg = Number(sp.change || 0);
+        if (vEl && val > 0) vEl.textContent = val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        if (cEl) {
+          cEl.textContent = `${chg >= 0 ? '+' : ''}${chg.toFixed(2)}%`;
+          cEl.className = chg >= 0 ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold';
+        }
+        if (pEl) {
+          if (k === 'NIFTY') {
+            pEl.textContent = `VWAP ${Number(regime.niftyVwap || val).toLocaleString('en-IN', { maximumFractionDigits: 0 })} • ${(anaMap.NIFTY?.pcr || 1).toFixed(2)} PCR`;
+          } else if (k === 'INDIA_VIX') {
+            const zEl = document.getElementById('vixZoneLabel');
+            if (zEl) zEl.textContent = regime.vixZone || 'MODERATE VOL';
+          } else {
+            const a = anaMap[k] || {};
+            pEl.textContent = `PCR ${Number(a.pcr || 1).toFixed(2)} • MP ${Number(a.max_pain || 0).toLocaleString('en-IN')}`;
+          }
+        }
+      });
+
+      const regPill = document.getElementById('macroRegimePill');
+      if (regPill && regime.regimeLabel) {
+        regPill.textContent = `REGIME: ${regime.regimeLabel}`;
+        regPill.className = String(regime.regimeLabel).includes('BULL')
+          ? 'px-2 py-0.5 rounded text-[10px] font-bold font-mono-code bg-emerald-100 text-emerald-800 border border-emerald-200'
+          : (String(regime.regimeLabel).includes('BEAR')
+            ? 'px-2 py-0.5 rounded text-[10px] font-bold font-mono-code bg-rose-100 text-rose-800 border border-rose-200'
+            : 'px-2 py-0.5 rounded text-[10px] font-bold font-mono-code bg-amber-100 text-amber-800 border border-amber-200');
+      }
+
+      // Selected Index Analytics Summary Bar
+      const selAna = anaMap[selectedOptionIndex] || {};
+      const elMap = {
+        ocSelectedLabel: `${selectedOptionIndex} CHAIN`,
+        ocExpiryVal: selAna.expiry || '--',
+        ocPcrVal: Number(selAna.pcr || 1.0).toFixed(2),
+        ocCoiPcrVal: Number(selAna.coi_pcr || 1.0).toFixed(2),
+        ocMaxPainVal: selAna.max_pain ? Number(selAna.max_pain).toLocaleString('en-IN') : '--',
+        ocCallWallVal: selAna.call_wall ? Number(selAna.call_wall).toLocaleString('en-IN') : '--',
+        ocPutWallVal: selAna.put_wall ? Number(selAna.put_wall).toLocaleString('en-IN') : '--',
+        ocExpMoveVal: selAna.expected_move_pct ? `±${selAna.expected_move_pct}%` : '--'
+      };
+      Object.entries(elMap).forEach(([id, txt]) => {
+        const e = document.getElementById(id);
+        if (e) e.textContent = txt;
+      });
+      const biasEl = document.getElementById('ocLadderBias');
+      if (biasEl) biasEl.textContent = `BIAS: ${selAna.bias || 'NEUTRAL'}`;
+
+      // Hot Strikes Leaderboard
+      const hotBody = document.getElementById('hotStrikesBody');
+      const hotList = intel.hotStrikesBoard || [];
+      if (hotBody) {
+        if (!hotList.length) {
+          hotBody.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-slate-400">Connect DhanHQ token or click SCAN OPTIONS NOW for live strike velocity.</td></tr>';
+        } else {
+          hotBody.innerHTML = hotList.slice(0, 12).map(c => {
+            const pChg = Number(c.pctChange || 0);
+            const buildupCls = String(c.buildup || '').includes('LONG BUILDUP') || String(c.buildup || '').includes('COVER')
+              ? 'bg-emerald-50 text-emerald-700'
+              : (String(c.buildup || '').includes('SHORT') ? 'bg-rose-50 text-rose-700' : 'bg-slate-100 text-slate-600');
+            return `
+              <tr onclick="viewStockInChart('${escHtml(c.index)}')" class="hover:bg-slate-50 cursor-pointer">
+                <td class="py-1.5 pr-1 font-bold text-slate-900">${escHtml(c.contract)} <span class="text-[9px] text-slate-400 font-normal">Δ${Number(c.delta || 0).toFixed(2)}</span></td>
+                <td class="py-1.5 px-1 font-semibold">₹${Number(c.ltp || 0).toFixed(1)}</td>
+                <td class="py-1.5 px-1 font-bold ${pChg >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${pChg >= 0 ? '+' : ''}${pChg.toFixed(1)}%</td>
+                <td class="py-1.5 px-1"><span class="px-1 py-0.5 rounded text-[9px] font-bold ${buildupCls}">${escHtml(c.buildup || 'NEUTRAL')}</span></td>
+                <td class="py-1.5 pl-1 text-right font-extrabold text-indigo-700">${Number(c.momentumScore || 0).toFixed(0)}</td>
+              </tr>
+            `;
+          }).join('');
+        }
+      }
+
+      // Option Chain ATM Ladder
+      const ladBody = document.getElementById('ocLadderBody');
+      const rows = intel.selectedChainRows || [];
+      if (ladBody) {
+        if (!rows.length) {
+          ladBody.innerHTML = '<tr><td colspan="7" class="py-6 text-center text-slate-400">No option chain strikes loaded yet for selected index.</td></tr>';
+        } else {
+          ladBody.innerHTML = rows.map(r => {
+            const rowBg = r.isAtm ? 'bg-amber-50/70 font-bold' : 'hover:bg-slate-50';
+            const ceL = Number(r.ceOi || 0) >= 100000 ? `${(r.ceOi / 100000).toFixed(1)}L` : r.ceOi;
+            const peL = Number(r.peOi || 0) >= 100000 ? `${(r.peOi / 100000).toFixed(1)}L` : r.peOi;
+            return `
+              <tr class="${rowBg}">
+                <td class="py-1 text-left text-[9px] font-semibold text-slate-600">${escHtml(r.ceBuildup)}</td>
+                <td class="py-1 text-slate-500">${ceL}</td>
+                <td class="py-1 font-bold text-slate-900">₹${Number(r.ceLtp || 0).toFixed(1)}</td>
+                <td class="py-1 bg-slate-100 font-extrabold text-slate-900 px-2">${Number(r.strike).toFixed(0)} ${r.isAtm ? '★' : ''}</td>
+                <td class="py-1 font-bold text-slate-900">₹${Number(r.peLtp || 0).toFixed(1)}</td>
+                <td class="py-1 text-slate-500">${peL}</td>
+                <td class="py-1 text-right text-[9px] font-semibold text-slate-600">${escHtml(r.peBuildup)}</td>
+              </tr>
+            `;
+          }).join('');
+        }
+      }
+    }
+
+    function renderPaperTradesTable(paperData) {
+      const tbody = document.getElementById('paperTradesBody');
+      const openBadge = document.getElementById('paperOpenPnlBadge');
+      if (openBadge && paperData.openPnl !== undefined) {
+        const op = Number(paperData.openPnl || 0);
+        openBadge.textContent = `OPEN MTM: ${op >= 0 ? '+' : ''}₹${op.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
+        openBadge.className = op >= 0
+          ? 'text-[10px] px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold'
+          : 'text-[10px] px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-bold';
+      }
+      if (!tbody) return;
+      const trades = paperData.paperTrades || [];
+      if (!trades.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-slate-400">No paper trades executed yet. Auto-trades trigger on verified signals.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = trades.slice(0, 20).map(t => {
+        const pnl = Number(t.pnl || 0);
+        const stCls = t.status === 'ACTIVE'
+          ? 'bg-blue-100 text-blue-800'
+          : (pnl > 0 ? 'bg-emerald-100 text-emerald-800' : (pnl === 0 ? 'bg-slate-200 text-slate-800' : 'bg-rose-100 text-rose-800'));
+        const trailTxt = t.trailStage && t.trailStage !== 'INITIAL' ? ` (${t.trailStage})` : '';
+        return `
+          <tr class="hover:bg-slate-50">
+            <td class="py-1.5 font-bold text-slate-900">${escHtml(t.symbol)}</td>
+            <td class="py-1.5 text-slate-600">${t.qty || 0}</td>
+            <td class="py-1.5">₹${Number(t.entryPrice || 0).toFixed(1)}</td>
+            <td class="py-1.5 font-semibold">₹${Number(t.exitPrice || t.currentPrice || t.entryPrice || 0).toFixed(1)}</td>
+            <td class="py-1.5 text-slate-600">₹${Number(t.stopLoss || 0).toFixed(1)}<span class="text-[9px] text-indigo-600">${escHtml(trailTxt)}</span></td>
+            <td class="py-1.5"><span class="px-1.5 py-0.5 rounded text-[9px] font-bold ${stCls}">${escHtml(t.status)}</span></td>
+            <td class="py-1.5 text-right font-extrabold ${pnl >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${pnl >= 0 ? '+' : ''}₹${pnl.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function syncMarketIntelligence() {
+      try {
+        const res = await fetch(`/api/market-intelligence?index=${encodeURIComponent(selectedOptionIndex)}`);
+        if (!res.ok) return;
+        const intel = await res.json();
+        if (!intel.success) return;
+        lastIntelData = intel;
+
+        renderOptionChainPanel(intel);
+        renderMomentumTable(intel.momentumSnapshot);
+        renderNewsFeed(intel.newsIntelligence, intel.newsHeadlines);
+
+        // Sync Visualization Deck & PALERMO Card 4 (Real Live Metrics, Zero Static Fakes)
+        const regime = intel.indexRegime || {};
+        const selAna = (intel.optionAnalytics || {})[selectedOptionIndex] || {};
+        const setTxt = (id, v) => { const e = document.getElementById(id); if (e && v !== undefined) e.textContent = v; };
+        setTxt('vizVixVal', `${Number(regime.vix || 17.56).toFixed(2)} (${Number(regime.vixChange || 0) >= 0 ? '+' : ''}${Number(regime.vixChange || 0).toFixed(2)}%)`);
+        setTxt('vizExpMove', regime.expectedMove || '±0.00%');
+        setTxt('vizMaxPain', selAna.max_pain ? Number(selAna.max_pain).toLocaleString('en-IN') : '--');
+        setTxt('vizCallWall', selAna.call_wall ? Number(selAna.call_wall).toLocaleString('en-IN') : '--');
+        setTxt('vizPutWall', selAna.put_wall ? Number(selAna.put_wall).toLocaleString('en-IN') : '--');
+
+        const bullSig = (latestSignals || []).filter(s => s.type === 'BULLISH').length;
+        const bearSig = (latestSignals || []).filter(s => s.type === 'BEARISH').length;
+        setTxt('flowBullCnt', String(bullSig));
+        setTxt('flowBearCnt', String(bearSig));
+        setTxt('flowVwapPos', regime.niftyVsVwap || '--');
+        setTxt('flowPcrRatio', Number(regime.pcrConsensus || 1.0).toFixed(2));
+        setTxt('flowNewsScore', (intel.newsIntelligence || {}).sentimentLabel || 'NEUTRAL');
+        const regB = document.getElementById('flowRegimeBadge');
+        if (regB) {
+          regB.textContent = regime.regimeLabel || 'CALIBRATING';
+          regB.className = String(regime.regimeLabel || '').includes('BULL')
+            ? 'text-xs font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 inline-block'
+            : (String(regime.regimeLabel || '').includes('BEAR')
+              ? 'text-xs font-bold px-2 py-0.5 rounded bg-rose-100 text-rose-800 inline-block'
+              : 'text-xs font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800 inline-block');
+        }
+
+        const ra = intel.riskAuditLog || {};
+        const ts = intel.trapStats || {};
+        setTxt('palermoStatusBadge', `${Number(ra.vetoCount || 0)} VETOES`);
+        setTxt('palermoAuditText', `CHECKED: ${ra.totalChecked || 0} | TRAPS: ${ts.trapsBlocked || 0} | TRAIL SL+: ${(ra.beTrailedCount || 0) + (ra.profitLockedCount || 0)}`);
+      } catch (e) {
+        console.warn('Market intelligence sync notice:', e);
+      }
+    }
+
+    async function triggerOptionsSweep() {
+      const btn = document.getElementById('scanOptionsBtn');
+      if (btn) { btn.disabled = true; btn.textContent = 'SCANNING OPTIONS...'; }
+      try {
+        await fetch('/api/options/scan', { method: 'POST' });
+        addLogEntry('STOCKHOLM', 'Triggered live Option Chain + Strike Velocity sweep (NIFTY / BANKNIFTY / SENSEX / FINNIFTY)...');
+        setTimeout(() => { syncMarketIntelligence(); syncBackend(); }, 2500);
+      } catch (e) {
+        addLogEntry('PALERMO', 'Options scan trigger notice: ' + e.message);
+      } finally {
+        setTimeout(() => {
+          if (btn) { btn.disabled = false; btn.textContent = '⚡ SCAN OPTIONS NOW'; }
+        }, 2500);
+      }
+    }
+
+    async function runRealBacktest() {
+      const btn = document.getElementById('runBacktestBtn');
+      const sym = (document.getElementById('btSymbolInput').value || 'SENSEX').trim().toUpperCase();
+      const tf = document.getElementById('btTimeframeSelect').value || '25m';
+      const days = Number(document.getElementById('btDaysSelect').value || 30);
+      const rr = Number(document.getElementById('btRrSelect').value || 2.0);
+      const trailing = document.getElementById('btTrailingCheck').checked;
+
+      if (btn) { btn.disabled = true; btn.textContent = 'RUNNING...'; }
+      document.getElementById('btSourceTag').textContent = 'COMPUTING...';
+
+      try {
+        const res = await fetch('/api/backtest/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ symbol: sym, timeframe: tf, days, riskReward: rr, trailingSl: trailing })
+        });
+        const data = await res.json();
+        const tbody = document.getElementById('btTradesBody');
+        if (!data.success) {
+          document.getElementById('btSourceTag').textContent = 'ERROR';
+          if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-rose-600">${escHtml(data.error || 'Backtest failed')}</td></tr>`;
+          return;
+        }
+        const m = data.metrics || {};
+        document.getElementById('btSourceTag').textContent = `${data.dataSource || 'DHAN'} • ${data.barsAnalyzed || 0} BARS (${data.dateRange || ''})`;
+        document.getElementById('btTotalTrades').textContent = m.totalTrades ?? 0;
+        document.getElementById('btWinRate').textContent = m.winRate || '0%';
+        document.getElementById('btNetPnl').textContent = m.netPnL || '₹0';
+        document.getElementById('btNetPnl').className = String(m.netPnL || '').includes('-') ? 'font-extrabold text-rose-600 text-xs' : 'font-extrabold text-emerald-600 text-xs';
+        document.getElementById('btProfitFactor').textContent = m.profitFactor ?? '--';
+        document.getElementById('btMaxDd').textContent = m.maxDrawdown || '0%';
+        document.getElementById('btBeSaves').textContent = m.breakevenSaves ?? 0;
+
+        const trades = data.recentTrades || [];
+        if (tbody) {
+          if (!trades.length) {
+            tbody.innerHTML = '<tr><td colspan="6" class="py-5 text-center text-slate-400">0 strict engulfing confluence setups matched in this window.</td></tr>';
+          } else {
+            tbody.innerHTML = trades.map(t => {
+              const p = Number(t.pnl || 0);
+              const cls = p > 0 ? 'text-emerald-600 font-bold' : (p < 0 ? 'text-rose-600 font-bold' : 'text-slate-600 font-bold');
+              return `
+                <tr class="hover:bg-slate-50">
+                  <td class="py-1 text-slate-500">${escHtml(t.date)}</td>
+                  <td class="py-1 font-bold ${t.type === 'LONG' ? 'text-emerald-700' : 'text-rose-700'}">${escHtml(t.type)} (${escHtml(t.grade || 'A')})</td>
+                  <td class="py-1">₹${Number(t.entry).toFixed(1)}</td>
+                  <td class="py-1">₹${Number(t.exit).toFixed(1)}</td>
+                  <td class="py-1 text-[9px] font-bold">${escHtml(t.status)}</td>
+                  <td class="py-1 text-right ${cls}">${p >= 0 ? '+' : ''}₹${p.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</td>
+                </tr>
+              `;
+            }).join('');
+          }
+        }
+        addLogEntry('PROFESSOR', `Backtest ${sym} (${tf}, ${days}d): ${m.totalTrades} trades | WR ${m.winRate} | Net ${m.netPnL}`);
+      } catch (e) {
+        document.getElementById('btSourceTag').textContent = 'FAILED';
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'RUN TEST'; }
+      }
+    }
+
+    async function resetPaperAccount() {
+      try {
+        await fetch('/api/options/reset-paper', { method: 'POST' });
+        addLogEntry('HELSINKI', 'Paper trading book reset to ₹20,00,000.00 initial capital.');
+        syncBackend();
+      } catch (e) {}
     }
 
     // -------------------------------------------------------------
@@ -1496,11 +2233,18 @@
           }
         }
 
-        // 4. Fetch Paper Trading Portfolio Balance (₹20 Lakhs Dynamic Sync)
+        // 4. Fetch Paper Trading Portfolio Balance & Equity History (₹20 Lakhs Dynamic Sync)
         const paperRes = await fetch('/api/options/paper-trades');
         if (paperRes.ok) {
           const paperData = await paperRes.json();
           const vp = paperData.virtualPortfolio;
+          if (Array.isArray(paperData.equityHistory) && paperData.equityHistory.length > 0) {
+            balancePoints = paperData.equityHistory.length === 1
+              ? [paperData.equityHistory[0], paperData.equityHistory[0]]
+              : paperData.equityHistory;
+            drawBalanceChart();
+          }
+          renderPaperTradesTable(paperData);
           if (vp) {
             const balEl = document.getElementById('displayBalance');
             if (balEl) {
@@ -1534,17 +2278,31 @@
     function renderSignalsTable(signals) {
       currentSignalsCache = signals || [];
       const tbody = document.getElementById('signalsTableBody');
-      if (!signals || signals.length === 0) return;
+      if (!tbody) return;
+      if (!signals || signals.length === 0) {
+        tbody.innerHTML = `<tr id="emptySignalRow"><td colspan="10" class="py-8 text-center text-slate-400">No strict 25m engulfing confluence signals active yet. Click <b>SWEEP SCAN F&O</b> or check <b>AGENT 01-10</b> live telemetry above.</td></tr>`;
+        return;
+      }
 
       tbody.innerHTML = '';
       signals.forEach((sig, idx) => {
         const isBull = sig.type === 'BULLISH';
+        const symSafe = escHtml(sig.symbol || '');
+        const symJs = String(sig.symbol || '').replace(/'/g, "\\'");
         const typeBadge = isBull 
           ? '<span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]">🟢 BULLISH</span>'
           : '<span class="px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-bold text-[10px]">🔴 BEARISH</span>';
 
+        const grade = sig.tradeGrade || (Number(sig.strength || 0) >= 85 ? 'A+' : Number(sig.strength || 0) >= 70 ? 'A' : 'B');
+        const gradeCls = grade === 'A+'
+          ? 'bg-emerald-600 text-white'
+          : (grade === 'A' ? 'bg-blue-100 text-blue-800' : 'bg-slate-200 text-slate-700');
+
         const timeStr = sig.timestamp ? new Date(sig.timestamp).toLocaleTimeString() : 'JUST NOW';
-        const trendTag = isBull ? '↘️ Reversal (Decline)' : '↗️ Reversal (Rally)';
+        const trendTag = escHtml(sig.trendContext || (isBull ? '↘️ Reversal (Decline)' : '↗️ Reversal (Rally)'));
+        const extraTags = [];
+        if (sig.rvol) extraTags.push(`RVOL ${Number(sig.rvol).toFixed(1)}x`);
+        if (sig.vwap) extraTags.push(`VWAP ₹${Number(sig.vwap).toFixed(1)}`);
 
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-slate-50 transition cursor-pointer border-b border-slate-100';
@@ -1553,21 +2311,29 @@
           viewStockInChart(sig.symbol);
         };
         tr.innerHTML = `
-          <td class="py-2.5 px-3 text-slate-400">${timeStr}</td>
-          <td class="py-2.5 px-3 font-bold text-slate-900">${sig.symbol}</td>
+          <td class="py-2.5 px-3 text-slate-400">${escHtml(timeStr)}</td>
+          <td class="py-2.5 px-3 font-bold text-slate-900">
+            <div>${symSafe}</div>
+            ${extraTags.length ? `<div class="text-[9px] text-slate-400 font-normal">${escHtml(extraTags.join(' • '))}</div>` : ''}
+          </td>
           <td class="py-2.5 px-3">${typeBadge}</td>
-          <td class="py-2.5 px-3 text-slate-600">${trendTag}</td>
-          <td class="py-2.5 px-3 font-bold text-slate-800">${sig.ratio || '135%'}</td>
-          <td class="py-2.5 px-3 font-bold text-slate-900">₹${Number(sig.entryPrice).toFixed(2)}</td>
-          <td class="py-2.5 px-3 text-rose-600 font-semibold">₹${Number(sig.stopLoss).toFixed(2)}</td>
-          <td class="py-2.5 px-3 text-emerald-600 font-semibold">₹${Number(sig.target).toFixed(2)}</td>
-          <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded bg-slate-100 font-bold text-slate-800">${sig.strength}%</span></td>
+          <td class="py-2.5 px-3 text-slate-600 max-w-[230px]">${trendTag}</td>
+          <td class="py-2.5 px-3 font-bold text-slate-800">${escHtml(sig.ratio || '135%')}</td>
+          <td class="py-2.5 px-3 font-bold text-slate-900">₹${Number(sig.entryPrice || 0).toFixed(2)}</td>
+          <td class="py-2.5 px-3 text-rose-600 font-semibold">₹${Number(sig.stopLoss || 0).toFixed(2)}</td>
+          <td class="py-2.5 px-3 text-emerald-600 font-semibold">₹${Number(sig.target || 0).toFixed(2)}</td>
+          <td class="py-2.5 px-3">
+            <div class="flex items-center gap-1">
+              <span class="px-1.5 py-0.5 rounded font-black text-[10px] ${gradeCls}">${escHtml(grade)}</span>
+              <span class="px-1.5 py-0.5 rounded bg-slate-100 font-bold text-slate-800">${Number(sig.strength || 0)}%</span>
+            </div>
+          </td>
           <td class="py-2.5 px-3 text-right">
             <div class="flex items-center justify-end gap-1.5">
-              <button onclick="viewStockInChart('${sig.symbol}')" class="px-2 py-1 rounded bg-emerald-600 text-white text-[10px] font-bold font-mono-code hover:bg-emerald-700 shadow-sm transition flex items-center gap-1">
+              <button onclick="viewStockInChart('${symJs}')" class="px-2 py-1 rounded bg-emerald-600 text-white text-[10px] font-bold font-mono-code hover:bg-emerald-700 shadow-sm transition flex items-center gap-1">
                 <span>📈 CHART</span>
               </button>
-              <button onclick="openCandleModalBySymbol('${sig.symbol}')" class="px-2 py-1 rounded bg-slate-100 text-slate-700 text-[10px] font-bold font-mono-code hover:bg-slate-200 transition">
+              <button onclick="openCandleModalBySymbol('${symJs}')" class="px-2 py-1 rounded bg-slate-100 text-slate-700 text-[10px] font-bold font-mono-code hover:bg-slate-200 transition">
                 <span>PATTERN</span>
               </button>
             </div>
@@ -1696,6 +2462,7 @@
               spinner.classList.add('hidden');
               label.textContent = 'SWEEP SCAN F&O';
               await syncBackend();
+              syncMarketIntelligence();
               addLogEntry('DENVER', `Sweep complete! Total ${stData.status.signalsFound || 0} signals active.`);
             }
           } catch (e) {
@@ -1762,9 +2529,11 @@
       if (!isStreaming && overlay) overlay.classList.remove('hidden');
 
       const badge = document.getElementById('activeChartSymbolBadge');
-      if (badge) badge.textContent = `${currentChartSymbol}.NS`;
+      const isIdx = ['NIFTY', 'BANKNIFTY', 'FINNIFTY', 'SENSEX', 'INDIA_VIX'].includes(currentChartSymbol);
+      const displaySym = isIdx ? currentChartSymbol : `${currentChartSymbol}.NS`;
+      if (badge) badge.textContent = displaySym;
       const nameEl = document.getElementById('chartSymbolName');
-      if (nameEl) nameEl.textContent = `${currentChartSymbol}.NS`;
+      if (nameEl) nameEl.textContent = displaySym;
       const extLink = document.getElementById('externalTvLink');
       if (extLink) extLink.href = `https://www.tradingview.com/chart/?symbol=NSE:${currentChartSymbol}`;
 
@@ -1822,8 +2591,46 @@
             }
           }
 
+          const srcTag = data.source || 'DHANHQ';
+          const srcBadge = document.getElementById('chartSourceBadge');
+          if (srcBadge) {
+            srcBadge.textContent = srcTag;
+            srcBadge.className = srcTag.includes('DHAN')
+              ? 'px-2 py-0.5 rounded text-[10px] font-bold font-mono-code bg-emerald-100 text-emerald-800'
+              : 'px-2 py-0.5 rounded text-[10px] font-bold font-mono-code bg-indigo-100 text-indigo-800';
+          }
+
+          const ind = data.indicators || {};
+          const elVwap = document.getElementById('indVwap');
+          if (elVwap) elVwap.textContent = ind.vwap ? `₹${Number(ind.vwap).toFixed(2)}` : '--';
+          const elRsi = document.getElementById('indRsi');
+          if (elRsi) {
+            const rVal = Number(ind.rsi || 50);
+            elRsi.textContent = rVal.toFixed(1);
+            elRsi.className = rVal >= 65 ? 'text-emerald-600 font-bold' : (rVal <= 35 ? 'text-rose-600 font-bold' : 'text-slate-900 font-bold');
+          }
+          const elRvol = document.getElementById('indRvol');
+          if (elRvol) {
+            const rv = Number(ind.rvol || 1);
+            elRvol.textContent = `${rv.toFixed(2)}x`;
+            elRvol.className = rv >= 1.5 ? 'text-amber-600 font-bold' : 'text-slate-900 font-bold';
+          }
+          const elAtr = document.getElementById('indAtr');
+          if (elAtr) elAtr.textContent = ind.atr ? `₹${Number(ind.atr).toFixed(2)}` : '--';
+          const elEmas = document.getElementById('indEmas');
+          if (elEmas) elEmas.textContent = (ind.ema9 && ind.ema21) ? `₹${Number(ind.ema9).toFixed(1)} / ₹${Number(ind.ema21).toFixed(1)}` : '--';
+          const elPdhPdl = document.getElementById('indPdhPdl');
+          if (elPdhPdl) elPdhPdl.textContent = (ind.pdh && ind.pdl) ? `₹${Number(ind.pdh).toFixed(1)} / ₹${Number(ind.pdl).toFixed(1)}` : '--';
+          const elFeed = document.getElementById('indFeedSource');
+          if (elFeed) {
+            elFeed.textContent = `FEED: ${srcTag}`;
+            elFeed.className = srcTag.includes('DHAN')
+              ? 'px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold'
+              : 'px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800 font-bold';
+          }
+
           const countEl = document.getElementById('chartCandleCount');
-          if (countEl) countEl.innerHTML = `<span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse mr-1"></span> ${chartCandlesData.length} Real Candles (${currentChartInterval}) • LIVE STREAMING`;
+          if (countEl) countEl.innerHTML = `<span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse mr-1"></span> ${chartCandlesData.length} Real Candles (${escHtml(currentChartInterval)}) • ${escHtml(srcTag)} STREAMING`;
 
           updateTopMetrics(chartCandlesData[chartCandlesData.length - 1], chartVolumesData[chartVolumesData.length - 1]);
           if (!isStreaming) chartPanOffset = 0;
@@ -2449,7 +3256,9 @@
             { symbol: 'VEDL', name: 'Vedanta Limited' },
             { symbol: 'TITAN', name: 'Titan Company' },
             { symbol: 'NIFTY', name: 'NIFTY 50 INDEX' },
-            { symbol: 'BANKNIFTY', name: 'BANK NIFTY INDEX' }
+            { symbol: 'BANKNIFTY', name: 'BANK NIFTY INDEX' },
+            { symbol: 'SENSEX', name: 'BSE SENSEX INDEX' },
+            { symbol: 'FINNIFTY', name: 'FIN NIFTY INDEX' }
           ];
           indices.forEach(idx => {
             const opt = document.createElement('option');
@@ -2458,6 +3267,16 @@
             select.appendChild(opt);
           });
 
+          const dl = document.getElementById('btSymbolSuggestions');
+          if (dl) {
+            dl.innerHTML = '';
+            ['SENSEX', 'NIFTY', 'BANKNIFTY', 'FINNIFTY'].forEach(idxSym => {
+              const o = document.createElement('option');
+              o.value = idxSym;
+              dl.appendChild(o);
+            });
+          }
+
           const sorted = [...data.stocks].sort((a,b) => a.symbol.localeCompare(b.symbol));
           sorted.forEach(stk => {
             if (!['IRFC', 'VEDL', 'TITAN'].includes(stk.symbol)) {
@@ -2465,6 +3284,11 @@
               opt.value = stk.symbol;
               opt.textContent = `${stk.symbol} - ${stk.name || stk.symbol}`;
               select.appendChild(opt);
+            }
+            if (dl) {
+              const o = document.createElement('option');
+              o.value = stk.symbol;
+              dl.appendChild(o);
             }
           });
 
@@ -2495,7 +3319,9 @@
       loadCandleData('IRFC', '25m', false);
       loadFnoStocksDropdown();
       syncBackend();
+      syncMarketIntelligence();
       setInterval(syncBackend, 3500);
+      setInterval(syncMarketIntelligence, 7000);
       startChartStreaming();
     });
 
