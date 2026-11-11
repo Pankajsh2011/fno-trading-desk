@@ -963,20 +963,30 @@ def fetch_yahoo_finance_index_spots():
     tickers = {
         "NIFTY": "^NSEI",
         "BANKNIFTY": "^NSEBANK",
-        "FINNIFTY": "^CNXFIN",
+        "FINNIFTY": "NIFTY_FIN_SERVICE.NS",
         "SENSEX": "^BSESN",
         "INDIA_VIX": "^INDIAVIX"
     }
     for key, ticker in tickers.items():
         try:
-            url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?interval=5m&range=5d"
+            url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?interval=1d&range=5d"
             resp = _yf_session.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=5)
             if resp.status_code == 200:
                 data = resp.json()
                 result = data.get("chart", {}).get("result", [{}])[0]
                 meta = result.get("meta", {})
-                ltp = meta.get("regularMarketPrice")
-                prev_close = meta.get("chartPreviousClose") or meta.get("previousClose") or ltp
+                quotes = result.get("indicators", {}).get("quote", [{}])[0]
+                raw_closes = [float(c) for c in (quotes.get("close") or []) if c is not None]
+                raw_opens = [float(c) for c in (quotes.get("open") or []) if c is not None]
+                raw_highs = [float(c) for c in (quotes.get("high") or []) if c is not None]
+                raw_lows = [float(c) for c in (quotes.get("low") or []) if c is not None]
+
+                ltp = meta.get("regularMarketPrice") or (raw_closes[-1] if raw_closes else None)
+                # Use prior trading session close (closes[-2]) rather than 5d range start
+                if len(raw_closes) >= 2:
+                    prev_close = raw_closes[-2]
+                else:
+                    prev_close = meta.get("previousClose") or meta.get("chartPreviousClose") or ltp
                 if ltp:
                     ltp_f = round(float(ltp), 2)
                     prev_f = round(float(prev_close), 2) if prev_close else ltp_f
@@ -987,9 +997,9 @@ def fetch_yahoo_finance_index_spots():
                         "change": chg,
                         "pointsChange": pts,
                         "prevClose": prev_f,
-                        "open": round(float(meta.get("regularMarketOpen") or ltp_f), 2),
-                        "high": round(float(meta.get("regularMarketDayHigh") or ltp_f), 2),
-                        "low": round(float(meta.get("regularMarketDayLow") or ltp_f), 2)
+                        "open": round(float(meta.get("regularMarketOpen") or (raw_opens[-1] if raw_opens else ltp_f)), 2),
+                        "high": round(float(meta.get("regularMarketDayHigh") or (raw_highs[-1] if raw_highs else ltp_f)), 2),
+                        "low": round(float(meta.get("regularMarketDayLow") or (raw_lows[-1] if raw_lows else ltp_f)), 2)
                     }
         except Exception as e:
             logger.debug(f"[Yahoo Index Spot Notice] {key}: {e}")
@@ -1841,7 +1851,7 @@ def fetch_yahoo_finance_stock_candles(symbol: str, exchange_segment: str, interv
         if exchange_segment == "IDX_I" or symbol in INDEX_MAPPINGS:
             if symbol == "NIFTY": ticker = "^NSEI"
             elif symbol == "BANKNIFTY": ticker = "^NSEBANK"
-            elif symbol == "FINNIFTY": ticker = "^CNXFIN"
+            elif symbol == "FINNIFTY": ticker = "NIFTY_FIN_SERVICE.NS"
             elif symbol == "SENSEX": ticker = "^BSESN"
             elif symbol in ["INDIA_VIX", "INDIAVIX", "VIX"]: ticker = "^INDIAVIX"
         elif exchange_segment == "MCX_COMM":
@@ -3253,7 +3263,8 @@ def get_agents_status():
 
     rvol_list = momentum_snapshot.get("rvolBreakouts", [])
     rvol_high = [r for r in rvol_list if float(r.get("rvol", 1.0)) >= 1.5]
-    top_leader = momentum_snapshot.get("topLeaderText", f"{len(active_scanning_list)} F&O Ready")
+    top_leader_raw = momentum_snapshot.get("topLeaderText") or ""
+    top_leader = top_leader_raw if momentum_snapshot.get("scannedAt") else f"{len(active_scanning_list)} F&O READY"
 
     grade_a_cnt = sum(1 for s in active_signals if s.get("tradeGrade") in ["A+", "A"])
     active_paper = [t for t in paper_trades if t.get("status") == "ACTIVE"]
@@ -3282,7 +3293,7 @@ def get_agents_status():
             "emoji": "🧑‍🚀",
             "badgeColor": "amber",
             "duty": f"F&O Momentum & RVOL Sniper ({len(active_scanning_list)} Scrips)",
-            "metric": f"{len(rvol_high)} RVOL | {len(active_scanning_list)} F&O" if rvol_high else top_leader[:22],
+            "metric": f"{len(rvol_high)} RVOL | {len(active_scanning_list)} F&O" if rvol_high else top_leader,
             "status": "SCANNING LIVE" if scanner_status["isRunning"] else f"PULSE: {momentum_snapshot.get('scannedAt') or 'PRIMED'}",
             "statusClass": "text-amber-700 bg-amber-50 border-amber-200",
             "dotClass": "bg-amber-500 animate-ping" if scanner_status["isRunning"] else "bg-amber-500",
@@ -4301,29 +4312,34 @@ def refresh_startup_intelligence():
         logger.debug(f"[Startup Spots Notice]: {e}")
     if dhan_status.get("isValid", False):
         try:
+            update_momentum_snapshot_from_quotes()
+        except Exception as e:
+            logger.debug(f"[Startup Quote Pulse Notice]: {e}")
+        try:
             for idx_sym, cfg in INDEX_MAPPINGS.items():
                 res = fetch_active_option_chain(idx_sym, cfg)
                 if res:
                     active_option_chain_data[idx_sym] = res["oc"]
                 time.sleep(0.35)
             update_index_spots_and_regime()
-            update_momentum_snapshot_from_quotes()
         except Exception as e:
             logger.debug(f"[Startup Dhan Sync Notice]: {e}")
 
 def startup_sequence():
     load_paper_trades_db()
-    check_dhan_connection()
+    if not dhan_status.get("lastChecked"):
+        check_dhan_connection()
 
     has_auto_creds = (
         os.getenv("DHAN_PIN") and os.getenv("DHAN_PIN") != "your_6_digit_pin_here" and
         os.getenv("DHAN_TOTP_SECRET") and os.getenv("DHAN_TOTP_SECRET") != "your_totp_secret_key_here"
     )
 
-    if has_auto_creds:
+    if has_auto_creds and not dhan_status.get("isValid"):
         logger.info("[Startup] Detecting automated login credentials. Attempting token generation...")
         generate_dhan_access_token()
-    else:
+        check_dhan_connection()
+    elif not dhan_status.get("isValid"):
         logger.info("[Startup] Automated login bypassed: Credentials not configured in .env. Using token mode.")
 
     sync_fno_stocks_list()
@@ -4338,19 +4354,31 @@ def startup_sequence():
     threading.Thread(target=scheduler_daily_token_renewal, daemon=True).start()
     threading.Thread(target=keep_alive_worker, daemon=True).start()
 
-    logger.info("[Startup] ✅ Server READY! Intelligence & Agent Daemons launched.")
+    logger.info(f"[Startup] ✅ Worker PID {os.getpid()} READY! DhanHQ Valid={dhan_status.get('isValid')} | Daemons launched.")
 
 _startup_lock = threading.Lock()
-_startup_done = False
+_startup_pid: Optional[int] = None
 
 def ensure_services_running():
-    global _startup_done
+    global _startup_pid
+    curr_pid = os.getpid()
+    if _startup_pid == curr_pid:
+        return
     with _startup_lock:
-        if not _startup_done:
-            _startup_done = True
+        if _startup_pid != curr_pid:
+            _startup_pid = curr_pid
+            if not dhan_status.get("lastChecked"):
+                try:
+                    check_dhan_connection()
+                except Exception:
+                    pass
             threading.Thread(target=startup_sequence, daemon=True).start()
 
-# Automatically ensure background services are started under any runner (Gunicorn/WSGI/Flask)
+@app.before_request
+def _ensure_worker_services_hook():
+    ensure_services_running()
+
+# Prime once on module load (and auto-rebind after any Gunicorn worker fork via before_request)
 ensure_services_running()
 
 def start():
