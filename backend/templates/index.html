@@ -177,6 +177,171 @@
     </div>
 
     <!-- ============================================================== -->
+    <!-- ⚡ 2B. LIVE DECISION PIPELINE · SIZER · ENTRY/EXIT TELEMETRY & AUDIT -->
+    <!-- ============================================================== -->
+    <div id="decisionPipelineDeck" class="desk-card p-4 space-y-3 border-slate-200">
+      <!-- Top Header & Result Start vs Now Strip -->
+      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+          <span class="text-xs font-bold text-slate-800 font-mono-code uppercase tracking-wider">// LIVE DECISION PIPELINE &amp; AUDIT STREAM</span>
+          <span class="hidden sm:inline text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-mono-code">EVERY TRADE GETS A REASON</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 font-mono-code text-[10px]">
+          <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200">
+            <span class="text-slate-400">MAX SLIPPAGE CAP</span>
+            <select id="slippageCapSelect" onchange="updateSlippageCap(this.value)" class="bg-white border border-slate-300 rounded px-1.5 py-0.5 font-bold text-slate-800 cursor-pointer">
+              <option value="1.0">1.0%</option>
+              <option value="1.5">1.5%</option>
+              <option value="2.0" selected>2.0%</option>
+              <option value="3.0">3.0%</option>
+            </select>
+          </div>
+          <div id="resultStartNowPill" class="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-slate-900 text-white font-bold">
+            <span class="text-slate-400">START</span>
+            <span id="resStartVal">₹20.00L</span>
+            <span class="text-slate-500">→</span>
+            <span class="text-emerald-300">NOW</span>
+            <span id="resNowVal">₹20.00L</span>
+            <span id="resWlBadge" class="px-1.5 py-0.5 rounded bg-slate-700 text-emerald-300">0W / 0L</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5-Stage Visual Execution Flow -->
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 font-mono-code text-[10px]">
+        <div class="p-2.5 rounded-lg border border-amber-200 bg-amber-50/50">
+          <div class="flex items-center justify-between text-amber-800 font-bold">
+            <span>01 TOKYO SCAN</span>
+            <span class="px-1 rounded bg-amber-100">SCOUT</span>
+          </div>
+          <div id="pipeScannedCnt" class="text-sm font-black text-slate-900 mt-1">0 checked</div>
+          <div class="text-slate-500 truncate">213 F&amp;O + 4 Idx chains</div>
+        </div>
+
+        <div class="p-2.5 rounded-lg border border-rose-200 bg-rose-50/50">
+          <div class="flex items-center justify-between text-rose-800 font-bold">
+            <span>02 TRAP / SPREAD</span>
+            <span class="px-1 rounded bg-rose-100">FILTERED</span>
+          </div>
+          <div id="pipeFilteredCnt" class="text-sm font-black text-rose-700 mt-1">0 blocked</div>
+          <div id="pipeFilteredSub" class="text-slate-500 truncate">LISBON / PALERMO gate</div>
+        </div>
+
+        <div class="p-2.5 rounded-lg border border-indigo-200 bg-indigo-50/50">
+          <div class="flex items-center justify-between text-indigo-800 font-bold">
+            <span>03 SIZER</span>
+            <span class="px-1 rounded bg-indigo-100">EQUITY %</span>
+          </div>
+          <div id="pipeSizerPct" class="text-sm font-black text-indigo-700 mt-1">~5.0% eq</div>
+          <div class="text-slate-500 truncate">Dynamic lot cap · ₹20L base</div>
+        </div>
+
+        <div class="p-2.5 rounded-lg border border-emerald-200 bg-emerald-50/50">
+          <div class="flex items-center justify-between text-emerald-800 font-bold">
+            <span>04 PROFESSOR EXEC</span>
+            <span class="px-1 rounded bg-emerald-100">SLIP GUARD</span>
+          </div>
+          <div id="pipeActiveCnt" class="text-sm font-black text-emerald-700 mt-1">0 active</div>
+          <div id="pipeSlipCapSub" class="text-slate-500 truncate">Cap ≤ 2.0% · 0 slip veto</div>
+        </div>
+
+        <div class="col-span-2 sm:col-span-1 p-2.5 rounded-lg border border-slate-200 bg-slate-50">
+          <div class="flex items-center justify-between text-slate-800 font-bold">
+            <span>05 HELSINKI LOG</span>
+            <span class="px-1 rounded bg-slate-200">AUDIT</span>
+          </div>
+          <div id="pipeExitsCnt" class="text-sm font-black text-slate-900 mt-1">0 exits</div>
+          <div id="pipeAuditTotal" class="text-slate-500 truncate">0 logged decisions</div>
+        </div>
+      </div>
+
+      <!-- Dual Panel: Live Open Trade Telemetry Card + Structured Audit Stream -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
+        <!-- Left (5 cols): TRADE · ENTRY vs EXIT Telemetry Card -->
+        <div class="lg:col-span-5 rounded-xl border border-slate-200 bg-slate-50/70 p-3 flex flex-col justify-between font-mono-code space-y-2.5">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] font-bold text-slate-700 uppercase">TRADE · ENTRY vs EXIT</span>
+              <span id="openTradeStatusBadge" class="text-[9px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 font-bold">STANDBY</span>
+            </div>
+            <span id="openTradeLivePct" class="text-xs font-black text-slate-600">0.00% live</span>
+          </div>
+
+          <div id="openTradeCardBody" class="space-y-2 text-[11px]">
+            <div class="flex items-center justify-between">
+              <span id="openTradeSymbol" class="text-sm font-black text-slate-900">Awaiting Verified Setup</span>
+              <span id="openTradeDirBadge" class="text-[9px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 font-bold">--</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 bg-white p-2.5 rounded-lg border border-slate-200">
+              <div>
+                <div class="text-[9px] text-slate-400">ENTRY FILL</div>
+                <div id="openTradeEntryPrice" class="font-bold text-slate-900">--</div>
+              </div>
+              <div>
+                <div class="text-[9px] text-slate-400">CURRENT / EXIT</div>
+                <div id="openTradeExitPrice" class="font-bold text-slate-900">--</div>
+              </div>
+              <div>
+                <div class="text-[9px] text-slate-400">SLIPPAGE vs CAP</div>
+                <div id="openTradeSlip" class="font-bold text-emerald-700">--</div>
+              </div>
+              <div>
+                <div class="text-[9px] text-slate-400">SIZER (% EQUITY)</div>
+                <div id="openTradeSize" class="font-bold text-indigo-700">--</div>
+              </div>
+            </div>
+
+            <div class="bg-white p-2 rounded-lg border border-slate-200 space-y-1 text-[10px]">
+              <div class="flex items-start gap-1.5">
+                <span class="text-slate-400 shrink-0 font-bold">REASON:</span>
+                <span id="openTradeReason" class="text-slate-700 break-words">Auto-paper &amp; sweep gates armed. Verified triggers appear with full rationale here.</span>
+              </div>
+              <div class="flex items-start gap-1.5">
+                <span class="text-slate-400 shrink-0 font-bold">EXIT / TRAIL:</span>
+                <span id="openTradeExitNote" class="text-slate-600 truncate">Two-stage Trail SL (1R BE → 1.5R +0.5R lock)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- START vs NOW Compact Equity Progress Bar -->
+          <div class="pt-2 border-t border-slate-200 space-y-1 text-[10px]">
+            <div class="flex items-center justify-between">
+              <span class="text-slate-500">RESULT · START vs NOW</span>
+              <span id="openMtmInline" class="font-bold text-slate-700">OPEN MTM: ₹0</span>
+            </div>
+            <div class="w-full h-1.5 rounded-full bg-slate-200 overflow-hidden">
+              <div id="equityProgressBar" class="h-full bg-emerald-500 transition-all duration-300" style="width: 50%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right (7 cols): Structured ENTER / FILTERED / EXIT Decision Audit Log -->
+        <div class="lg:col-span-7 rounded-xl border border-slate-200 bg-white p-3 flex flex-col font-mono-code">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2 mb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] font-bold text-slate-800 uppercase">$ tail -f decisions_audit.log</span>
+              <span id="auditLogCountBadge" class="text-[9px] px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 font-bold">0 ENTRIES</span>
+            </div>
+            <div class="flex items-center gap-1 text-[10px]">
+              <button onclick="setAuditFilter('ALL')" id="auditFilterALL" class="px-2 py-0.5 rounded bg-slate-900 text-white font-bold">ALL</button>
+              <button onclick="setAuditFilter('ENTER')" id="auditFilterENTER" class="px-2 py-0.5 rounded bg-slate-100 text-emerald-700 font-bold hover:bg-emerald-50">ENTER</button>
+              <button onclick="setAuditFilter('FILTERED')" id="auditFilterFILTERED" class="px-2 py-0.5 rounded bg-slate-100 text-rose-700 font-bold hover:bg-rose-50">FILTERED</button>
+              <button onclick="setAuditFilter('EXIT')" id="auditFilterEXIT" class="px-2 py-0.5 rounded bg-slate-100 text-indigo-700 font-bold hover:bg-indigo-50">EXIT</button>
+            </div>
+          </div>
+
+          <div id="decisionAuditBody" class="h-[210px] overflow-y-auto divide-y divide-slate-100 pr-1 text-[10px]">
+            <div class="py-12 text-center text-slate-400">
+              Awaiting scan or trade events — filtered traps, spread vetoes, slippage blocks, entries &amp; exits will appear here with reasons.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
     <!-- 📈 3. DUAL TELEMETRY ROW (BALANCE HISTORY CHART + ACTIVITY LOG) -->
     <!-- ============================================================== -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4">
@@ -811,7 +976,7 @@
               <thead>
                 <tr class="text-slate-400 border-b border-slate-100">
                   <th class="py-1.5">CONTRACT</th>
-                  <th class="py-1.5">QTY</th>
+                  <th class="py-1.5">SIZE / SLIP</th>
                   <th class="py-1.5">ENTRY</th>
                   <th class="py-1.5">LTP/EXIT</th>
                   <th class="py-1.5">SL (TRAIL)</th>
@@ -2001,6 +2166,183 @@
       }
     }
 
+    let latestDecisionAudit = [];
+    let currentAuditFilter = 'ALL';
+
+    function setAuditFilter(filterType) {
+      currentAuditFilter = filterType || 'ALL';
+      ['ALL', 'ENTER', 'FILTERED', 'EXIT'].forEach(f => {
+        const btn = document.getElementById('auditFilter' + f);
+        if (!btn) return;
+        if (f === currentAuditFilter) {
+          btn.className = 'px-2 py-0.5 rounded bg-slate-900 text-white font-bold';
+        } else {
+          const inactive = f === 'ENTER' ? 'text-emerald-700 hover:bg-emerald-50' : (f === 'FILTERED' ? 'text-rose-700 hover:bg-rose-50' : (f === 'EXIT' ? 'text-indigo-700 hover:bg-indigo-50' : 'text-slate-600 hover:bg-slate-200'));
+          btn.className = `px-2 py-0.5 rounded bg-slate-100 ${inactive} font-bold`;
+        }
+      });
+      renderDecisionAuditRows();
+    }
+
+    async function updateSlippageCap(val) {
+      const num = parseFloat(val);
+      if (isNaN(num)) return;
+      try {
+        const res = await fetch('/api/settings/risk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ maxSlippagePct: num })
+        });
+        if (res.ok) {
+          addLogEntry('PROFESSOR', `Entry slippage cap updated to ≤ ${num.toFixed(1)}%`);
+          syncMarketIntelligence();
+        }
+      } catch (e) {
+        console.warn('Slippage cap update notice:', e);
+      }
+    }
+
+    function renderDecisionAuditRows() {
+      const container = document.getElementById('decisionAuditBody');
+      const countBadge = document.getElementById('auditLogCountBadge');
+      if (!container) return;
+      const rows = (latestDecisionAudit || []).filter(r => currentAuditFilter === 'ALL' || r.action === currentAuditFilter);
+      if (countBadge) countBadge.textContent = `${rows.length} ENTRIES`;
+      if (!rows.length) {
+        container.innerHTML = `<div class="py-12 text-center text-slate-400">No ${escHtml(currentAuditFilter)} decisions logged yet. Live scans, trap filters, slippage vetoes &amp; fills stream here.</div>`;
+        return;
+      }
+      container.innerHTML = rows.slice(0, 40).map(d => {
+        const act = String(d.action || 'FILTERED').toUpperCase();
+        const actCls = act === 'ENTER'
+          ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+          : (act === 'EXIT' ? 'bg-indigo-100 text-indigo-800 border-indigo-200' : 'bg-rose-100 text-rose-800 border-rose-200');
+        let metaHtml = '';
+        if (d.pnl !== null && d.pnl !== undefined) {
+          const pv = Number(d.pnl);
+          metaHtml = `<span class="font-extrabold ${pv >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${pv >= 0 ? '+' : ''}₹${pv.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>`;
+        } else if (d.equityPct !== null && d.equityPct !== undefined) {
+          metaHtml = `<span class="text-indigo-700 font-bold">${Number(d.equityPct).toFixed(1)}% eq${d.slippagePct !== null && d.slippagePct !== undefined ? ` · slip ${Number(d.slippagePct).toFixed(2)}%` : ''}</span>`;
+        } else if (d.slippagePct !== null && d.slippagePct !== undefined) {
+          metaHtml = `<span class="text-rose-600 font-bold">slip ${Number(d.slippagePct).toFixed(2)}%</span>`;
+        } else if (d.price) {
+          metaHtml = `<span class="text-slate-500">₹${Number(d.price).toFixed(1)}</span>`;
+        }
+        return `
+          <div class="py-1.5 flex items-start justify-between gap-2 hover:bg-slate-50 px-1 rounded">
+            <div class="min-w-0 flex-1 space-y-0.5">
+              <div class="flex flex-wrap items-center gap-1.5">
+                <span class="text-slate-400">${escHtml(d.time || '--:--')}</span>
+                <span class="px-1.5 py-0.5 rounded border text-[9px] font-bold ${actCls}">${escHtml(act)}</span>
+                <span class="px-1 py-0.5 rounded bg-slate-100 text-slate-600 text-[9px] font-bold">${escHtml(d.agent || 'DESK')}</span>
+                <span class="font-extrabold text-slate-900 truncate">${escHtml(d.symbol || '--')}</span>
+              </div>
+              <div class="text-slate-600 truncate pl-1" title="${escHtml(d.reason || '')}">reason: ${escHtml(d.reason || '--')}</div>
+            </div>
+            <div class="shrink-0 text-right pt-0.5">${metaHtml}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderPipelineAndAudit(summary, auditLog, riskCfg) {
+      if (Array.isArray(auditLog)) {
+        latestDecisionAudit = auditLog;
+        renderDecisionAuditRows();
+      }
+      if (!summary) return;
+      const setTxt = (id, v) => { const el = document.getElementById(id); if (el && v !== undefined) el.textContent = v; };
+      const cap = Number((riskCfg && riskCfg.maxSlippagePct) || summary.slippageCapPct || 2.0);
+      const capSel = document.getElementById('slippageCapSelect');
+      if (capSel && document.activeElement !== capSel) {
+        const matchOpt = Array.from(capSel.options).find(o => Math.abs(parseFloat(o.value) - cap) < 0.05);
+        if (matchOpt) capSel.value = matchOpt.value;
+      }
+
+      const startCap = Number(summary.startCapital || 2000000);
+      const nowEq = Number(summary.liveEquity !== undefined ? summary.liveEquity : (summary.currentEquity || startCap));
+      const fmtLakh = (n) => n >= 100000 ? `₹${(n / 100000).toFixed(2)}L` : `₹${n.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
+      setTxt('resStartVal', fmtLakh(startCap));
+      setTxt('resNowVal', fmtLakh(nowEq));
+      setTxt('resWlBadge', `${summary.winCount || 0}W / ${summary.lossCount || 0}L`);
+
+      setTxt('pipeScannedCnt', `${summary.scannedCount || 0} checked`);
+      setTxt('pipeFilteredCnt', `${summary.filteredCount || 0} blocked`);
+      const recentFilt = (summary.recentFiltered || [])[0];
+      setTxt('pipeFilteredSub', recentFilt ? `Last: ${recentFilt.symbol} (${recentFilt.agent})` : 'LISBON / PALERMO gate');
+      setTxt('pipeActiveCnt', `${summary.activeTradesCount || 0} active`);
+      setTxt('pipeSlipCapSub', `Cap ≤ ${cap.toFixed(1)}% · ${summary.slippageVetoes || 0} slip veto`);
+      setTxt('pipeExitsCnt', `${summary.closedTradesCount || 0} exits`);
+      setTxt('pipeAuditTotal', `${summary.totalAuditEvents || 0} logged decisions`);
+
+      const openMtm = Number(summary.openPnl || 0);
+      const mtmEl = document.getElementById('openMtmInline');
+      if (mtmEl) {
+        mtmEl.textContent = `OPEN MTM: ${openMtm >= 0 ? '+' : ''}₹${openMtm.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
+        mtmEl.className = `font-bold ${openMtm >= 0 ? 'text-emerald-600' : 'text-rose-600'}`;
+      }
+      const prog = document.getElementById('equityProgressBar');
+      if (prog && startCap > 0) {
+        const pctShift = ((nowEq - startCap) / startCap) * 100.0;
+        const barW = Math.max(8, Math.min(100, 50 + pctShift * 4));
+        prog.style.width = `${barW.toFixed(0)}%`;
+        prog.className = `h-full transition-all duration-300 ${nowEq >= startCap ? 'bg-emerald-500' : 'bg-rose-500'}`;
+      }
+
+      const focusTrade = summary.activeTrade || summary.lastClosedTrade;
+      const stBadge = document.getElementById('openTradeStatusBadge');
+      const livePctEl = document.getElementById('openTradeLivePct');
+      const dirBadge = document.getElementById('openTradeDirBadge');
+      if (!focusTrade) {
+        if (stBadge) {
+          stBadge.textContent = 'STANDBY';
+          stBadge.className = 'text-[9px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 font-bold';
+        }
+        if (livePctEl) { livePctEl.textContent = '0.00% live'; livePctEl.className = 'text-xs font-black text-slate-600'; }
+        setTxt('openTradeSymbol', 'Awaiting Verified Setup');
+        if (dirBadge) { dirBadge.textContent = '--'; dirBadge.className = 'text-[9px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 font-bold'; }
+        setTxt('openTradeEntryPrice', '--');
+        setTxt('openTradeExitPrice', '--');
+        setTxt('openTradeSlip', `0.00% / cap ${cap.toFixed(1)}%`);
+        setTxt('openTradeSize', 'Dynamic (~5.0% equity)');
+        setTxt('openTradeReason', recentFilt ? `Last Filtered: ${recentFilt.symbol} — ${recentFilt.reason}` : 'Auto-paper & sweep gates armed. Verified triggers appear with full rationale.');
+        setTxt('openTradeExitNote', 'Two-stage Trail SL (1R BE → 1.5R +0.5R lock)');
+        return;
+      }
+
+      const isOpen = focusTrade.status === 'ACTIVE';
+      const pctVal = Number(focusTrade.livePnLPct || 0);
+      const slipVal = Number(focusTrade.slippagePct || 0);
+      const eqPctVal = Number(focusTrade.equityPct || 0);
+      if (stBadge) {
+        stBadge.textContent = isOpen ? 'OPEN' : focusTrade.status;
+        stBadge.className = isOpen
+          ? 'text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold'
+          : (pctVal >= 0 ? 'text-[9px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800 font-bold' : 'text-[9px] px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 font-bold');
+      }
+      if (livePctEl) {
+        livePctEl.textContent = `${pctVal >= 0 ? '+' : ''}${pctVal.toFixed(2)}% ${isOpen ? 'live' : 'final'}`;
+        livePctEl.className = `text-xs font-black ${pctVal >= 0 ? 'text-emerald-600' : 'text-rose-600'}`;
+      }
+      setTxt('openTradeSymbol', focusTrade.symbol || '--');
+      const dirLabel = focusTrade.type === 'BULLISH' ? 'LONG' : 'SHORT';
+      if (dirBadge) {
+        dirBadge.textContent = dirLabel;
+        dirBadge.className = focusTrade.type === 'BULLISH'
+          ? 'text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold'
+          : 'text-[9px] px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 font-bold';
+      }
+      setTxt('openTradeEntryPrice', `₹${Number(focusTrade.entryPrice || 0).toFixed(2)}`);
+      const exitDisp = focusTrade.exitPrice || focusTrade.currentPrice || focusTrade.entryPrice || 0;
+      setTxt('openTradeExitPrice', isOpen ? `₹${Number(exitDisp).toFixed(2)} (open)` : `₹${Number(exitDisp).toFixed(2)}`);
+      setTxt('openTradeSlip', `${slipVal.toFixed(2)}% / cap ${cap.toFixed(1)}%`);
+      const allocRs = Number(focusTrade.allocatedCapital || 0);
+      setTxt('openTradeSize', `${eqPctVal.toFixed(1)}% eq (₹${allocRs.toLocaleString('en-IN', { maximumFractionDigits: 0 })})`);
+      setTxt('pipeSizerPct', `${eqPctVal.toFixed(1)}% eq`);
+      setTxt('openTradeReason', focusTrade.entryReason || 'Engulfing / Momentum verified setup');
+      setTxt('openTradeExitNote', focusTrade.exitReason || `SL ₹${Number(focusTrade.stopLoss || 0).toFixed(1)} · TGT ₹${Number(focusTrade.target || 0).toFixed(1)} · Stage: ${focusTrade.trailStage || 'INITIAL'}`);
+    }
+
     function renderPaperTradesTable(paperData) {
       const tbody = document.getElementById('paperTradesBody');
       const openBadge = document.getElementById('paperOpenPnlBadge');
@@ -2019,18 +2361,29 @@
       }
       tbody.innerHTML = trades.slice(0, 20).map(t => {
         const pnl = Number(t.pnl || 0);
+        const eqPct = Number(t.equityPct || 0);
+        const slipPct = Number(t.slippagePct || 0);
         const stCls = t.status === 'ACTIVE'
           ? 'bg-blue-100 text-blue-800'
           : (pnl > 0 ? 'bg-emerald-100 text-emerald-800' : (pnl === 0 ? 'bg-slate-200 text-slate-800' : 'bg-rose-100 text-rose-800'));
         const trailTxt = t.trailStage && t.trailStage !== 'INITIAL' ? ` (${t.trailStage})` : '';
         return `
           <tr class="hover:bg-slate-50">
-            <td class="py-1.5 font-bold text-slate-900">${escHtml(t.symbol)}</td>
-            <td class="py-1.5 text-slate-600">${t.qty || 0}</td>
+            <td class="py-1.5">
+              <div class="font-bold text-slate-900">${escHtml(t.symbol)}</div>
+              <div class="text-[9px] text-slate-400 truncate max-w-[170px]" title="${escHtml(t.entryReason || '')}">${escHtml(t.entryReason || '')}</div>
+            </td>
+            <td class="py-1.5 text-slate-600">
+              <div>${t.qty || 0} (${eqPct.toFixed(1)}% eq)</div>
+              <div class="text-[9px] text-indigo-600">slip ${slipPct.toFixed(2)}%</div>
+            </td>
             <td class="py-1.5">₹${Number(t.entryPrice || 0).toFixed(1)}</td>
             <td class="py-1.5 font-semibold">₹${Number(t.exitPrice || t.currentPrice || t.entryPrice || 0).toFixed(1)}</td>
             <td class="py-1.5 text-slate-600">₹${Number(t.stopLoss || 0).toFixed(1)}<span class="text-[9px] text-indigo-600">${escHtml(trailTxt)}</span></td>
-            <td class="py-1.5"><span class="px-1.5 py-0.5 rounded text-[9px] font-bold ${stCls}">${escHtml(t.status)}</span></td>
+            <td class="py-1.5">
+              <span class="px-1.5 py-0.5 rounded text-[9px] font-bold ${stCls}">${escHtml(t.status)}</span>
+              ${t.exitReason ? `<div class="text-[9px] text-slate-400 truncate max-w-[110px]">${escHtml(t.exitReason)}</div>` : ''}
+            </td>
             <td class="py-1.5 text-right font-extrabold ${pnl >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${pnl >= 0 ? '+' : ''}₹${pnl.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</td>
           </tr>
         `;
@@ -2080,6 +2433,7 @@
         const ts = intel.trapStats || {};
         setTxt('palermoStatusBadge', `${Number(ra.vetoCount || 0)} VETOES`);
         setTxt('palermoAuditText', `CHECKED: ${ra.totalChecked || 0} | TRAPS: ${ts.trapsBlocked || 0} | TRAIL SL+: ${(ra.beTrailedCount || 0) + (ra.profitLockedCount || 0)}`);
+        renderPipelineAndAudit(intel.pipelineSummary, intel.decisionAuditLog, intel.riskSettings);
       } catch (e) {
         console.warn('Market intelligence sync notice:', e);
       }
@@ -2169,6 +2523,7 @@
         await fetch('/api/options/reset-paper', { method: 'POST' });
         addLogEntry('HELSINKI', 'Paper trading book reset to ₹20,00,000.00 initial capital.');
         syncBackend();
+        syncMarketIntelligence();
       } catch (e) {}
     }
 
@@ -2245,6 +2600,7 @@
             drawBalanceChart();
           }
           renderPaperTradesTable(paperData);
+          renderPipelineAndAudit(paperData.pipelineSummary, paperData.decisionAuditLog, paperData.riskSettings);
           if (vp) {
             const balEl = document.getElementById('displayBalance');
             if (balEl) {

@@ -152,7 +152,8 @@ risk_settings: Dict[str, Any] = {
     "autoTrading": True,  # Activated by default for paper trading
     "riskPercent": 1.0,
     "maxDailyTrades": 10,
-    "currentDailyTrades": 0
+    "currentDailyTrades": 0,
+    "maxSlippagePct": 2.0
 }
 
 options_signals: List[Dict[str, Any]] = []
@@ -246,11 +247,49 @@ risk_audit_log: Dict[str, Any] = {
     "totalChecked": 0,
     "vetoCount": 0,
     "spreadVetoes": 0,
+    "slippageVetoes": 0,
     "circuitAlerts": 0,
     "beTrailedCount": 0,
     "profitLockedCount": 0,
     "lastVetoReason": "All checks nominal"
 }
+
+_decision_log_lock = threading.Lock()
+trade_decision_log: List[Dict[str, Any]] = []
+
+def record_trade_decision(
+    action: str,
+    symbol: str,
+    agent: str,
+    reason: str,
+    price: Optional[float] = None,
+    equity_pct: Optional[float] = None,
+    slippage_pct: Optional[float] = None,
+    allocated_capital: Optional[float] = None,
+    pnl: Optional[float] = None,
+    direction: Optional[str] = None
+) -> Dict[str, Any]:
+    ist_now = datetime.now(pytz.timezone("Asia/Kolkata")).strftime("%H:%M:%S")
+    entry: Dict[str, Any] = {
+        "id": f"DEC-{int(time.time() * 1000)}-{random.randint(100, 999)}",
+        "time": ist_now,
+        "timestamp": datetime.utcnow().isoformat(),
+        "action": str(action or "FILTERED").upper(),
+        "symbol": str(symbol or "--"),
+        "agent": str(agent or "SYSTEM").upper(),
+        "reason": str(reason or "No reason logged"),
+        "direction": direction,
+        "price": round(float(price), 2) if price is not None else None,
+        "equityPct": round(float(equity_pct), 1) if equity_pct is not None else None,
+        "slippagePct": round(float(slippage_pct), 2) if slippage_pct is not None else None,
+        "allocatedCapital": round(float(allocated_capital), 2) if allocated_capital is not None else None,
+        "pnl": round(float(pnl), 2) if pnl is not None else None
+    }
+    with _decision_log_lock:
+        trade_decision_log.insert(0, entry)
+        if len(trade_decision_log) > 80:
+            del trade_decision_log[80:]
+    return entry
 
 hot_strikes_board: List[Dict[str, Any]] = []
 
@@ -884,7 +923,7 @@ def fetch_active_option_chain(index_symbol: str, config: Dict[str, Any]) -> Opti
 PAPER_DB_PATH = BASE_DIR / "paper_trades_db.json"
 
 def load_paper_trades_db():
-    global paper_trades, virtual_portfolio, options_signals
+    global paper_trades, virtual_portfolio, options_signals, trade_decision_log
     if PAPER_DB_PATH.exists():
         try:
             with open(PAPER_DB_PATH, "r", encoding="utf-8") as f:
@@ -902,21 +941,83 @@ def load_paper_trades_db():
                         paper_trades = []
                 if "optionsSignals" in db:
                     options_signals = db["optionsSignals"]
+                if isinstance(db.get("decisionAuditLog"), list):
+                    with _decision_log_lock:
+                        trade_decision_log = db["decisionAuditLog"][:80]
             logger.info("[Paper Trade DB] Loaded virtual portfolio successfully with ₹20,00,000 capital.")
         except Exception as e:
             logger.error(f"[Paper Trade DB] Error loading DB: {e}")
 
 def save_paper_trades_db():
     try:
+        with _decision_log_lock:
+            audit_snapshot = list(trade_decision_log[:80])
         db = {
             "paperTrades": paper_trades,
             "virtualPortfolio": virtual_portfolio,
-            "optionsSignals": options_signals
+            "optionsSignals": options_signals,
+            "decisionAuditLog": audit_snapshot
         }
         with open(PAPER_DB_PATH, "w", encoding="utf-8") as f:
             json.dump(db, f, indent=2)
     except Exception as e:
         logger.error(f"[Paper Trade DB] Error saving DB: {e}")
+
+def _enrich_trade_telemetry(trade: Dict[str, Any], equity_base: float = 2000000.0) -> Dict[str, Any]:
+    item = dict(trade)
+    entry_p = float(item.get("entryPrice") or 0.0)
+    qty_v = int(item.get("qty") or 0)
+    allocated = float(item.get("allocatedCapital") or round(entry_p * qty_v, 2))
+    item["allocatedCapital"] = round(allocated, 2)
+    if item.get("equityPct") is None:
+        item["equityPct"] = round((allocated / equity_base) * 100.0, 1) if equity_base > 0 else 0.0
+    if item.get("slippagePct") is None:
+        item["slippagePct"] = 0.0
+    if item.get("maxSlippageCap") is None:
+        item["maxSlippageCap"] = float(risk_settings.get("maxSlippagePct", 2.0))
+    if not item.get("entryReason"):
+        item["entryReason"] = "Engulfing / Momentum verified setup"
+    curr_p = float(item.get("exitPrice") or item.get("currentPrice") or entry_p)
+    if entry_p > 0:
+        pct_move = ((curr_p - entry_p) / entry_p) * 100.0
+        item["livePnLPct"] = round(pct_move if item.get("type", "BULLISH") == "BULLISH" else -pct_move, 2)
+    else:
+        item["livePnLPct"] = 0.0
+    return item
+
+def build_pipeline_summary() -> Dict[str, Any]:
+    start_cap = round(float(virtual_portfolio.get("initialCash", 2000000.0)), 2)
+    realized_equity = round(start_cap + float(virtual_portfolio.get("netProfit", 0.0)), 2)
+    open_pnl = round(sum(float(t.get("pnl") or 0.0) for t in paper_trades if t.get("status") == "ACTIVE"), 2)
+    live_equity = round(realized_equity + open_pnl, 2)
+    active_list = [_enrich_trade_telemetry(t, realized_equity) for t in paper_trades if t.get("status") == "ACTIVE"]
+    closed_list = [_enrich_trade_telemetry(t, realized_equity) for t in paper_trades if t.get("status") != "ACTIVE"]
+    win_cnt = sum(1 for t in closed_list if float(t.get("pnl") or 0.0) > 0)
+    loss_cnt = sum(1 for t in closed_list if float(t.get("pnl") or 0.0) < 0)
+    be_cnt = sum(1 for t in closed_list if float(t.get("pnl") or 0.0) == 0)
+    with _decision_log_lock:
+        recent_filtered = [d for d in trade_decision_log if d.get("action") == "FILTERED"][:6]
+        total_decisions = len(trade_decision_log)
+    return {
+        "startCapital": start_cap,
+        "currentEquity": realized_equity,
+        "liveEquity": live_equity,
+        "openPnl": open_pnl,
+        "netProfit": round(float(virtual_portfolio.get("netProfit", 0.0)), 2),
+        "scannedCount": int(risk_audit_log.get("totalChecked", 0)),
+        "filteredCount": int(trap_stats.get("trapsBlocked", 0)) + int(risk_audit_log.get("vetoCount", 0)),
+        "slippageVetoes": int(risk_audit_log.get("slippageVetoes", 0)),
+        "activeTradesCount": len(active_list),
+        "closedTradesCount": len(closed_list),
+        "winCount": win_cnt,
+        "lossCount": loss_cnt,
+        "beCount": be_cnt,
+        "slippageCapPct": float(risk_settings.get("maxSlippagePct", 2.0)),
+        "activeTrade": active_list[0] if active_list else None,
+        "lastClosedTrade": closed_list[0] if closed_list else None,
+        "recentFiltered": recent_filtered,
+        "totalAuditEvents": total_decisions
+    }
 
 def get_atm_strikes(symbol: str, spot: float) -> List[float]:
     step = STRIKE_STEPS.get(symbol, 50)
@@ -1040,35 +1141,66 @@ def open_point_track(candles: List[Dict[str, float]]) -> float:
 # 📉 REAL-TIME PAPER TRADING ENGINE
 # ----------------------------------------------------
 def execute_paper_trade(signal: Dict[str, Any]):
+    signal_price = round(float(signal.get("price") or 0.0), 2)
+    if signal_price <= 0:
+        return None
+
     active_trades = [t for t in paper_trades if t.get("status") == "ACTIVE"]
     if len(active_trades) >= 5:
         logger.info(f"[Paper Trade Engine] Max active concurrent positions (5) reached. Active count: {len(active_trades)}")
-        return
+        risk_audit_log["vetoCount"] += 1
+        risk_audit_log["lastVetoReason"] = f"Max 5 open trades reached; skipped {signal.get('symbol')}"
+        record_trade_decision("FILTERED", signal.get("symbol", "--"), "PALERMO", "Max 5 concurrent paper positions reached", price=signal_price, direction=signal.get("type"))
+        return None
+
+    # 🛡️ PROFESSOR Slippage Cap Guard (Compare signal trigger price vs live fill / half-spread)
+    max_slip_cap = float(risk_settings.get("maxSlippagePct", 2.0))
+    if signal.get("execPrice") is not None:
+        exec_price = round(float(signal["execPrice"]), 2)
+    elif float(signal.get("spreadPct") or 0.0) > 0:
+        half_spread_pct = float(signal["spreadPct"]) * 0.5
+        exec_price = round(signal_price * (1.0 + (half_spread_pct / 100.0)), 2)
+    else:
+        cached_hist = options_candle_cache.get(signal.get("symbol", ""))
+        exec_price = round(float(cached_hist[-1]["close"]), 2) if cached_hist else signal_price
+
+    slippage_pct = round(abs(exec_price - signal_price) / signal_price * 100.0, 2) if signal_price > 0 else 0.0
+    if slippage_pct > max_slip_cap:
+        risk_audit_log["vetoCount"] += 1
+        risk_audit_log["slippageVetoes"] += 1
+        risk_audit_log["lastVetoReason"] = f"Slippage {slippage_pct:.2f}% > {max_slip_cap:.1f}% cap on {signal['symbol']}"
+        logger.info(f"[PROFESSOR Slippage Guard] {risk_audit_log['lastVetoReason']}")
+        record_trade_decision("FILTERED", signal["symbol"], "PROFESSOR", risk_audit_log["lastVetoReason"], price=exec_price, slippage_pct=slippage_pct, direction=signal.get("type"))
+        return None
 
     lot_sizes = {"NIFTY": 65, "BANKNIFTY": 30, "FINNIFTY": 60, "MIDCPNIFTY": 120, "SENSEX": 10}
     lot_size = lot_sizes.get(signal.get("index"), 50)
 
     # Scale position size sensibly for 20 Lakh capital (allocate up to ~5% per trade)
+    current_equity = float(virtual_portfolio.get("initialCash", 2000000.0)) + float(virtual_portfolio.get("netProfit", 0.0))
     max_trade_capital = virtual_portfolio["cash"] * 0.05
-    lots_to_buy = max(1, min(10, int(max_trade_capital / (signal["price"] * lot_size or 1.0))))
-    total_cost = signal["price"] * (lots_to_buy * lot_size)
+    lots_to_buy = max(1, min(10, int(max_trade_capital / (exec_price * lot_size or 1.0))))
+    total_cost = exec_price * (lots_to_buy * lot_size)
 
     while lots_to_buy > 0 and virtual_portfolio["cash"] < total_cost:
         lots_to_buy -= 1
-        total_cost = signal["price"] * (lots_to_buy * lot_size)
+        total_cost = exec_price * (lots_to_buy * lot_size)
 
     if lots_to_buy <= 0:
-        logger.info(f"[Paper Trade Engine] Insufficient virtual funds (₹{virtual_portfolio['cash']:.2f}) to buy even 1 lot of {signal['symbol']} at ₹{signal['price']:.2f}.")
-        return
+        logger.info(f"[Paper Trade Engine] Insufficient virtual funds (₹{virtual_portfolio['cash']:.2f}) to buy even 1 lot of {signal['symbol']} at ₹{exec_price:.2f}.")
+        record_trade_decision("FILTERED", signal["symbol"], "PALERMO", f"Insufficient margin for 1 lot @ ₹{exec_price:.2f}", price=exec_price, slippage_pct=slippage_pct, direction=signal.get("type"))
+        return None
 
     qty = lots_to_buy * lot_size
+    equity_pct = round((total_cost / current_equity) * 100.0, 1) if current_equity > 0 else 0.0
     sl_percent = 0.12
     target_percent = 0.25
 
-    stop_loss = round(signal["price"] * (1 - sl_percent) if signal["type"] == "BULLISH" else signal["price"] * (1 + sl_percent), 2)
-    target = round(signal["price"] * (1 + target_percent) if signal["type"] == "BULLISH" else signal["price"] * (1 - target_percent), 2)
-    initial_risk = round(abs(signal["price"] - stop_loss), 2)
+    stop_loss = round(exec_price * (1 - sl_percent) if signal["type"] == "BULLISH" else exec_price * (1 + sl_percent), 2)
+    target = round(exec_price * (1 + target_percent) if signal["type"] == "BULLISH" else exec_price * (1 - target_percent), 2)
+    initial_risk = round(abs(exec_price - stop_loss), 2)
     paper_id = f"PT-{str(int(time.time() * 1000))[-6:]}"
+    entry_reason = signal.get("reason") or signal.get("trendContext") or signal.get("signalType") or "Verified Multi-Factor Trigger"
 
     new_trade = {
         "id": paper_id,
@@ -1077,8 +1209,16 @@ def execute_paper_trade(signal: Dict[str, Any]):
         "strike": signal["strike"],
         "optionType": signal["optionType"],
         "type": signal["type"],
-        "entryPrice": round(signal["price"], 2),
+        "signalPrice": signal_price,
+        "entryPrice": round(exec_price, 2),
+        "slippagePct": slippage_pct,
+        "maxSlippageCap": max_slip_cap,
         "qty": qty,
+        "lots": lots_to_buy,
+        "lotSize": lot_size,
+        "allocatedCapital": round(total_cost, 2),
+        "equityPct": equity_pct,
+        "entryReason": entry_reason,
         "stopLoss": stop_loss,
         "initialRisk": initial_risk,
         "trailStage": "INITIAL",
@@ -1088,15 +1228,28 @@ def execute_paper_trade(signal: Dict[str, Any]):
         "entryTime": datetime.utcnow().isoformat(),
         "exitTime": None,
         "exitPrice": None,
+        "exitReason": None,
         "pnl": 0.0,
-        "currentPrice": round(signal["price"], 2)
+        "currentPrice": round(exec_price, 2)
     }
 
     virtual_portfolio["cash"] -= total_cost
     paper_trades.insert(0, new_trade)
     virtual_portfolio["totalTrades"] += 1
 
-    logger.info(f"[Paper Trade] Executed virtual BUY order for {signal['symbol']}. Qty: {qty} ({lots_to_buy} lots), Price: ₹{signal['price']:.2f}, Cost: ₹{total_cost:.2f}")
+    record_trade_decision(
+        "ENTER",
+        new_trade["symbol"],
+        "PROFESSOR",
+        entry_reason,
+        price=new_trade["entryPrice"],
+        equity_pct=equity_pct,
+        slippage_pct=slippage_pct,
+        allocated_capital=round(total_cost, 2),
+        direction=new_trade["type"]
+    )
+
+    logger.info(f"[Paper Trade] Executed virtual BUY order for {signal['symbol']}. Qty: {qty} ({lots_to_buy} lots, {equity_pct}% eq), Fill: ₹{exec_price:.2f} (Slip {slippage_pct}%), Cost: ₹{total_cost:.2f}")
 
     append_to_google_sheet("Paper_Trade_Book", [
         paper_id,
@@ -1111,6 +1264,7 @@ def execute_paper_trade(signal: Dict[str, Any]):
         "ACTIVE"
     ])
     save_paper_trades_db()
+    return new_trade
 
 def paper_trades_monitor_loop():
     while True:
@@ -1205,6 +1359,19 @@ def paper_trades_monitor_loop():
 
                     if final_pnl > 0:
                         virtual_portfolio["winningTrades"] += 1
+
+                    pnl_pct_exit = round((final_pnl / total_cost) * 100.0, 2) if total_cost > 0 else 0.0
+                    record_trade_decision(
+                        "EXIT",
+                        trade["symbol"],
+                        "HELSINKI",
+                        f"{exit_reason} ({pnl_pct_exit:+.2f}%)",
+                        price=exit_price,
+                        equity_pct=trade.get("equityPct"),
+                        slippage_pct=trade.get("slippagePct"),
+                        pnl=final_pnl,
+                        direction=trade.get("type")
+                    )
 
                     logger.info(f"[Paper Trade Exit] Closed position for {trade['symbol']}. Reason: {exit_reason}, P&L: ₹{final_pnl:.2f}")
 
@@ -1722,6 +1889,8 @@ def analyze_engulfing_pattern(
     # FILTER 4: LISBON ANTI-TRAP VERIFICATION (ATR Compression, Overbought/Oversold & PDH/PDL Sweeps)
     trap_reason = check_anti_trap(symbol, sig_type, current, indicators, record_stats=record_traps)
     if trap_reason:
+        if record_traps:
+            record_trade_decision("FILTERED", symbol, "LISBON", trap_reason, price=c_close, direction=sig_type)
         logger.debug(f"[LISBON Anti-Trap] Filtered {sig_type} in {symbol}: {trap_reason}")
         return None
 
@@ -2823,6 +2992,7 @@ def run_options_scan():
                         risk_audit_log["vetoCount"] += 1
                         risk_audit_log["spreadVetoes"] += 1
                         risk_audit_log["lastVetoReason"] = f"Wide bid-ask spread ({spread_pct:.1f}%) on {contract_key}"
+                        record_trade_decision("FILTERED", contract_key, "PALERMO", f"Wide bid-ask spread ({spread_pct:.1f}% > 4.0%)", price=current["close"], slippage_pct=round(spread_pct, 2), direction="BULLISH" if is_bull_sig else "BEARISH")
                         logger.info(f"[PALERMO Spread Veto] {risk_audit_log['lastVetoReason']}")
                         continue
 
@@ -2832,6 +3002,7 @@ def run_options_scan():
                         trap_stats["oiWallBlocks"] += 1
                         trap_stats["lastTrapSymbol"] = contract_key
                         trap_stats["lastTrapReason"] = f"{contract_key}: Spot trapped under Call OI Wall {call_wall:.0f}"
+                        record_trade_decision("FILTERED", contract_key, "LISBON", trap_stats["lastTrapReason"], price=current["close"], direction="BULLISH")
                         logger.info(f"[LISBON OI Wall Block] {trap_stats['lastTrapReason']}")
                         continue
                     if is_bull_sig and option_type == "PE" and put_wall > 0 and 0 <= (spot - put_wall) <= (idx_step * 0.5):
@@ -2839,6 +3010,7 @@ def run_options_scan():
                         trap_stats["oiWallBlocks"] += 1
                         trap_stats["lastTrapSymbol"] = contract_key
                         trap_stats["lastTrapReason"] = f"{contract_key}: Spot resting on Put Support Wall {put_wall:.0f}"
+                        record_trade_decision("FILTERED", contract_key, "LISBON", trap_stats["lastTrapReason"], price=current["close"], direction="BEARISH")
                         logger.info(f"[LISBON OI Wall Block] {trap_stats['lastTrapReason']}")
                         continue
 
@@ -3179,6 +3351,8 @@ def risk_settings_route():
             risk_settings["riskPercent"] = float(body["riskPercent"])
         if "maxDailyTrades" in body:
             risk_settings["maxDailyTrades"] = int(body["maxDailyTrades"])
+        if "maxSlippagePct" in body:
+            risk_settings["maxSlippagePct"] = round(max(0.1, min(10.0, float(body["maxSlippagePct"]))), 2)
         return jsonify({"success": True, "message": "Risk parameters successfully updated", "data": risk_settings})
     return jsonify(risk_settings)
 
@@ -3578,12 +3752,19 @@ def get_option_chain():
 
 @app.route("/api/options/paper-trades", methods=["GET"])
 def get_paper_trades():
-    open_pnl = round(sum(float(t.get("pnl") or 0) for t in paper_trades if t.get("status") == "ACTIVE"), 2)
+    summary = build_pipeline_summary()
+    eq_base = summary["currentEquity"] or 2000000.0
+    enriched_trades = [_enrich_trade_telemetry(t, eq_base) for t in paper_trades]
+    with _decision_log_lock:
+        audit_snapshot = list(trade_decision_log[:50])
     return jsonify({
-        "paperTrades": paper_trades,
+        "paperTrades": enriched_trades,
         "virtualPortfolio": virtual_portfolio,
         "equityHistory": equity_history,
-        "openPnl": open_pnl
+        "openPnl": summary["openPnl"],
+        "decisionAuditLog": audit_snapshot,
+        "pipelineSummary": summary,
+        "riskSettings": risk_settings
     })
 
 @app.route("/api/options/status", methods=["GET"])
@@ -3602,6 +3783,8 @@ def reset_paper_trades():
         "netProfit": 0.0
     }
     equity_history = [2000000.0]
+    with _decision_log_lock:
+        trade_decision_log.clear()
     save_paper_trades_db()
     return jsonify({"success": True, "message": "Virtual Paper Trading account successfully reset."})
 
@@ -3767,6 +3950,8 @@ def get_market_intelligence():
                 "peIv": round(float(pe.get("implied_volatility") or 0), 1)
             })
 
+    with _decision_log_lock:
+        audit_snapshot = list(trade_decision_log[:50])
     return jsonify({
         "success": True,
         "selectedIndex": sel_idx,
@@ -3782,6 +3967,9 @@ def get_market_intelligence():
         "newsHeadlines": (news_cache.get("data") or [])[:12],
         "trapStats": trap_stats,
         "riskAuditLog": risk_audit_log,
+        "decisionAuditLog": audit_snapshot,
+        "pipelineSummary": build_pipeline_summary(),
+        "riskSettings": risk_settings,
         "equityHistory": equity_history,
         "scannerStatus": scanner_status,
         "optionsScannerStatus": options_scanner_status
