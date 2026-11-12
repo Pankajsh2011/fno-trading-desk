@@ -1202,7 +1202,7 @@
         <div class="w-full grid grid-cols-2 gap-2 text-[11px] font-mono-code">
           <div class="p-2 rounded bg-white border border-slate-200 flex justify-between">
             <span class="text-slate-500">Body Engulf:</span>
-            <span id="modalBodyRatio" class="font-bold text-slate-900">100% (Full Body)</span>
+            <span id="modalBodyRatio" class="font-bold text-slate-900">80% - 120% Range</span>
           </div>
           <div class="p-2 rounded bg-white border border-slate-200 flex justify-between">
             <span class="text-slate-500">Wick Limit:</span>
@@ -2674,7 +2674,7 @@
           </td>
           <td class="py-2.5 px-3">${typeBadge}</td>
           <td class="py-2.5 px-3 text-slate-600 max-w-[230px]">${trendTag}</td>
-          <td class="py-2.5 px-3 font-bold text-slate-800">${escHtml(sig.ratio || '135%')}</td>
+          <td class="py-2.5 px-3 font-bold text-slate-800">${escHtml(sig.ratio || '100%')}</td>
           <td class="py-2.5 px-3 font-bold text-slate-900">₹${Number(sig.entryPrice || 0).toFixed(2)}</td>
           <td class="py-2.5 px-3 text-rose-600 font-semibold">₹${Number(sig.stopLoss || 0).toFixed(2)}</td>
           <td class="py-2.5 px-3 text-emerald-600 font-semibold">₹${Number(sig.target || 0).toFixed(2)}</td>
@@ -2721,7 +2721,7 @@
         ? '↘️ Appears after a decline, buyers step in (Photo 2 & 4)'
         : '↗️ Appears after a rise, sellers take over (Photo 2 & 4)';
 
-      document.getElementById('modalBodyRatio').textContent = `${sig.ratio || '100%'} (Full Body Engulf)`;
+      document.getElementById('modalBodyRatio').textContent = `${sig.ratio || '100%'} (Target: 80% - 120%)`;
       document.getElementById('modalWickRatio').textContent = `${sig.wickPct || '≤ 20%'} (Limit: ≤ 20%)`;
       document.getElementById('modalEntry').textContent = `₹${Number(sig.entryPrice).toFixed(2)}`;
       document.getElementById('modalSL').textContent = `₹${Number(sig.stopLoss).toFixed(2)}`;
@@ -3184,12 +3184,19 @@
           const wickPct = (totalWick / overallH) * 100;
           if (wickPct > 20.05) continue;
 
-          // Ratio check (engulfing body must be larger)
-          if ((cBody / pBody) < 1.05) continue;
+          // Strict 80% - 120% body ratio & >= 80% overlap engulfing filter
+          const ratio = cBody / pBody;
+          if (ratio < 0.7999 || ratio > 1.2001) continue;
 
-          // CANDLE SHAPE: Full body-to-body engulf
-          const isBullShape = (pC < pO && cC > cO && cC >= pO && cO <= pC && (cC > pO || cO < pC));
-          const isBearShape = (pC > pO && cC < cO && cO >= pC && cC <= pO && (cO > pC || cC < pO));
+          const currTop = Math.max(cO, cC);
+          const currBot = Math.min(cO, cC);
+          const prevTop = Math.max(pO, pC);
+          const prevBot = Math.min(pO, pC);
+          const overlap = Math.max(0, Math.min(currTop, prevTop) - Math.max(currBot, prevBot));
+          if ((overlap / pBody) < 0.7999) continue;
+
+          const isBullShape = (pC < pO && cC > cO && cC >= (prevBot + 0.80 * pBody - 1e-6));
+          const isBearShape = (pC > pO && cC < cO && cC <= (prevTop - 0.80 * pBody + 1e-6));
           if (!isBullShape && !isBearShape) continue;
 
           // FILTER 3: STRICT PRIOR TREND & LOCATION REVERSAL CHECK
@@ -3267,7 +3274,7 @@
             cCtx.strokeRect(xCenter - 46, tagY - 6, 92, 16);
 
             cCtx.fillStyle = '#6ee7b7';
-            cCtx.fillText('▲ BULL ENGULF', xCenter, tagY + 6);
+            cCtx.fillText(`▲ BULL ${(ratio * 100).toFixed(0)}%`, xCenter, tagY + 6);
           } else {
             const tagY = yTop - 20;
             // Arrow pointing DOWN
@@ -3287,7 +3294,7 @@
             cCtx.strokeRect(xCenter - 46, tagY - 8, 92, 16);
 
             cCtx.fillStyle = '#fca5a5';
-            cCtx.fillText('▼ BEAR ENGULF', xCenter, tagY + 4);
+            cCtx.fillText(`▼ BEAR ${(ratio * 100).toFixed(0)}%`, xCenter, tagY + 4);
           }
 
           cCtx.restore();

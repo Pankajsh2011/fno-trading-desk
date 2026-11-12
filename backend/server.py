@@ -1749,36 +1749,84 @@ def calculate_strength(body: float, total_wick: float, volume: float) -> int:
     strength = round((1 - wick_ratio) * 50 + volume_score * 5)
     return max(1, min(strength, 100))
 
+ENGULF_MIN_RATIO = 0.80
+ENGULF_MAX_RATIO = 1.20
+
+def _evaluate_engulf_geometry(current: Dict[str, float], previous: Dict[str, float]) -> Dict[str, Any]:
+    """
+    Validates strict 80%-120% Perfect Engulfing body ratio with >= 80% body overlap coverage.
+    Rejects weak <80% bars and extreme >120% blowout spikes.
+    """
+    c_open = float(current["open"])
+    c_close = float(current["close"])
+    p_open = float(previous["open"])
+    p_close = float(previous["close"])
+
+    c_body = abs(c_close - c_open)
+    p_body = abs(p_close - p_open)
+    if p_body <= 0 or c_body <= 0:
+        return {"valid": False, "direction": None, "ratio": 0.0, "coverage": 0.0, "reason": "Zero body size"}
+
+    ratio = c_body / p_body
+    if ratio < (ENGULF_MIN_RATIO - 1e-6) or ratio > (ENGULF_MAX_RATIO + 1e-6):
+        return {
+            "valid": False,
+            "direction": None,
+            "ratio": ratio,
+            "coverage": 0.0,
+            "reason": f"Body ratio {ratio * 100:.1f}% outside 80%-120%"
+        }
+
+    curr_top = max(c_open, c_close)
+    curr_bottom = min(c_open, c_close)
+    prev_top = max(p_open, p_close)
+    prev_bottom = min(p_open, p_close)
+
+    overlap = max(0.0, min(curr_top, prev_top) - max(curr_bottom, prev_bottom))
+    coverage = overlap / p_body
+    if coverage < (ENGULF_MIN_RATIO - 1e-6):
+        return {
+            "valid": False,
+            "direction": None,
+            "ratio": ratio,
+            "coverage": coverage,
+            "reason": f"Body coverage {coverage * 100:.1f}% < 80%"
+        }
+
+    is_bull = (p_close < p_open and c_close > c_open and c_close >= (prev_bottom + 0.80 * p_body - 1e-6))
+    is_bear = (p_close > p_open and c_close < c_open and c_close <= (prev_top - 0.80 * p_body + 1e-6))
+    if not (is_bull or is_bear):
+        return {"valid": False, "direction": None, "ratio": ratio, "coverage": coverage, "reason": "Opposite close < 80%"}
+
+    return {
+        "valid": True,
+        "direction": "BULLISH" if is_bull else "BEARISH",
+        "ratio": ratio,
+        "coverage": coverage,
+        "reason": "OK"
+    }
+
 def check_perfect_engulfing(current: Dict[str, float], previous: Dict[str, float], avg_body: float) -> Dict[str, Any]:
     """
-    Full body-to-body engulf check per user's Dhan configuration:
-    - Current candle body must FULLY cover previous candle body
-    - No complex tier system - just full engulf required
+    Perfect Engulfing check restricted strictly to 80% - 120% body ratio with >= 80% body overlap.
     """
     prev_body = abs(previous["close"] - previous["open"])
     curr_body = abs(current["close"] - current["open"])
 
-    if prev_body == 0:
-        return {"isPerfect": False, "reason": "Zero previous body size"}
+    if prev_body <= 0 or curr_body <= 0:
+        return {"isPerfect": False, "direction": None, "reason": "Zero body size", "category": "Incomplete", "requiredRange": "80% - 120%", "pctOfAvg": "0.0%", "ratio": "0.0%"}
 
-    ratio = curr_body / prev_body
+    min_opt_body = max(float(previous["close"]) * 0.001, (avg_body or 1.0) * 0.25, 0.25)
+    geom = _evaluate_engulf_geometry(current, previous)
+    ratio = geom["ratio"]
+    is_perfect = bool(geom["valid"] and prev_body >= min_opt_body and curr_body >= min_opt_body)
 
-    # Current body top/bottom
-    curr_top = max(current["open"], current["close"])
-    curr_bottom = min(current["open"], current["close"])
-    prev_top = max(previous["open"], previous["close"])
-    prev_bottom = min(previous["open"], previous["close"])
-
-    # Full body-to-body engulf: current body must completely cover previous body
-    is_full_engulf = (curr_top >= prev_top and curr_bottom <= prev_bottom)
-
-    is_perfect = is_full_engulf and ratio >= 1.0  # At minimum 100% coverage
-
-    category = f"Full Body Engulf ({ratio*100:.0f}%)" if is_perfect else "Incomplete"
-    required_range = ">= 100%"
+    category = f"Perfect Engulf ({ratio*100:.0f}%)" if is_perfect else "Incomplete"
+    required_range = "80% - 120%"
 
     return {
         "isPerfect": is_perfect,
+        "direction": geom["direction"] if is_perfect else None,
         "category": category,
         "requiredRange": required_range,
         "pctOfAvg": f"{(prev_body / (avg_body or 1.0) * 100):.1f}%",
@@ -1852,34 +1900,15 @@ def analyze_engulfing_pattern(
     if wick_pct > 20.0:
         return None
 
-    # Ratio of current body to previous body (must be meaningfully larger)
-    ratio = round(c_body / p_body, 2)
-    if ratio < 1.05:
+    # Perfect Engulfing restricted strictly to 80% - 120% body ratio with >= 80% overlap coverage
+    geom = _evaluate_engulf_geometry(current, previous)
+    if not geom["valid"]:
         return None
-
-    # CANDLE SHAPE: Full body-to-body engulf
-    is_bull_shape = (
-        p_close < p_open and
-        c_close > c_open and
-        c_close >= p_open and
-        c_open <= p_close and
-        (c_close > p_open or c_open < p_close)
-    )
-
-    is_bear_shape = (
-        p_close > p_open and
-        c_close < c_open and
-        c_open >= p_close and
-        c_close <= p_open and
-        (c_open > p_close or c_close < p_open)
-    )
-
-    if not (is_bull_shape or is_bear_shape):
-        return None
+    ratio = round(geom["ratio"], 2)
 
     # FILTER 3: STRICT PRIOR TREND & LOCATION REVERSAL CHECK
     prior_trend = detect_prior_trend(history, previous)
-    sig_type = "BULLISH" if is_bull_shape else "BEARISH"
+    sig_type = geom["direction"]
 
     if sig_type == "BULLISH" and prior_trend == "RISE":
         return None
@@ -1948,11 +1977,11 @@ def analyze_engulfing_pattern(
         "entryPrice": c_close,
         "stopLoss": stop_loss,
         "target": target,
-        "perfectCategory": f"Full Body ({ratio * 100:.0f}%)",
+        "perfectCategory": f"Perfect Engulf ({ratio * 100:.0f}%)",
         "pctOfAvg": f"{(p_body / (avg_body or 1.0) * 100):.1f}%",
         "ratio": f"{(ratio * 100):.1f}%",
         "wickPct": f"{wick_pct}%",
-        "requiredRange": "Full Body (Wick ≤ 20%)",
+        "requiredRange": "80% - 120% (Wick ≤ 20%)",
         "trendContext": trend_text,
         "timestamp": datetime.utcnow().isoformat(),
         "candleData": {"current": current, "previous": previous}
@@ -2941,25 +2970,17 @@ def run_options_scan():
                 is_wick_acceptable = overall_size > 0 and (curr_tot_wick <= 0.20 * overall_size)
 
                 is_bull_engulf = (
-                    current["close"] > current["open"] and
-                    previous["close"] < previous["open"] and
-                    current_top >= previous_top and
-                    current_bottom <= previous_bottom and
-                    (current_top > previous_top or current_bottom < previous_bottom) and
+                    perfect_engulf_info.get("isPerfect") and
+                    perfect_engulf_info.get("direction") == "BULLISH" and
                     body_size > 0 and
-                    is_wick_acceptable and
-                    perfect_engulf_info["isPerfect"]
+                    is_wick_acceptable
                 )
 
                 is_bear_engulf = (
-                    current["close"] < current["open"] and
-                    previous["close"] > previous["open"] and
-                    current_top >= previous_top and
-                    current_bottom <= previous_bottom and
-                    (current_top > previous_top or current_bottom < previous_bottom) and
+                    perfect_engulf_info.get("isPerfect") and
+                    perfect_engulf_info.get("direction") == "BEARISH" and
                     body_size > 0 and
-                    is_wick_acceptable and
-                    perfect_engulf_info["isPerfect"]
+                    is_wick_acceptable
                 )
 
                 if is_bull_engulf:
