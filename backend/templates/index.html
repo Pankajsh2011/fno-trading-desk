@@ -117,467 +117,6 @@
     </header>
 
     <!-- ============================================================== -->
-    <!-- 📊 2. TOP METRIC CARDS (BALANCE, TOTAL PNL, MISSION CLOCK, APPROVAL GATE) -->
-    <!-- ============================================================== -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-      
-      <!-- Card 1: Balance / Capital -->
-      <div class="desk-card p-4 space-y-1 relative overflow-hidden">
-        <div class="text-[11px] font-bold text-slate-400 font-mono-code uppercase tracking-wider">// BALANCE / PORTFOLIO</div>
-        <div class="flex items-baseline gap-2">
-          <span id="displayBalance" class="text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono-code">₹20,00,000.00</span>
-        </div>
-        <div id="displayInitialCapital" class="text-[11px] text-slate-400 font-mono-code">FROM ₹20,00,000.00 INITIAL CAPITAL</div>
-        <div class="absolute right-3 top-3 w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 text-xs font-mono-code">01</div>
-      </div>
-
-      <!-- Card 2: Total PnL -->
-      <div class="desk-card p-4 space-y-1 relative overflow-hidden">
-        <div class="text-[11px] font-bold text-slate-400 font-mono-code uppercase tracking-wider">// TOTAL PNL / GAIN</div>
-        <div class="flex items-baseline gap-2">
-          <span id="displayPnl" class="text-2xl sm:text-3xl font-extrabold text-emerald-600 font-mono-code">+₹0.00</span>
-          <span id="displayPnlPct" class="text-xs font-bold font-mono-code px-2 py-0.5 rounded bg-emerald-50 text-emerald-700">+0.00%</span>
-        </div>
-        <div class="text-[11px] text-slate-400 font-mono-code">REALIZED + PAPER TRADES PROFIT</div>
-        <div class="absolute right-3 top-3 w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 text-xs font-mono-code">02</div>
-      </div>
-
-      <!-- Card 3: Mission Clock -->
-      <div class="desk-card p-4 space-y-1 relative overflow-hidden">
-        <div class="text-[11px] font-bold text-slate-400 font-mono-code uppercase tracking-wider">// MISSION CLOCK / SESSION</div>
-        <div class="flex items-baseline gap-2">
-          <span id="missionClock" class="text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono-code">00:00:00</span>
-        </div>
-        <div class="text-[11px] text-slate-400 font-mono-code">SCANNING INTERVAL: 25-MIN ROLLING</div>
-        <div class="absolute right-3 top-3 w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 text-xs font-mono-code">03</div>
-      </div>
-
-      <!-- Card 4: Approval Gate -->
-      <div class="desk-card p-4 space-y-1 relative overflow-hidden">
-        <div class="text-[11px] font-bold text-slate-400 font-mono-code uppercase tracking-wider">// APPROVAL GATE / RISK</div>
-        <div class="flex items-center justify-between">
-          <span class="text-xl sm:text-2xl font-black text-slate-900 font-mono-code">PALERMO</span>
-          <span id="palermoStatusBadge" class="text-[10px] font-bold font-mono-code px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">RISK SHIELD</span>
-        </div>
-        <!-- Stepper indicator -->
-        <div id="palermoBars" class="flex items-center gap-1 pt-1.5">
-          <div class="h-1.5 flex-1 rounded-full bg-emerald-500"></div>
-          <div class="h-1.5 flex-1 rounded-full bg-emerald-500"></div>
-          <div class="h-1.5 flex-1 rounded-full bg-emerald-500"></div>
-          <div class="h-1.5 flex-1 rounded-full bg-emerald-500"></div>
-          <div class="h-1.5 flex-1 rounded-full bg-emerald-500"></div>
-          <div class="h-1.5 flex-1 rounded-full bg-emerald-400"></div>
-          <div class="h-1.5 flex-1 rounded-full bg-emerald-300"></div>
-          <div class="h-1.5 flex-1 rounded-full bg-slate-200"></div>
-          <div class="h-1.5 flex-1 rounded-full bg-slate-200"></div>
-        </div>
-        <div id="palermoAuditText" class="text-[10px] text-slate-400 font-mono-code pt-0.5 truncate">VETOES: 0 | TRAPS: 0 | RISK 1.0%</div>
-      </div>
-
-    </div>
-
-    <!-- ============================================================== -->
-    <!-- ⚡ 2B. LIVE DECISION PIPELINE · SIZER · ENTRY/EXIT TELEMETRY & AUDIT -->
-    <!-- ============================================================== -->
-    <div id="decisionPipelineDeck" class="desk-card p-4 space-y-3 border-slate-200">
-      <!-- Top Header & Result Start vs Now Strip -->
-      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
-        <div class="flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
-          <span class="text-xs font-bold text-slate-800 font-mono-code uppercase tracking-wider">// LIVE DECISION PIPELINE &amp; AUDIT STREAM</span>
-          <span class="hidden sm:inline text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-mono-code">EVERY TRADE GETS A REASON</span>
-        </div>
-        <div class="flex flex-wrap items-center gap-2 font-mono-code text-[10px]">
-          <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200">
-            <span class="text-slate-400">MAX SLIPPAGE CAP</span>
-            <select id="slippageCapSelect" onchange="updateSlippageCap(this.value)" class="bg-white border border-slate-300 rounded px-1.5 py-0.5 font-bold text-slate-800 cursor-pointer">
-              <option value="1.0">1.0%</option>
-              <option value="1.5">1.5%</option>
-              <option value="2.0" selected>2.0%</option>
-              <option value="3.0">3.0%</option>
-            </select>
-          </div>
-          <div id="resultStartNowPill" class="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-slate-900 text-white font-bold">
-            <span class="text-slate-400">START</span>
-            <span id="resStartVal">₹20.00L</span>
-            <span class="text-slate-500">→</span>
-            <span class="text-emerald-300">NOW</span>
-            <span id="resNowVal">₹20.00L</span>
-            <span id="resWlBadge" class="px-1.5 py-0.5 rounded bg-slate-700 text-emerald-300">0W / 0L</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- 5-Stage Visual Execution Flow -->
-      <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 font-mono-code text-[10px]">
-        <div class="p-2.5 rounded-lg border border-amber-200 bg-amber-50/50">
-          <div class="flex items-center justify-between text-amber-800 font-bold">
-            <span>01 TOKYO SCAN</span>
-            <span class="px-1 rounded bg-amber-100">SCOUT</span>
-          </div>
-          <div id="pipeScannedCnt" class="text-sm font-black text-slate-900 mt-1">0 checked</div>
-          <div class="text-slate-500 truncate">213 F&amp;O + 4 Idx chains</div>
-        </div>
-
-        <div class="p-2.5 rounded-lg border border-rose-200 bg-rose-50/50">
-          <div class="flex items-center justify-between text-rose-800 font-bold">
-            <span>02 TRAP / SPREAD</span>
-            <span class="px-1 rounded bg-rose-100">FILTERED</span>
-          </div>
-          <div id="pipeFilteredCnt" class="text-sm font-black text-rose-700 mt-1">0 blocked</div>
-          <div id="pipeFilteredSub" class="text-slate-500 truncate">LISBON / PALERMO gate</div>
-        </div>
-
-        <div class="p-2.5 rounded-lg border border-indigo-200 bg-indigo-50/50">
-          <div class="flex items-center justify-between text-indigo-800 font-bold">
-            <span>03 SIZER</span>
-            <span class="px-1 rounded bg-indigo-100">EQUITY %</span>
-          </div>
-          <div id="pipeSizerPct" class="text-sm font-black text-indigo-700 mt-1">~5.0% eq</div>
-          <div class="text-slate-500 truncate">Dynamic lot cap · ₹20L base</div>
-        </div>
-
-        <div class="p-2.5 rounded-lg border border-emerald-200 bg-emerald-50/50">
-          <div class="flex items-center justify-between text-emerald-800 font-bold">
-            <span>04 PROFESSOR EXEC</span>
-            <span class="px-1 rounded bg-emerald-100">SLIP GUARD</span>
-          </div>
-          <div id="pipeActiveCnt" class="text-sm font-black text-emerald-700 mt-1">0 active</div>
-          <div id="pipeSlipCapSub" class="text-slate-500 truncate">Cap ≤ 2.0% · 0 slip veto</div>
-        </div>
-
-        <div class="col-span-2 sm:col-span-1 p-2.5 rounded-lg border border-slate-200 bg-slate-50">
-          <div class="flex items-center justify-between text-slate-800 font-bold">
-            <span>05 HELSINKI LOG</span>
-            <span class="px-1 rounded bg-slate-200">AUDIT</span>
-          </div>
-          <div id="pipeExitsCnt" class="text-sm font-black text-slate-900 mt-1">0 exits</div>
-          <div id="pipeAuditTotal" class="text-slate-500 truncate">0 logged decisions</div>
-        </div>
-      </div>
-
-      <!-- Dual Panel: Live Open Trade Telemetry Card + Structured Audit Stream -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
-        <!-- Left (5 cols): TRADE · ENTRY vs EXIT Telemetry Card -->
-        <div class="lg:col-span-5 rounded-xl border border-slate-200 bg-slate-50/70 p-3 flex flex-col justify-between font-mono-code space-y-2.5">
-          <div class="flex items-center justify-between border-b border-slate-200 pb-2">
-            <div class="flex items-center gap-2">
-              <span class="text-[11px] font-bold text-slate-700 uppercase">TRADE · ENTRY vs EXIT</span>
-              <span id="openTradeStatusBadge" class="text-[9px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 font-bold">STANDBY</span>
-            </div>
-            <span id="openTradeLivePct" class="text-xs font-black text-slate-600">0.00% live</span>
-          </div>
-
-          <div id="openTradeCardBody" class="space-y-2 text-[11px]">
-            <div class="flex items-center justify-between">
-              <span id="openTradeSymbol" class="text-sm font-black text-slate-900">Awaiting Verified Setup</span>
-              <span id="openTradeDirBadge" class="text-[9px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 font-bold">--</span>
-            </div>
-
-            <div class="grid grid-cols-2 gap-2 bg-white p-2.5 rounded-lg border border-slate-200">
-              <div>
-                <div class="text-[9px] text-slate-400">ENTRY FILL</div>
-                <div id="openTradeEntryPrice" class="font-bold text-slate-900">--</div>
-              </div>
-              <div>
-                <div class="text-[9px] text-slate-400">CURRENT / EXIT</div>
-                <div id="openTradeExitPrice" class="font-bold text-slate-900">--</div>
-              </div>
-              <div>
-                <div class="text-[9px] text-slate-400">SLIPPAGE vs CAP</div>
-                <div id="openTradeSlip" class="font-bold text-emerald-700">--</div>
-              </div>
-              <div>
-                <div class="text-[9px] text-slate-400">SIZER (% EQUITY)</div>
-                <div id="openTradeSize" class="font-bold text-indigo-700">--</div>
-              </div>
-            </div>
-
-            <div class="bg-white p-2 rounded-lg border border-slate-200 space-y-1 text-[10px]">
-              <div class="flex items-start gap-1.5">
-                <span class="text-slate-400 shrink-0 font-bold">REASON:</span>
-                <span id="openTradeReason" class="text-slate-700 break-words">Auto-paper &amp; sweep gates armed. Verified triggers appear with full rationale here.</span>
-              </div>
-              <div class="flex items-start gap-1.5">
-                <span class="text-slate-400 shrink-0 font-bold">EXIT / TRAIL:</span>
-                <span id="openTradeExitNote" class="text-slate-600 truncate">Two-stage Trail SL (1R BE → 1.5R +0.5R lock)</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- START vs NOW Compact Equity Progress Bar -->
-          <div class="pt-2 border-t border-slate-200 space-y-1 text-[10px]">
-            <div class="flex items-center justify-between">
-              <span class="text-slate-500">RESULT · START vs NOW</span>
-              <span id="openMtmInline" class="font-bold text-slate-700">OPEN MTM: ₹0</span>
-            </div>
-            <div class="w-full h-1.5 rounded-full bg-slate-200 overflow-hidden">
-              <div id="equityProgressBar" class="h-full bg-emerald-500 transition-all duration-300" style="width: 50%"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Right (7 cols): Structured ENTER / FILTERED / EXIT Decision Audit Log -->
-        <div class="lg:col-span-7 rounded-xl border border-slate-200 bg-white p-3 flex flex-col font-mono-code">
-          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2 mb-2">
-            <div class="flex items-center gap-2">
-              <span class="text-[11px] font-bold text-slate-800 uppercase">$ tail -f decisions_audit.log</span>
-              <span id="auditLogCountBadge" class="text-[9px] px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 font-bold">0 ENTRIES</span>
-            </div>
-            <div class="flex items-center gap-1 text-[10px]">
-              <button onclick="setAuditFilter('ALL')" id="auditFilterALL" class="px-2 py-0.5 rounded bg-slate-900 text-white font-bold">ALL</button>
-              <button onclick="setAuditFilter('ENTER')" id="auditFilterENTER" class="px-2 py-0.5 rounded bg-slate-100 text-emerald-700 font-bold hover:bg-emerald-50">ENTER</button>
-              <button onclick="setAuditFilter('FILTERED')" id="auditFilterFILTERED" class="px-2 py-0.5 rounded bg-slate-100 text-rose-700 font-bold hover:bg-rose-50">FILTERED</button>
-              <button onclick="setAuditFilter('EXIT')" id="auditFilterEXIT" class="px-2 py-0.5 rounded bg-slate-100 text-indigo-700 font-bold hover:bg-indigo-50">EXIT</button>
-            </div>
-          </div>
-
-          <div id="decisionAuditBody" class="h-[210px] overflow-y-auto divide-y divide-slate-100 pr-1 text-[10px]">
-            <div class="py-12 text-center text-slate-400">
-              Awaiting scan or trade events — filtered traps, spread vetoes, slippage blocks, entries &amp; exits will appear here with reasons.
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ============================================================== -->
-    <!-- 📈 3. DUAL TELEMETRY ROW (BALANCE HISTORY CHART + ACTIVITY LOG) -->
-    <!-- ============================================================== -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4">
-      
-      <!-- Left (7 Cols): Balance History Canvas Chart -->
-      <div class="desk-card p-4 lg:col-span-7 flex flex-col justify-between">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
-          <div class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-            <span class="text-xs font-bold text-slate-800 font-mono-code uppercase tracking-wider">// BALANCE HISTORY / EQUITY CURVE</span>
-          </div>
-          <div class="text-[11px] font-mono-code text-slate-400">INR / INTRADAY SESSION</div>
-        </div>
-        
-        <div class="relative w-full h-[220px]">
-          <canvas id="balanceChart" class="w-full h-full"></canvas>
-          <div id="chartTooltip" class="absolute hidden bg-slate-900 text-white text-[11px] font-mono-code px-2 py-1 rounded shadow-lg pointer-events-none"></div>
-        </div>
-
-        <div class="flex items-center justify-between text-[11px] text-slate-400 font-mono-code pt-2 border-t border-slate-100 mt-2">
-          <span>09:15 OPEN</span>
-          <span>11:30 MID</span>
-          <span>13:45 PEAK</span>
-          <span>15:30 CLOSE</span>
-        </div>
-      </div>
-
-      <!-- Right (5 Cols): Live Activity Log Terminal -->
-      <div class="desk-card p-4 lg:col-span-5 flex flex-col justify-between">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-2">
-          <div class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
-            <span class="text-xs font-bold text-slate-800 font-mono-code uppercase tracking-wider">// ACTIVITY LOG STREAM</span>
-          </div>
-          <span id="logEventCount" class="text-[11px] font-mono-code text-slate-400">018 EVENTS</span>
-        </div>
-
-        <!-- Terminal Event Stream Box -->
-        <div id="activityLogBox" class="h-[220px] overflow-y-auto space-y-2 font-mono-code text-[11px] pr-2">
-          <!-- Sample initial messages -->
-          <div class="flex items-start gap-2 text-slate-700">
-            <span class="text-slate-400 shrink-0">09:15</span>
-            <span class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-bold shrink-0">TOKYO</span>
-            <span class="truncate">Scout engine primed: 213 F&O scrips master loaded</span>
-          </div>
-          <div class="flex items-start gap-2 text-slate-700">
-            <span class="text-slate-400 shrink-0">09:15</span>
-            <span class="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold shrink-0">PALERMO</span>
-            <span class="truncate">Risk gate active: Daily max 5 trades, 1.0% capital risk</span>
-          </div>
-          <div class="flex items-start gap-2 text-slate-700">
-            <span class="text-slate-400 shrink-0">09:16</span>
-            <span class="px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 text-[10px] font-bold shrink-0">RIO</span>
-            <span class="truncate">25-min rolling candle builder streaming intraday bars</span>
-          </div>
-        </div>
-
-        <div class="text-[10px] font-mono-code text-slate-400 pt-2 border-t border-slate-100 mt-2 flex items-center justify-between">
-          <span>PIPELINE: ACTIVE (ALL CHANNELS)</span>
-          <span class="text-emerald-600 font-bold">READY TO FIRE</span>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- ============================================================== -->
-    <!-- 🔬 4. ADVANCED VISUALIZATION DECK (RIDGE PLOT + 5D HYPERCUBE LATTICE) -->
-    <!-- ============================================================== -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4">
-      
-      <!-- Left (7 Cols): Tail Probability Ridge / Strike Landscape -->
-      <div class="desk-card p-4 lg:col-span-7 flex flex-col justify-between">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-2 mb-2">
-          <div class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-rose-500"></span>
-            <span class="text-xs font-bold text-slate-800 font-mono-code uppercase tracking-wider">// TAIL PROBABILITY RIDGE & STRIKE LANDSCAPE</span>
-          </div>
-          <div class="text-[11px] font-mono-code text-slate-400">ONE RIDGE / ONE SESSION / TAILS PAY</div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
-          <!-- Live Option Chain & Volatility Telemetry Column -->
-          <div class="md:col-span-4 space-y-1.5 font-mono-code text-xs">
-            <div class="text-[10px] text-slate-400 uppercase">OPTION CHAIN & VIX / LIVE</div>
-            <div class="flex justify-between py-1 border-b border-slate-100">
-              <span class="text-slate-500">INDIA VIX</span>
-              <span id="vizVixVal" class="font-bold text-slate-900">17.56</span>
-            </div>
-            <div class="flex justify-between py-1 border-b border-slate-100">
-              <span class="text-slate-500">EXP MOVE</span>
-              <span id="vizExpMove" class="font-bold text-emerald-600">±0.00%</span>
-            </div>
-            <div class="flex justify-between py-1 border-b border-slate-100">
-              <span class="text-slate-500">MAX PAIN</span>
-              <span id="vizMaxPain" class="font-bold text-slate-900">--</span>
-            </div>
-            <div class="flex justify-between py-1 border-b border-slate-100">
-              <span class="text-slate-500">CALL WALL</span>
-              <span id="vizCallWall" class="font-bold text-rose-600">--</span>
-            </div>
-            <div class="flex justify-between py-1">
-              <span class="text-slate-500">PUT WALL</span>
-              <span id="vizPutWall" class="font-bold text-emerald-600">--</span>
-            </div>
-          </div>
-
-          <!-- Canvas Isometric Ridge Plot -->
-          <div class="md:col-span-8 h-[160px] relative">
-            <canvas id="ridgeCanvas" class="w-full h-full"></canvas>
-            <div class="absolute right-2 top-2 px-2 py-0.5 rounded bg-slate-900 text-white text-[9px] font-mono-code">STRIKE / EXIT</div>
-          </div>
-        </div>
-
-        <div class="text-[10px] text-slate-400 font-mono-code pt-2 border-t border-slate-100 mt-2 flex justify-between">
-          <span>PRICE THE TAIL, CHECK THE EXIT</span>
-          <span>-2σ • -1σ • 0 • +1σ • +2σ</span>
-        </div>
-      </div>
-
-      <!-- Right (5 Cols): 5D Strategy Lattice Hypercube 3D Wireframe -->
-      <div class="desk-card p-4 lg:col-span-5 flex flex-col justify-between">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-2 mb-2">
-          <div class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
-            <span class="text-xs font-bold text-slate-800 font-mono-code uppercase tracking-wider">// 5D STRATEGY LATTICE</span>
-          </div>
-          <div class="text-[10px] font-mono-code text-slate-400">PENTERACT • 32 NODES / 80 EDGES</div>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
-          <!-- 3D Canvas -->
-          <div class="sm:col-span-8 h-[160px] relative">
-            <canvas id="latticeCanvas" class="w-full h-full"></canvas>
-          </div>
-
-          <!-- Metadata -->
-          <div class="sm:col-span-4 space-y-1 font-mono-code text-[11px]">
-            <div class="flex justify-between">
-              <span class="text-slate-400">DIMENSIONS</span>
-              <span class="font-bold text-slate-800">5 / 5</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-slate-400">VERTICES</span>
-              <span class="font-bold text-slate-800">32</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-slate-400">EDGES</span>
-              <span class="font-bold text-slate-800">80</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-slate-400">ROTATION</span>
-              <span id="rotationDeg" class="font-bold text-rose-500">24°</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-slate-400">PROJECTION</span>
-              <span class="font-bold text-slate-800">5D → 2D</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="text-[10px] text-slate-400 font-mono-code pt-2 border-t border-slate-100 mt-2 flex items-center justify-between">
-          <span>EVERY AXIS IS AN EDGE</span>
-          <div class="flex gap-1">
-            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-            <span class="w-2 h-2 rounded-full bg-purple-500"></span>
-            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- ============================================================== -->
-    <!-- 🌐 5. RELATIONSHIP GRAPH SIMULATION (FLOW & LIQUIDITY NODES) -->
-    <!-- ============================================================== -->
-    <div class="desk-card p-4">
-      <div class="flex items-center justify-between border-b border-slate-100 pb-2 mb-3">
-        <div class="flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-fuchsia-500 animate-pulse"></span>
-          <span class="text-xs font-bold text-slate-800 font-mono-code uppercase tracking-wider">// RELATIONSHIP GRAPH & SIGNAL FLOW PIPELINE</span>
-        </div>
-        <div class="text-[11px] font-mono-code text-slate-400">VOLUME / FLOW / LIQUIDITY • 90 NODES • 134 EDGES</div>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
-        <!-- Node classification sidebar -->
-        <div class="lg:col-span-2 space-y-2 font-mono-code text-[11px]">
-          <div class="text-[10px] text-slate-400 font-bold uppercase">NODE CLASS</div>
-          <div class="flex items-center gap-2 text-slate-700">
-            <span class="w-2 h-2 rounded-full bg-rose-500"></span>
-            <span>Bear Signal</span>
-          </div>
-          <div class="flex items-center gap-2 text-slate-700">
-            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-            <span>Bull Signal</span>
-          </div>
-          <div class="flex items-center gap-2 text-slate-700">
-            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
-            <span>Median Path</span>
-          </div>
-          <div class="flex items-center gap-2 text-slate-700">
-            <span class="w-2 h-2 rounded-full bg-teal-500"></span>
-            <span>Catalyst</span>
-          </div>
-          <div class="pt-2 border-t border-slate-100 space-y-1 text-[10px]">
-            <div class="flex justify-between text-slate-500"><span>BEAR SIGNALS</span><span id="flowBearCnt" class="font-bold text-rose-600">0</span></div>
-            <div class="flex justify-between text-slate-500"><span>BULL SIGNALS</span><span id="flowBullCnt" class="font-bold text-emerald-600">0</span></div>
-            <div class="flex justify-between text-slate-500"><span>NIFTY VWAP</span><span id="flowVwapPos" class="font-bold text-slate-900">--</span></div>
-          </div>
-        </div>
-
-        <!-- Particle Node Canvas -->
-        <div class="lg:col-span-8 h-[170px] relative">
-          <canvas id="flowCanvas" class="w-full h-full"></canvas>
-        </div>
-
-        <!-- Live Macro Regime & Consensus Gauge -->
-        <div class="lg:col-span-2 space-y-2 font-mono-code text-[11px] text-right">
-          <div>
-            <div class="text-slate-400 text-[10px]">OI PCR CONSENSUS</div>
-            <div id="flowPcrRatio" class="text-base font-extrabold text-emerald-600">1.00</div>
-          </div>
-          <div>
-            <div class="text-slate-400 text-[10px]">NEWS SENTIMENT AI</div>
-            <div id="flowNewsScore" class="text-lg font-black text-slate-900">NEUTRAL</div>
-          </div>
-          <div>
-            <div class="text-slate-400 text-[10px]">BERLIN REGIME</div>
-            <div id="flowRegimeBadge" class="text-xs font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 inline-block">CALIBRATING</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ============================================================== -->
     <!-- 👥 6. THE 10 OPERATOR AGENT DECK (FROM IMAGE 5) -->
     <!-- ============================================================== -->
     <div class="space-y-2">
@@ -731,267 +270,7 @@
       </div>
     </div>
 
-    <!-- ============================================================== -->
-    <!-- 🧠 6.5 MARKET INTELLIGENCE COMMAND CENTER (BERLIN / STOCKHOLM / TOKYO / NAIROBI / BACKTEST) -->
-    <!-- ============================================================== -->
-    <div id="intelCommandCenter" class="desk-card p-4 space-y-3">
-      <!-- Live 5-Index & India VIX Ribbon (BERLIN) -->
-      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
-        <div class="flex items-center gap-2">
-          <span class="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></span>
-          <h2 class="text-xs sm:text-sm font-bold text-slate-900 font-mono-code uppercase tracking-wider">// INDIAN MARKET INTELLIGENCE COMMAND CENTER</h2>
-          <span id="macroRegimePill" class="px-2 py-0.5 rounded text-[10px] font-bold font-mono-code bg-emerald-100 text-emerald-800 border border-emerald-200">REGIME: CALIBRATING</span>
-        </div>
-        <div class="flex flex-wrap items-center gap-1.5 font-mono-code text-[11px]">
-          <button onclick="switchIntelTab('options')" id="tabBtnOptions" class="intel-tab-btn px-2.5 py-1 rounded-lg bg-slate-900 text-white font-bold transition">🎯 OPTION CHAIN & STRIKES</button>
-          <button onclick="switchIntelTab('momentum')" id="tabBtnMomentum" class="intel-tab-btn px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition">🚀 MOMENTUM & NEWS AI</button>
-          <button onclick="switchIntelTab('backtest')" id="tabBtnBacktest" class="intel-tab-btn px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition">🧪 BACKTEST & PAPER BOOK</button>
-        </div>
-      </div>
 
-      <!-- 5-Index + India VIX Live Ticker Strip -->
-      <div id="indexTickerStrip" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 font-mono-code">
-        <button onclick="selectOptionChainIndex('NIFTY')" data-idx="NIFTY" class="idx-spot-card text-left p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:border-blue-400 transition">
-          <div class="flex items-center justify-between text-[10px] text-slate-500 font-bold"><span>NIFTY 50</span><span id="spotChgNIFTY" class="text-emerald-600">+0.00%</span></div>
-          <div id="spotValNIFTY" class="text-sm sm:text-base font-extrabold text-slate-900 mt-0.5">--</div>
-          <div id="spotPtsNIFTY" class="text-[10px] text-slate-400">VWAP --</div>
-        </button>
-        <button onclick="selectOptionChainIndex('BANKNIFTY')" data-idx="BANKNIFTY" class="idx-spot-card text-left p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:border-blue-400 transition">
-          <div class="flex items-center justify-between text-[10px] text-slate-500 font-bold"><span>BANK NIFTY</span><span id="spotChgBANKNIFTY" class="text-emerald-600">+0.00%</span></div>
-          <div id="spotValBANKNIFTY" class="text-sm sm:text-base font-extrabold text-slate-900 mt-0.5">--</div>
-          <div id="spotPtsBANKNIFTY" class="text-[10px] text-slate-400">PCR --</div>
-        </button>
-        <button onclick="selectOptionChainIndex('SENSEX')" data-idx="SENSEX" class="idx-spot-card text-left p-2.5 rounded-xl border-2 border-blue-500 bg-blue-50/40 hover:border-blue-600 transition">
-          <div class="flex items-center justify-between text-[10px] text-blue-700 font-bold"><span>BSE SENSEX ★</span><span id="spotChgSENSEX" class="text-emerald-600">+0.00%</span></div>
-          <div id="spotValSENSEX" class="text-sm sm:text-base font-extrabold text-slate-900 mt-0.5">--</div>
-          <div id="spotPtsSENSEX" class="text-[10px] text-slate-500">PCR --</div>
-        </button>
-        <button onclick="selectOptionChainIndex('FINNIFTY')" data-idx="FINNIFTY" class="idx-spot-card text-left p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:border-blue-400 transition">
-          <div class="flex items-center justify-between text-[10px] text-slate-500 font-bold"><span>FIN NIFTY</span><span id="spotChgFINNIFTY" class="text-emerald-600">+0.00%</span></div>
-          <div id="spotValFINNIFTY" class="text-sm sm:text-base font-extrabold text-slate-900 mt-0.5">--</div>
-          <div id="spotPtsFINNIFTY" class="text-[10px] text-slate-400">PCR --</div>
-        </button>
-        <div class="p-2.5 rounded-xl border border-rose-200 bg-rose-50/40">
-          <div class="flex items-center justify-between text-[10px] text-rose-700 font-bold"><span>INDIA VIX</span><span id="spotChgINDIA_VIX" class="text-rose-600">+0.00%</span></div>
-          <div id="spotValINDIA_VIX" class="text-sm sm:text-base font-extrabold text-slate-900 mt-0.5">--</div>
-          <div id="vixZoneLabel" class="text-[10px] text-rose-600 font-semibold truncate">MODERATE VOL</div>
-        </div>
-      </div>
-
-      <!-- TAB 1: INDEX OPTION CHAIN & STRIKE MOMENTUM RADAR (STOCKHOLM) -->
-      <div id="intelTabOptions" class="space-y-3">
-        <!-- Selected Index OC Telemetry Bar -->
-        <div class="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono-code text-[11px]">
-          <div class="flex flex-wrap items-center gap-3">
-            <span id="ocSelectedLabel" class="px-2 py-0.5 rounded bg-blue-600 text-white font-bold">SENSEX CHAIN</span>
-            <span>EXPIRY: <b id="ocExpiryVal" class="text-slate-800">--</b></span>
-            <span>PCR: <b id="ocPcrVal" class="text-slate-900">--</b></span>
-            <span>COI PCR: <b id="ocCoiPcrVal" class="text-indigo-700">--</b></span>
-            <span>MAX PAIN: <b id="ocMaxPainVal" class="text-slate-900">--</b></span>
-            <span>CALL WALL: <b id="ocCallWallVal" class="text-rose-600">--</b></span>
-            <span>PUT WALL: <b id="ocPutWallVal" class="text-emerald-600">--</b></span>
-            <span>EXP MOVE: <b id="ocExpMoveVal" class="text-amber-700">--</b></span>
-          </div>
-          <button id="scanOptionsBtn" onclick="triggerOptionsSweep()" class="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] transition">
-            ⚡ SCAN OPTIONS NOW
-          </button>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
-          <!-- Hot Strike Velocity Board -->
-          <div class="lg:col-span-5 border border-slate-200 rounded-xl p-3 bg-white space-y-2">
-            <div class="flex items-center justify-between font-mono-code text-xs border-b border-slate-100 pb-2">
-              <span class="font-bold text-slate-800">🔥 HOT STRIKE MOMENTUM LEADERBOARD</span>
-              <span class="text-[10px] text-slate-400">OI BUILDUP + VWAP + GREEKS</span>
-            </div>
-            <div class="overflow-x-auto max-h-[280px] overflow-y-auto">
-              <table class="w-full text-left font-mono-code text-[11px]">
-                <thead>
-                  <tr class="text-slate-400 border-b border-slate-100 text-[10px]">
-                    <th class="py-1.5 pr-2">CONTRACT</th>
-                    <th class="py-1.5 px-1">LTP</th>
-                    <th class="py-1.5 px-1">CHG%</th>
-                    <th class="py-1.5 px-1">BUILDUP</th>
-                    <th class="py-1.5 pl-1 text-right">SCORE</th>
-                  </tr>
-                </thead>
-                <tbody id="hotStrikesBody" class="divide-y divide-slate-100">
-                  <tr><td colspan="5" class="py-6 text-center text-slate-400">Loading strike momentum...</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- ATM ±6 Option Chain Ladder -->
-          <div class="lg:col-span-7 border border-slate-200 rounded-xl p-3 bg-white space-y-2">
-            <div class="flex items-center justify-between font-mono-code text-xs border-b border-slate-100 pb-2">
-              <span class="font-bold text-slate-800">🎯 ATM ±6 OPTION CHAIN OI & BUILDUP LADDER</span>
-              <span id="ocLadderBias" class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-bold">BIAS: NEUTRAL</span>
-            </div>
-            <div class="overflow-x-auto max-h-[280px] overflow-y-auto">
-              <table class="w-full text-center font-mono-code text-[11px]">
-                <thead>
-                  <tr class="text-slate-400 border-b border-slate-100 text-[10px]">
-                    <th class="py-1.5 text-left">CE BUILDUP</th>
-                    <th class="py-1.5">CE OI</th>
-                    <th class="py-1.5">CE LTP</th>
-                    <th class="py-1.5 bg-slate-100 text-slate-800 px-2">STRIKE</th>
-                    <th class="py-1.5">PE LTP</th>
-                    <th class="py-1.5">PE OI</th>
-                    <th class="py-1.5 text-right">PE BUILDUP</th>
-                  </tr>
-                </thead>
-                <tbody id="ocLadderBody" class="divide-y divide-slate-100">
-                  <tr><td colspan="7" class="py-6 text-center text-slate-400">Syncing DhanHQ Option Chain...</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- TAB 2: F&O MOMENTUM SCANNER & INDIAN MARKET NEWS AI (TOKYO + NAIROBI) -->
-      <div id="intelTabMomentum" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-3">
-        <!-- TOKYO Momentum Stocks -->
-        <div class="lg:col-span-6 border border-slate-200 rounded-xl p-3 bg-white space-y-2">
-          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2 font-mono-code text-xs">
-            <span class="font-bold text-slate-800">🚀 TOKYO: F&O MOMENTUM & RVOL LEADERS</span>
-            <div class="flex items-center gap-1 text-[10px]">
-              <button onclick="setMomFilter('rvol')" id="momBtnRvol" class="px-2 py-0.5 rounded bg-amber-500 text-white font-bold">RVOL</button>
-              <button onclick="setMomFilter('gainers')" id="momBtnGainers" class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-bold">GAINERS</button>
-              <button onclick="setMomFilter('losers')" id="momBtnLosers" class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-bold">LOSERS</button>
-            </div>
-          </div>
-          <div class="overflow-x-auto max-h-[300px] overflow-y-auto">
-            <table class="w-full text-left font-mono-code text-[11px]">
-              <thead>
-                <tr class="text-slate-400 border-b border-slate-100 text-[10px]">
-                  <th class="py-1.5">SYMBOL</th>
-                  <th class="py-1.5">LTP</th>
-                  <th class="py-1.5">CHG%</th>
-                  <th class="py-1.5">RVOL</th>
-                  <th class="py-1.5">RSI</th>
-                  <th class="py-1.5 text-right">VWAP</th>
-                </tr>
-              </thead>
-              <tbody id="momentumStocksBody" class="divide-y divide-slate-100">
-                <tr><td colspan="6" class="py-6 text-center text-slate-400">Syncing F&O stock quotes...</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- NAIROBI News AI -->
-        <div class="lg:col-span-6 border border-slate-200 rounded-xl p-3 bg-white space-y-2">
-          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2 font-mono-code text-xs">
-            <span class="font-bold text-slate-800">📰 NAIROBI: INDIAN MARKET NEWS AI</span>
-            <div class="flex items-center gap-1.5 text-[10px]">
-              <span id="newsSentimentBadge" class="px-2 py-0.5 rounded bg-slate-100 text-slate-800 font-bold">NEUTRAL (0)</span>
-              <span id="newsSectorBadge" class="px-2 py-0.5 rounded bg-rose-50 text-rose-700 font-bold">INDEX</span>
-            </div>
-          </div>
-          <div id="newsFeedList" class="space-y-2 max-h-[300px] overflow-y-auto pr-1 font-mono-code text-[11px]">
-            <div class="py-6 text-center text-slate-400">Fetching ET, Moneycontrol & LiveMint feeds...</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- TAB 3: REAL HISTORICAL BACKTESTER & LIVE PAPER TRADE BOOK (HELSINKI + PROFESSOR) -->
-      <div id="intelTabBacktest" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-3">
-        <!-- Backtester -->
-        <div class="lg:col-span-6 border border-slate-200 rounded-xl p-3 bg-white space-y-3 font-mono-code">
-          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
-            <span class="text-xs font-bold text-slate-800">🧪 REAL HISTORICAL BACKTEST ENGINE (DHAN / NSE)</span>
-            <span id="btSourceTag" class="text-[10px] px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 font-bold">READY</span>
-          </div>
-
-          <div class="grid grid-cols-2 sm:grid-cols-6 gap-2 text-[11px]">
-            <input id="btSymbolInput" list="btSymbolSuggestions" value="SENSEX" placeholder="Symbol" class="col-span-2 sm:col-span-1 px-2 py-1.5 rounded border border-slate-300 font-bold uppercase" />
-            <datalist id="btSymbolSuggestions">
-              <option value="SENSEX"><option value="NIFTY"><option value="BANKNIFTY"><option value="RELIANCE"><option value="SBIN"><option value="M&M"><option value="TRENT"><option value="HDFCBANK"><option value="TATAMOTORS">
-            </datalist>
-            <select id="btTimeframeSelect" class="px-2 py-1.5 rounded border border-slate-300">
-              <option value="25m" selected>25m ★</option>
-              <option value="15m">15m</option>
-              <option value="5m">5m</option>
-              <option value="1h">1h</option>
-            </select>
-            <select id="btDaysSelect" class="px-2 py-1.5 rounded border border-slate-300">
-              <option value="15">15D</option>
-              <option value="30" selected>30D</option>
-              <option value="45">45D</option>
-            </select>
-            <select id="btRrSelect" class="px-2 py-1.5 rounded border border-slate-300">
-              <option value="1.5">1:1.5</option>
-              <option value="2.0" selected>1:2.0</option>
-              <option value="2.5">1:2.5</option>
-              <option value="3.0">1:3.0</option>
-            </select>
-            <label class="flex items-center gap-1 px-2 py-1 rounded border border-slate-200 bg-slate-50 text-[10px] font-bold cursor-pointer">
-              <input id="btTrailingCheck" type="checkbox" checked class="accent-emerald-600" />
-              <span>TRAIL SL</span>
-            </label>
-            <button id="runBacktestBtn" onclick="runRealBacktest()" class="px-3 py-1.5 rounded bg-slate-900 hover:bg-slate-800 text-white font-bold text-[11px] transition">RUN TEST</button>
-          </div>
-
-          <div id="btMetricsGrid" class="grid grid-cols-3 sm:grid-cols-6 gap-1.5 text-[10px]">
-            <div class="p-2 rounded bg-slate-50 border border-slate-100"><div class="text-slate-400">TRADES</div><div id="btTotalTrades" class="font-extrabold text-slate-900 text-xs">--</div></div>
-            <div class="p-2 rounded bg-slate-50 border border-slate-100"><div class="text-slate-400">WIN RATE</div><div id="btWinRate" class="font-extrabold text-emerald-600 text-xs">--</div></div>
-            <div class="p-2 rounded bg-slate-50 border border-slate-100"><div class="text-slate-400">NET P&L</div><div id="btNetPnl" class="font-extrabold text-slate-900 text-xs">--</div></div>
-            <div class="p-2 rounded bg-slate-50 border border-slate-100"><div class="text-slate-400">PF</div><div id="btProfitFactor" class="font-extrabold text-slate-900 text-xs">--</div></div>
-            <div class="p-2 rounded bg-slate-50 border border-slate-100"><div class="text-slate-400">MAX DD</div><div id="btMaxDd" class="font-extrabold text-rose-600 text-xs">--</div></div>
-            <div class="p-2 rounded bg-slate-50 border border-slate-100"><div class="text-slate-400">BE/LOCK</div><div id="btBeSaves" class="font-extrabold text-indigo-600 text-xs">--</div></div>
-          </div>
-
-          <div class="overflow-x-auto max-h-[210px] overflow-y-auto">
-            <table class="w-full text-left text-[10px]">
-              <thead>
-                <tr class="text-slate-400 border-b border-slate-100">
-                  <th class="py-1">ENTRY TIME</th>
-                  <th class="py-1">DIR</th>
-                  <th class="py-1">ENTRY</th>
-                  <th class="py-1">EXIT</th>
-                  <th class="py-1">STATUS</th>
-                  <th class="py-1 text-right">P&L</th>
-                </tr>
-              </thead>
-              <tbody id="btTradesBody" class="divide-y divide-slate-100">
-                <tr><td colspan="6" class="py-5 text-center text-slate-400">Select symbol & click RUN TEST to backtest on real historical bars.</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- HELSINKI Paper Trades Book -->
-        <div class="lg:col-span-6 border border-slate-200 rounded-xl p-3 bg-white space-y-2 font-mono-code">
-          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2 text-xs">
-            <span class="font-bold text-slate-800">💼 HELSINKI: PAPER TRADE BOOK & TRAILING SL</span>
-            <div class="flex items-center gap-2">
-              <span id="paperOpenPnlBadge" class="text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-bold">OPEN MTM: ₹0</span>
-              <button onclick="resetPaperAccount()" class="px-2 py-0.5 rounded bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[10px] font-bold">RESET ₹20L</button>
-            </div>
-          </div>
-          <div class="overflow-x-auto max-h-[285px] overflow-y-auto">
-            <table class="w-full text-left text-[10px]">
-              <thead>
-                <tr class="text-slate-400 border-b border-slate-100">
-                  <th class="py-1.5">CONTRACT</th>
-                  <th class="py-1.5">SIZE / SLIP</th>
-                  <th class="py-1.5">ENTRY</th>
-                  <th class="py-1.5">LTP/EXIT</th>
-                  <th class="py-1.5">SL (TRAIL)</th>
-                  <th class="py-1.5">STATUS</th>
-                  <th class="py-1.5 text-right">P&L</th>
-                </tr>
-              </thead>
-              <tbody id="paperTradesBody" class="divide-y divide-slate-100">
-                <tr><td colspan="7" class="py-8 text-center text-slate-400">No paper trades executed yet. Auto-trades trigger on verified signals.</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <!-- ============================================================== -->
     <!-- 📈 7. LIVE REAL-TIME NSE CANDLESTICK TERMINAL (ZERO SIMULATION) -->
@@ -1140,22 +419,20 @@
         <table class="w-full text-left font-mono-code text-xs">
           <thead>
             <tr class="border-b border-slate-200 text-slate-400 text-[11px]">
-              <th class="py-2.5 px-3">TIME</th>
+              <th class="py-2.5 px-3">TIME (IST)</th>
               <th class="py-2.5 px-3">SCRIP</th>
               <th class="py-2.5 px-3">PATTERN SETUP</th>
-              <th class="py-2.5 px-3">TREND CONTEXT</th>
               <th class="py-2.5 px-3">BODY ENGULF</th>
               <th class="py-2.5 px-3">ENTRY</th>
               <th class="py-2.5 px-3">STOP LOSS</th>
               <th class="py-2.5 px-3">TARGET</th>
-              <th class="py-2.5 px-3">RATING</th>
               <th class="py-2.5 px-3 text-right">ACTION</th>
             </tr>
           </thead>
           <tbody id="signalsTableBody" class="divide-y divide-slate-100 text-slate-700">
             <!-- Populated via Javascript -->
             <tr id="emptySignalRow">
-              <td colspan="10" class="py-8 text-center text-slate-400">
+              <td colspan="8" class="py-8 text-center text-slate-400">
                 Scanning active NSE F&O universe on strict 25m confluence (VWAP + RVOL + RSI + Anti-Trap)... Patterns will appear here instantly.
               </td>
             </tr>
@@ -1393,268 +670,15 @@
       if (audioEnabled) playBreakoutChime();
     }
 
+        // -------------------------------------------------------------
+    // Canvas & Chart Simulation Stubs (Safely Guarded)
     // -------------------------------------------------------------
-    // Canvas 1: Balance History (Smooth Curved Line)
-    // -------------------------------------------------------------
-    const bCanvas = document.getElementById('balanceChart');
-    const bCtx = bCanvas.getContext('2d');
     let balancePoints = [2000000, 2000000];
+    function drawBalanceChart() {}
+    function drawRidgePlot() {}
+    function drawLattice() {}
+    function drawFlowSimulation() {}
 
-    function drawBalanceChart() {
-      const rect = bCanvas.getBoundingClientRect();
-      bCanvas.width = rect.width * window.devicePixelRatio || 600;
-      bCanvas.height = rect.height * window.devicePixelRatio || 220;
-      bCtx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
-
-      const w = rect.width;
-      const h = rect.height;
-      bCtx.clearRect(0, 0, w, h);
-
-      // Grid lines
-      bCtx.strokeStyle = '#f1f5f9';
-      bCtx.lineWidth = 1;
-      for (let i = 1; i <= 4; i++) {
-        const y = (h / 5) * i;
-        bCtx.beginPath();
-        bCtx.moveTo(0, y);
-        bCtx.lineTo(w, y);
-        bCtx.stroke();
-      }
-
-      // Min & Max
-      const min = Math.min(...balancePoints) * 0.998;
-      const max = Math.max(...balancePoints) * 1.002;
-      const range = max - min || 1;
-
-      // Draw Gradient fill
-      const grad = bCtx.createLinearGradient(0, 0, 0, h);
-      grad.addColorStop(0, 'rgba(16, 185, 129, 0.25)');
-      grad.addColorStop(1, 'rgba(16, 185, 129, 0.00)');
-
-      bCtx.beginPath();
-      balancePoints.forEach((val, i) => {
-        const x = (w / (balancePoints.length - 1)) * i;
-        const y = h - ((val - min) / range) * (h - 30) - 15;
-        if (i === 0) bCtx.moveTo(x, y);
-        else bCtx.lineTo(x, y);
-      });
-      bCtx.lineTo(w, h);
-      bCtx.lineTo(0, h);
-      bCtx.closePath();
-      bCtx.fillStyle = grad;
-      bCtx.fill();
-
-      // Stroke line
-      bCtx.beginPath();
-      balancePoints.forEach((val, i) => {
-        const x = (w / (balancePoints.length - 1)) * i;
-        const y = h - ((val - min) / range) * (h - 30) - 15;
-        if (i === 0) bCtx.moveTo(x, y);
-        else bCtx.lineTo(x, y);
-      });
-      bCtx.strokeStyle = '#10b981';
-      bCtx.lineWidth = 2.5;
-      bCtx.stroke();
-
-      // Latest point dot
-      const lastX = w;
-      const lastY = h - ((balancePoints[balancePoints.length - 1] - min) / range) * (h - 30) - 15;
-      bCtx.beginPath();
-      bCtx.arc(lastX - 2, lastY, 4.5, 0, Math.PI * 2);
-      bCtx.fillStyle = '#10b981';
-      bCtx.fill();
-      bCtx.lineWidth = 2;
-      bCtx.strokeStyle = '#ffffff';
-      bCtx.stroke();
-    }
-
-    // -------------------------------------------------------------
-    // Canvas 2: Tail Probability Ridge Plot (Isometric stacked waves)
-    // -------------------------------------------------------------
-    const rCanvas = document.getElementById('ridgeCanvas');
-    const rCtx = rCanvas.getContext('2d');
-    let ridgeTick = 0;
-
-    function drawRidgePlot() {
-      const rect = rCanvas.getBoundingClientRect();
-      rCanvas.width = rect.width * window.devicePixelRatio || 400;
-      rCanvas.height = rect.height * window.devicePixelRatio || 160;
-      rCtx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
-
-      const w = rect.width;
-      const h = rect.height;
-      rCtx.clearRect(0, 0, w, h);
-
-      const totalLines = 16;
-      for (let i = 0; i < totalLines; i++) {
-        const baseY = 30 + (i * (h - 50) / totalLines);
-        rCtx.beginPath();
-        rCtx.moveTo(0, baseY);
-
-        for (let x = 0; x <= w; x += 6) {
-          const normX = (x - w / 2) / (w * 0.28);
-          const bell = Math.exp(-0.5 * normX * normX);
-          const wave = Math.sin(ridgeTick * 0.03 + i * 0.4 + normX) * 2;
-          const peakHeight = 45 * Math.sin((i / totalLines) * Math.PI);
-          const y = baseY - (bell * peakHeight) + wave;
-          rCtx.lineTo(x, y);
-        }
-
-        rCtx.strokeStyle = (i > 11) ? 'rgba(244, 63, 94, 0.4)' : `rgba(15, 23, 42, ${0.1 + (i / totalLines) * 0.35})`;
-        rCtx.lineWidth = (i > 11) ? 1.4 : 1.1;
-        rCtx.stroke();
-      }
-
-      ridgeTick++;
-      requestAnimationFrame(drawRidgePlot);
-    }
-
-    // -------------------------------------------------------------
-    // Canvas 3: 5D Strategy Lattice (Rotating 3D/5D Pentaract)
-    // -------------------------------------------------------------
-    const lCanvas = document.getElementById('latticeCanvas');
-    const lCtx = lCanvas.getContext('2d');
-    let rotAngle = 0;
-
-    function drawLattice() {
-      const rect = lCanvas.getBoundingClientRect();
-      lCanvas.width = rect.width * window.devicePixelRatio || 200;
-      lCanvas.height = rect.height * window.devicePixelRatio || 160;
-      lCtx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
-
-      const w = rect.width;
-      const h = rect.height;
-      lCtx.clearRect(0, 0, w, h);
-
-      const cx = w / 2;
-      const cy = h / 2;
-      const size = Math.min(w, h) * 0.34;
-
-      rotAngle += 0.012;
-      const deg = Math.round((rotAngle * 180 / Math.PI) % 360);
-      document.getElementById('rotationDeg').textContent = deg + '°';
-
-      // 16 points for 4D/5D hypercube projection
-      const points = [];
-      for (let i = 0; i < 16; i++) {
-        const u = (i & 1) ? 1 : -1;
-        const v = (i & 2) ? 1 : -1;
-        const s = (i & 4) ? 1 : -1;
-        const t = (i & 8) ? 1 : -1;
-
-        // 3D rotation projection
-        const cosR = Math.cos(rotAngle);
-        const sinR = Math.sin(rotAngle);
-        const x3 = u * cosR - v * sinR;
-        const y3 = u * sinR + v * cosR;
-        const z3 = s * 0.7 + t * 0.3;
-
-        const projX = cx + (x3 + z3 * 0.4) * size;
-        const projY = cy + (y3 - z3 * 0.4) * size;
-        points.push({ x: projX, y: projY });
-      }
-
-      // Draw Edges
-      lCtx.strokeStyle = 'rgba(99, 102, 241, 0.28)';
-      lCtx.lineWidth = 1;
-      for (let i = 0; i < 16; i++) {
-        for (let j = i + 1; j < 16; j++) {
-          const diff = i ^ j;
-          // Connect only hypercube adjacent vertices
-          if (diff === 1 || diff === 2 || diff === 4 || diff === 8) {
-            lCtx.beginPath();
-            lCtx.moveTo(points[i].x, points[i].y);
-            lCtx.lineTo(points[j].x, points[j].y);
-            lCtx.stroke();
-          }
-        }
-      }
-
-      // Draw Vertices
-      points.forEach((p, idx) => {
-        lCtx.beginPath();
-        lCtx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
-        lCtx.fillStyle = (idx % 2 === 0) ? '#10b981' : '#ec4899';
-        lCtx.fill();
-      });
-
-      requestAnimationFrame(drawLattice);
-    }
-
-    // -------------------------------------------------------------
-    // Canvas 4: Relationship Graph Flow Simulation (Particles)
-    // -------------------------------------------------------------
-    const fCanvas = document.getElementById('flowCanvas');
-    const fCtx = fCanvas.getContext('2d');
-    let particles = [];
-
-    for (let i = 0; i < 25; i++) {
-      particles.push({
-        x: Math.random() * 400,
-        y: Math.random() * 150,
-        vx: 0.5 + Math.random() * 0.8,
-        vy: (Math.random() - 0.5) * 0.3,
-        color: i % 2 === 0 ? '#10b981' : '#f43f5e'
-      });
-    }
-
-    function drawFlowSimulation() {
-      const rect = fCanvas.getBoundingClientRect();
-      fCanvas.width = rect.width * window.devicePixelRatio || 500;
-      fCanvas.height = rect.height * window.devicePixelRatio || 170;
-      fCtx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
-
-      const w = rect.width;
-      const h = rect.height;
-      fCtx.clearRect(0, 0, w, h);
-
-      // Main flow path dashed curve
-      fCtx.beginPath();
-      fCtx.setLineDash([4, 4]);
-      fCtx.moveTo(40, h * 0.7);
-      fCtx.bezierCurveTo(w * 0.3, h * 0.2, w * 0.6, h * 0.8, w - 40, h * 0.4);
-      fCtx.strokeStyle = '#cbd5e1';
-      fCtx.lineWidth = 1.5;
-      fCtx.stroke();
-      fCtx.setLineDash([]);
-
-      // Clusters
-      const c1 = { x: w * 0.22, y: h * 0.45, label: "BEAR CLUSTER", col: "#f43f5e" };
-      const c2 = { x: w * 0.50, y: h * 0.70, label: "ASTRA PRIME", col: "#6366f1" };
-      const c3 = { x: w * 0.78, y: h * 0.40, label: "CATALYST RING", col: "#10b981" };
-
-      [c1, c2, c3].forEach(c => {
-        fCtx.beginPath();
-        fCtx.arc(c.x, c.y, 14, 0, Math.PI * 2);
-        fCtx.fillStyle = c.col;
-        fCtx.fill();
-
-        fCtx.beginPath();
-        fCtx.arc(c.x, c.y, 22, 0, Math.PI * 2);
-        fCtx.strokeStyle = c.col;
-        fCtx.lineWidth = 1;
-        fCtx.stroke();
-
-        fCtx.font = '9px "JetBrains Mono"';
-        fCtx.fillStyle = '#64748b';
-        fCtx.fillText(c.label, c.x - 28, c.y + 34);
-      });
-
-      // Move & draw particles
-      particles.forEach(p => {
-        p.x += p.vx;
-        p.y += p.vy;
-        if (p.x > w) p.x = 0;
-        if (p.y < 10 || p.y > h - 10) p.vy *= -1;
-
-        fCtx.beginPath();
-        fCtx.arc(p.x, p.y, 2.2, 0, Math.PI * 2);
-        fCtx.fillStyle = p.color;
-        fCtx.fill();
-      });
-
-      requestAnimationFrame(drawFlowSimulation);
-    }
 
     // -------------------------------------------------------------
     // Mission Clock Tracker
@@ -1662,19 +686,22 @@
     let startSeconds = 0;
     setInterval(() => {
       startSeconds++;
+      const el = document.getElementById('missionClock');
+      if (!el) return;
       const hrs = String(Math.floor(startSeconds / 3600)).padStart(2, '0');
       const mins = String(Math.floor((startSeconds % 3600) / 60)).padStart(2, '0');
       const secs = String(startSeconds % 60).padStart(2, '0');
-      document.getElementById('missionClock').textContent = `${hrs}:${mins}:${secs}`;
+      el.textContent = `${hrs}:${mins}:${secs}`;
     }, 1000);
 
     // -------------------------------------------------------------
     // Activity Log Pusher
     // -------------------------------------------------------------
     function addLogEntry(actor, text, type = 'info') {
+      const box = document.getElementById('activityLogBox');
+      if (!box) return;
       const now = new Date();
       const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-      const box = document.getElementById('activityLogBox');
       
       const badgeColors = {
         TOKYO: 'bg-amber-100 text-amber-800',
@@ -2629,6 +1656,21 @@
       }
     }
 
+        function formatToIST(ts) {
+      if (!ts) return 'JUST NOW';
+      try {
+        let s = String(ts).trim();
+        if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(s) && !s.endsWith('Z') && !/[+-]\d{2}:\d{2}$/.test(s)) {
+          s += 'Z';
+        }
+        const d = new Date(s);
+        if (isNaN(d.getTime())) return String(ts);
+        return d.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour12: false }) + ' IST';
+      } catch (e) {
+        return String(ts);
+      }
+    }
+
     let currentSignalsCache = [];
 
     function renderSignalsTable(signals) {
@@ -2636,7 +1678,7 @@
       const tbody = document.getElementById('signalsTableBody');
       if (!tbody) return;
       if (!signals || signals.length === 0) {
-        tbody.innerHTML = `<tr id="emptySignalRow"><td colspan="10" class="py-8 text-center text-slate-400">No strict 25m engulfing confluence signals active yet. Click <b>SWEEP SCAN F&O</b> or check <b>AGENT 01-10</b> live telemetry above.</td></tr>`;
+        tbody.innerHTML = `<tr id="emptySignalRow"><td colspan="8" class="py-8 text-center text-slate-400">No strict 25m engulfing confluence signals active yet. Click <b>SWEEP SCAN F&O</b> or check <b>AGENT 01-10</b> live telemetry above.</td></tr>`;
         return;
       }
 
@@ -2649,13 +1691,7 @@
           ? '<span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]">🟢 BULLISH</span>'
           : '<span class="px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-bold text-[10px]">🔴 BEARISH</span>';
 
-        const grade = sig.tradeGrade || (Number(sig.strength || 0) >= 85 ? 'A+' : Number(sig.strength || 0) >= 70 ? 'A' : 'B');
-        const gradeCls = grade === 'A+'
-          ? 'bg-emerald-600 text-white'
-          : (grade === 'A' ? 'bg-blue-100 text-blue-800' : 'bg-slate-200 text-slate-700');
-
-        const timeStr = sig.timestamp ? new Date(sig.timestamp).toLocaleTimeString() : 'JUST NOW';
-        const trendTag = escHtml(sig.trendContext || (isBull ? '↘️ Reversal (Decline)' : '↗️ Reversal (Rally)'));
+        const timeStr = formatToIST(sig.timestamp);
         const extraTags = [];
         if (sig.rvol) extraTags.push(`RVOL ${Number(sig.rvol).toFixed(1)}x`);
         if (sig.vwap) extraTags.push(`VWAP ₹${Number(sig.vwap).toFixed(1)}`);
@@ -2667,23 +1703,16 @@
           viewStockInChart(sig.symbol);
         };
         tr.innerHTML = `
-          <td class="py-2.5 px-3 text-slate-400">${escHtml(timeStr)}</td>
+          <td class="py-2.5 px-3 text-slate-500 font-mono-code">${escHtml(timeStr)}</td>
           <td class="py-2.5 px-3 font-bold text-slate-900">
             <div>${symSafe}</div>
             ${extraTags.length ? `<div class="text-[9px] text-slate-400 font-normal">${escHtml(extraTags.join(' • '))}</div>` : ''}
           </td>
           <td class="py-2.5 px-3">${typeBadge}</td>
-          <td class="py-2.5 px-3 text-slate-600 max-w-[230px]">${trendTag}</td>
           <td class="py-2.5 px-3 font-bold text-slate-800">${escHtml(sig.ratio || '100%')}</td>
           <td class="py-2.5 px-3 font-bold text-slate-900">₹${Number(sig.entryPrice || 0).toFixed(2)}</td>
           <td class="py-2.5 px-3 text-rose-600 font-semibold">₹${Number(sig.stopLoss || 0).toFixed(2)}</td>
           <td class="py-2.5 px-3 text-emerald-600 font-semibold">₹${Number(sig.target || 0).toFixed(2)}</td>
-          <td class="py-2.5 px-3">
-            <div class="flex items-center gap-1">
-              <span class="px-1.5 py-0.5 rounded font-black text-[10px] ${gradeCls}">${escHtml(grade)}</span>
-              <span class="px-1.5 py-0.5 rounded bg-slate-100 font-bold text-slate-800">${Number(sig.strength || 0)}%</span>
-            </div>
-          </td>
           <td class="py-2.5 px-3 text-right">
             <div class="flex items-center justify-end gap-1.5">
               <button onclick="viewStockInChart('${symJs}')" class="px-2 py-1 rounded bg-emerald-600 text-white text-[10px] font-bold font-mono-code hover:bg-emerald-700 shadow-sm transition flex items-center gap-1">
@@ -3675,10 +2704,6 @@
     }
 
     window.addEventListener('load', () => {
-      drawBalanceChart();
-      drawRidgePlot();
-      drawLattice();
-      drawFlowSimulation();
       loadCandleData('IRFC', '25m', false);
       loadFnoStocksDropdown();
       syncBackend();
@@ -3689,7 +2714,6 @@
     });
 
     window.addEventListener('resize', () => {
-      drawBalanceChart();
       drawNativeCandles();
     });
   </script>
