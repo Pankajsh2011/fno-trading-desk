@@ -375,9 +375,23 @@ def update_env_file(key: str, value: str):
 def generate_dhan_access_token(supplied_client_id: Optional[str] = None,
                                supplied_pin: Optional[str] = None,
                                supplied_totp_secret: Optional[str] = None) -> Dict[str, Any]:
-    client_id = supplied_client_id or os.getenv("DHAN_CLIENT_ID") or credentials["clientId"]
+    client_id = supplied_client_id or os.getenv("DHAN_CLIENT_ID") or credentials.get("clientId", "")
     pin = supplied_pin or os.getenv("DHAN_PIN")
     totp_secret = supplied_totp_secret or os.getenv("DHAN_TOTP_SECRET")
+
+    # Fallback to local config file if not set in environment
+    gemini_cfg_path = Path(r"C:\Users\Dell\.gemini\config\dhan_config.json")
+    if gemini_cfg_path.exists() and (not pin or not totp_secret or not client_id or client_id == "your_client_id_here"):
+        try:
+            d_cfg = json.loads(gemini_cfg_path.read_text(encoding="utf-8"))
+            if not pin:
+                pin = d_cfg.get("pin")
+            if not totp_secret:
+                totp_secret = d_cfg.get("totpSecret")
+            if not client_id or client_id == "your_client_id_here":
+                client_id = d_cfg.get("clientId", "1100571858")
+        except Exception as e:
+            logger.debug(f"[Auto-Login] dhan_config.json read notice: {e}")
 
     if not client_id or not pin or not totp_secret or \
        client_id == "your_client_id_here" or \
@@ -409,6 +423,18 @@ def generate_dhan_access_token(supplied_client_id: Optional[str] = None,
 
                 update_env_file("DHAN_CLIENT_ID", client_id)
                 update_env_file("DHAN_ACCESS_TOKEN", generated_token)
+
+                # Also sync directly to local MCP config file
+                if gemini_cfg_path.exists():
+                    try:
+                        d_cfg = json.loads(gemini_cfg_path.read_text(encoding="utf-8"))
+                        d_cfg["accessToken"] = generated_token
+                        if client_id:
+                            d_cfg["clientId"] = client_id
+                        gemini_cfg_path.write_text(json.dumps(d_cfg, indent=2), encoding="utf-8")
+                        logger.info(r"[Auto-Login] Synced fresh access token to C:\Users\Dell\.gemini\config\dhan_config.json")
+                    except Exception as ce:
+                        logger.warning(f"[Auto-Login] Could not sync to dhan_config.json: {ce}")
                 if supplied_pin:
                     update_env_file("DHAN_PIN", supplied_pin)
                 if supplied_totp_secret:
@@ -3236,13 +3262,32 @@ def scheduler_options_scanner():
         time.sleep(180)
 
 def scheduler_daily_token_renewal():
+    last_recovery_attempt = 0.0
     while True:
         try:
             now_ist = datetime.now(IST)
+            # Daily schedule at 08:30 AM IST
             if now_ist.hour == 8 and now_ist.minute == 30:
                 logger.info("[Scheduler] Daily Automated Access Token Renewal Triggered at 08:30 AM IST")
-                generate_dhan_access_token()
+                res = generate_dhan_access_token()
+                if res.get("success"):
+                    check_dhan_connection()
                 time.sleep(70)
+
+            # Auto-recovery if token expired and auto-creds available (retry every 15 mins)
+            curr_time = time.time()
+            if not dhan_status.get("isValid") and (curr_time - last_recovery_attempt > 900):
+                last_recovery_attempt = curr_time
+                g_cfg = Path(r"C:\Users\Dell\.gemini\config\dhan_config.json")
+                has_creds = bool(
+                    (os.getenv("DHAN_PIN") and os.getenv("DHAN_TOTP_SECRET")) or
+                    (g_cfg.exists() and json.loads(g_cfg.read_text(encoding="utf-8")).get("pin") and json.loads(g_cfg.read_text(encoding="utf-8")).get("totpSecret"))
+                )
+                if has_creds:
+                    logger.info("[Scheduler] Dhan session invalid. Attempting automatic TOTP token regeneration...")
+                    res = generate_dhan_access_token()
+                    if res.get("success"):
+                        check_dhan_connection()
         except Exception as e:
             logger.error(f"[Scheduler Token Renewal Error]: {e}")
         time.sleep(30)
