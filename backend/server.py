@@ -639,15 +639,21 @@ def get_expiry_candidates() -> List[str]:
             candidates.append(d.strftime("%Y-%m-%d"))
     return candidates
 
-def dhan_api_call(endpoint: str, method: str = "GET", body: Any = None) -> Dict[str, Any]:
+def dhan_api_call(endpoint: str, method: str = "GET", body: Any = None, retry: bool = True) -> Dict[str, Any]:
     global dhan_status
     if not dhan_status.get("isValid", False):
+        if retry:
+            res = generate_dhan_access_token()
+            if res.get("success"):
+                dhan_status["isValid"] = True
+                dhan_status["error"] = None
+                return dhan_api_call(endpoint, method, body, retry=False)
         return {"status": 401, "data": {"message": dhan_status.get("error", "DhanHQ token expired or unauthorized")}}
 
     headers = {
         "Content-Type": "application/json",
-        "client-id": credentials["clientId"],
-        "access-token": credentials["accessToken"]
+        "client-id": credentials.get("clientId", "1100571858"),
+        "access-token": credentials.get("accessToken", "")
     }
     url = f"{DHAN_API_BASE}{endpoint}"
     try:
@@ -658,7 +664,14 @@ def dhan_api_call(endpoint: str, method: str = "GET", body: Any = None) -> Dict[
         if resp.status_code == 401:
             dhan_status["isValid"] = False
             dhan_status["error"] = "DH-901 Token Expired"
-            logger.warning("[Dhan API] Token expired (401). Switched to Live NSE fallback.")
+            logger.warning("[Dhan API] Token expired (401). Attempting dynamic auto-renewal...")
+            if retry:
+                res = generate_dhan_access_token()
+                if res.get("success"):
+                    dhan_status["isValid"] = True
+                    dhan_status["error"] = None
+                    return dhan_api_call(endpoint, method, body, retry=False)
+            logger.warning("[Dhan API] Auto-renewal unavailable. Switched to Live NSE fallback.")
         try:
             data = resp.json()
         except Exception:
