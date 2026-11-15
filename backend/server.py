@@ -49,7 +49,7 @@ PORT = int(os.getenv("PORT", "3001"))
 DHAN_API_BASE = "https://api.dhan.co"
 IST = pytz.timezone("Asia/Kolkata")
 
-# No pre-seeded signals - fresh scan will detect with strict wick ≤ 20% and full body engulf
+# No pre-seeded signals - fresh scan will detect with strict wick ≤ 20% on both candles and full body engulf
 INITIAL_VERIFIED_SIGNALS = []
 
 active_signals: List[Dict[str, Any]] = list(INITIAL_VERIFIED_SIGNALS)
@@ -1808,21 +1808,55 @@ def _evaluate_engulf_geometry(current: Dict[str, float], previous: Dict[str, flo
 
 def check_perfect_engulfing(current: Dict[str, float], previous: Dict[str, float], avg_body: float) -> Dict[str, Any]:
     """
-    Perfect Engulfing check restricted strictly to 80% - 120% body ratio with >= 80% body overlap.
+    Perfect Engulfing check restricted strictly to 80% - 120% body ratio with >= 80% body overlap,
+    and strict wick <= 20% of overall size across both candles.
     """
-    prev_body = abs(previous["close"] - previous["open"])
-    curr_body = abs(current["close"] - current["open"])
+    c_open = float(current["open"])
+    c_close = float(current["close"])
+    p_open = float(previous["open"])
+    p_close = float(previous["close"])
+
+    prev_body = abs(p_close - p_open)
+    curr_body = abs(c_close - c_open)
 
     if prev_body <= 0 or curr_body <= 0:
-        return {"isPerfect": False, "direction": None, "reason": "Zero body size", "category": "Incomplete", "requiredRange": "80% - 120%", "pctOfAvg": "0.0%", "ratio": "0.0%"}
+        return {"isPerfect": False, "direction": None, "reason": "Zero body size", "category": "Incomplete", "requiredRange": "80% - 120% (Both Wicks ≤ 20%)", "pctOfAvg": "0.0%", "ratio": "0.0%"}
 
     min_opt_body = max(float(previous["close"]) * 0.001, (avg_body or 1.0) * 0.25, 0.25)
     geom = _evaluate_engulf_geometry(current, previous)
     ratio = geom["ratio"]
-    is_perfect = bool(geom["valid"] and prev_body >= min_opt_body and curr_body >= min_opt_body)
+
+    # Strict Wick Check on both candles & combined (<= 20% rule)
+    c_high = float(current.get("high", max(c_open, c_close)))
+    c_low = float(current.get("low", min(c_open, c_close)))
+    p_high = float(previous.get("high", max(p_open, p_close)))
+    p_low = float(previous.get("low", min(p_open, p_close)))
+
+    c_overall = c_high - c_low
+    c_u_wick = c_high - max(c_open, c_close)
+    c_l_wick = min(c_open, c_close) - c_low
+    c_tot_wick = c_u_wick + c_l_wick
+    c_wick_pct = (c_tot_wick / c_overall * 100.0) if c_overall > 0 else 100.0
+
+    p_overall = p_high - p_low
+    p_u_wick = p_high - max(p_open, p_close)
+    p_l_wick = min(p_open, p_close) - p_low
+    p_tot_wick = p_u_wick + p_l_wick
+    p_wick_pct = (p_tot_wick / p_overall * 100.0) if p_overall > 0 else 100.0
+
+    both_overall = c_overall + p_overall
+    both_tot_wick = c_tot_wick + p_tot_wick
+    both_wick_pct = (both_tot_wick / both_overall * 100.0) if both_overall > 0 else 100.0
+
+    wick_valid = (c_wick_pct <= 20.0001) and (p_wick_pct <= 20.0001) and (both_wick_pct <= 20.0001)
+    is_perfect = bool(geom["valid"] and prev_body >= min_opt_body and curr_body >= min_opt_body and wick_valid)
 
     category = f"Perfect Engulf ({ratio*100:.0f}%)" if is_perfect else "Incomplete"
-    required_range = "80% - 120%"
+    required_range = "80% - 120% (Both Wicks ≤ 20%)"
+
+    reason = geom.get("reason", "OK")
+    if geom["valid"] and not wick_valid:
+        reason = f"Wick exceeds 20% limit (curr: {c_wick_pct:.1f}%, prev: {p_wick_pct:.1f}%, both: {both_wick_pct:.1f}%)"
 
     return {
         "isPerfect": is_perfect,
@@ -1830,7 +1864,11 @@ def check_perfect_engulfing(current: Dict[str, float], previous: Dict[str, float
         "category": category,
         "requiredRange": required_range,
         "pctOfAvg": f"{(prev_body / (avg_body or 1.0) * 100):.1f}%",
-        "ratio": f"{(ratio * 100):.1f}%"
+        "ratio": f"{(ratio * 100):.1f}%",
+        "cWickPct": f"{c_wick_pct:.1f}%",
+        "pWickPct": f"{p_wick_pct:.1f}%",
+        "bothWickPct": f"{both_wick_pct:.1f}%",
+        "reason": reason
     }
 
 def detect_prior_trend(history: Optional[List[Dict[str, float]]] = None, previous: Optional[Dict[str, float]] = None) -> str:
@@ -1878,12 +1916,15 @@ def analyze_engulfing_pattern(
 
     p_open = round(float(previous["open"]), 2)
     p_close = round(float(previous["close"]), 2)
+    p_high = round(float(previous.get("high", max(p_open, p_close))), 2)
+    p_low = round(float(previous.get("low", min(p_open, p_close))), 2)
 
     c_body = round(abs(c_close - c_open), 2)
     p_body = round(abs(p_close - p_open), 2)
-    overall_size = round(c_high - c_low, 2)
+    c_overall_size = round(c_high - c_low, 2)
+    p_overall_size = round(p_high - p_low, 2)
 
-    if overall_size <= 0 or c_body <= 0 or p_body <= 0:
+    if c_overall_size <= 0 or p_overall_size <= 0 or c_body <= 0 or p_body <= 0:
         return None
 
     # FILTER 1: Minimum Candle Body Size (Filter out micro-dojis & flat lunchtime noise)
@@ -1891,14 +1932,28 @@ def analyze_engulfing_pattern(
     if p_body < min_body_threshold or c_body < min_body_threshold:
         return None
 
-    # FILTER 2: Wick size ≤ 20% of total candle size (Exact Dhan criteria)
-    upper_wick = round(c_high - max(c_open, c_close), 2)
-    lower_wick = round(min(c_open, c_close) - c_low, 2)
-    total_wick = round(upper_wick + lower_wick, 2)
-    wick_pct = round((total_wick / overall_size) * 100, 1)
+    # FILTER 2: Strict Wick size <= 20% of total candle size on BOTH candles & combined
+    c_upper_wick = round(c_high - max(c_open, c_close), 2)
+    c_lower_wick = round(min(c_open, c_close) - c_low, 2)
+    c_total_wick = round(c_upper_wick + c_lower_wick, 2)
+    c_wick_pct = round((c_total_wick / c_overall_size) * 100, 1) if c_overall_size > 0 else 100.0
 
-    if wick_pct > 20.0:
+    p_upper_wick = round(p_high - max(p_open, p_close), 2)
+    p_lower_wick = round(min(p_open, p_close) - p_low, 2)
+    p_total_wick = round(p_upper_wick + p_lower_wick, 2)
+    p_wick_pct = round((p_total_wick / p_overall_size) * 100, 1) if p_overall_size > 0 else 100.0
+
+    both_total_wick = round(c_total_wick + p_total_wick, 2)
+    both_overall_size = round(c_overall_size + p_overall_size, 2)
+    both_wick_pct = round((both_total_wick / both_overall_size) * 100, 1) if both_overall_size > 0 else 100.0
+
+    # User rule: "wick should not be more then 20% of over all both candle"
+    if c_wick_pct > 20.0 or p_wick_pct > 20.0 or both_wick_pct > 20.0:
         return None
+
+    overall_size = c_overall_size
+    total_wick = c_total_wick
+    wick_pct = c_wick_pct
 
     # Perfect Engulfing restricted strictly to 80% - 120% body ratio with >= 80% overlap coverage
     geom = _evaluate_engulf_geometry(current, previous)
@@ -1980,8 +2035,11 @@ def analyze_engulfing_pattern(
         "perfectCategory": f"Perfect Engulf ({ratio * 100:.0f}%)",
         "pctOfAvg": f"{(p_body / (avg_body or 1.0) * 100):.1f}%",
         "ratio": f"{(ratio * 100):.1f}%",
-        "wickPct": f"{wick_pct}%",
-        "requiredRange": "80% - 120% (Wick ≤ 20%)",
+        "wickPct": f"{c_wick_pct:.1f}%",
+        "cWickPct": f"{c_wick_pct:.1f}%",
+        "pWickPct": f"{p_wick_pct:.1f}%",
+        "bothWickPct": f"{both_wick_pct:.1f}%",
+        "requiredRange": "80% - 120% (Both Wicks ≤ 20%)",
         "trendContext": trend_text,
         "timestamp": datetime.utcnow().isoformat(),
         "candleData": {"current": current, "previous": previous}
@@ -2456,7 +2514,7 @@ def dispatch_signal_alerts(signal: Dict[str, Any], candle_data: Dict[str, Any]):
             f"<b>Setup:</b> <i>{signal.get('trendContext', 'Reversal Confirmed')}</i>\n"
             f"<b>Pattern:</b> {pattern_name}\n"
             f"<b>Engulfing Ratio:</b> {signal['ratio']} (Required: {signal['requiredRange']})\n"
-            f"<b>Wick % of Candle:</b> {overall_wick_ratio} (Strict Limit: &lt;= 40%)\n"
+            f"<b>Wick % of Candles:</b> Curr: {signal.get('cWickPct', overall_wick_ratio)} | Prev: {signal.get('pWickPct', '≤20%')} | Both: {signal.get('bothWickPct', overall_wick_ratio)} (Strict Limit: ≤ 20%)\n"
             f"<b>Rating / Confidence:</b> {signal['strength']}%\n\n"
             f"🎯 <b>Target:</b> ₹{signal['target']:.2f} (1:2 R:R)\n"
             f"🛑 <b>Stop Loss:</b> ₹{signal['stopLoss']:.2f}\n"
@@ -2967,7 +3025,19 @@ def run_options_scan():
                 curr_l_wick = min(current["open"], current["close"]) - current["low"]
                 curr_tot_wick = curr_u_wick + curr_l_wick
                 overall_size = current["high"] - current["low"]
-                is_wick_acceptable = overall_size > 0 and (curr_tot_wick <= 0.20 * overall_size)
+
+                prev_u_wick = previous["high"] - max(previous["open"], previous["close"])
+                prev_l_wick = min(previous["open"], previous["close"]) - previous["low"]
+                prev_tot_wick = prev_u_wick + prev_l_wick
+                prev_overall_size = previous["high"] - previous["low"]
+
+                both_tot_wick = curr_tot_wick + prev_tot_wick
+                both_overall_size = overall_size + prev_overall_size
+
+                is_curr_wick_ok = overall_size > 0 and (curr_tot_wick <= 0.2001 * overall_size)
+                is_prev_wick_ok = prev_overall_size > 0 and (prev_tot_wick <= 0.2001 * prev_overall_size)
+                is_both_wick_ok = both_overall_size > 0 and (both_tot_wick <= 0.2001 * both_overall_size)
+                is_wick_acceptable = is_curr_wick_ok and is_prev_wick_ok and is_both_wick_ok
 
                 is_bull_engulf = (
                     perfect_engulf_info.get("isPerfect") and
@@ -3058,7 +3128,7 @@ def run_options_scan():
                         "pctOfAvg": perfect_engulf_info["pctOfAvg"] if "ENGULFING" in signal_type else None,
                         "ratio": perfect_engulf_info["ratio"] if "ENGULFING" in signal_type else None,
                         "requiredRange": perfect_engulf_info["requiredRange"] if "ENGULFING" in signal_type else None,
-                        "wickPct": f"{((curr_tot_wick / overall_size) * 100):.1f}%" if ("ENGULFING" in signal_type and overall_size > 0) else None,
+                        "wickPct": f"{((curr_tot_wick / overall_size) * 100):.1f}% (Both: {((both_tot_wick / both_overall_size) * 100):.1f}%)" if ("ENGULFING" in signal_type and overall_size > 0 and both_overall_size > 0) else None,
                         "timestamp": datetime.utcnow().isoformat(),
                         "resistance": resistance,
                         "support": support

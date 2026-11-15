@@ -483,7 +483,7 @@
           </div>
           <div class="p-2 rounded bg-white border border-slate-200 flex justify-between">
             <span class="text-slate-500">Wick Limit:</span>
-            <span id="modalWickRatio" class="font-bold text-emerald-600">&le; 20%</span>
+            <span id="modalWickRatio" class="font-bold text-emerald-600">Both &le; 20%</span>
           </div>
           <div class="p-2 rounded bg-white border border-slate-200 flex justify-between">
             <span class="text-slate-500">Entry:</span>
@@ -1751,7 +1751,7 @@
         : '↗️ Appears after a rise, sellers take over (Photo 2 & 4)';
 
       document.getElementById('modalBodyRatio').textContent = `${sig.ratio || '100%'} (Target: 80% - 120%)`;
-      document.getElementById('modalWickRatio').textContent = `${sig.wickPct || '≤ 20%'} (Limit: ≤ 20%)`;
+      document.getElementById('modalWickRatio').textContent = `${sig.cWickPct || sig.wickPct || '≤ 20%'} (Both Candles ≤ 20%)`;
       document.getElementById('modalEntry').textContent = `₹${Number(sig.entryPrice).toFixed(2)}`;
       document.getElementById('modalSL').textContent = `₹${Number(sig.stopLoss).toFixed(2)}`;
 
@@ -2206,12 +2206,23 @@
           const minBody = Math.max(pC * 0.0008, 0.20);
           if (pBody < minBody || cBody < minBody) continue;
 
-          // FILTER 2: Wick size <= 20% of total candle size (Exact Dhan criteria)
-          const upperWick = cH - Math.max(cO, cC);
-          const lowerWick = Math.min(cO, cC) - cL;
-          const totalWick = upperWick + lowerWick;
-          const wickPct = (totalWick / overallH) * 100;
-          if (wickPct > 20.05) continue;
+          // FILTER 2: Strict Wick size <= 20% on BOTH candles & combined (Dhan / Photo Criteria)
+          const cUpperWick = cH - Math.max(cO, cC);
+          const cLowerWick = Math.min(cO, cC) - cL;
+          const cTotalWick = cUpperWick + cLowerWick;
+          const cWickPct = overallH > 0 ? (cTotalWick / overallH) * 100 : 100;
+
+          const pUpperWick = prev.high - Math.max(pO, pC);
+          const pLowerWick = Math.min(pO, pC) - prev.low;
+          const pTotalWick = pUpperWick + pLowerWick;
+          const pOverallH = prev.high - prev.low;
+          const pWickPct = pOverallH > 0 ? (pTotalWick / pOverallH) * 100 : 100;
+
+          const bothTotalWick = cTotalWick + pTotalWick;
+          const bothOverallH = overallH + pOverallH;
+          const bothWickPct = bothOverallH > 0 ? (bothTotalWick / bothOverallH) * 100 : 100;
+
+          if (cWickPct > 20.05 || pWickPct > 20.05 || bothWickPct > 20.05) continue;
 
           // Strict 80% - 120% body ratio & >= 80% overlap engulfing filter
           const ratio = cBody / pBody;

@@ -42,14 +42,24 @@ c_body   = math.abs(c_close - c_open)
 p_body   = math.abs(p_close - p_open)
 c_range  = c_high - c_low
 
-// Wick calculation
-upper_wick = c_high - math.max(c_open, c_close)
-lower_wick = math.min(c_open, c_close) - c_low
-tot_wick   = upper_wick + lower_wick
-wick_pct   = c_range > 0 ? (tot_wick / c_range) * 100.0 : 100.0
+// Wick calculation on BOTH candles & combined (Strict <= 20% rule)
+p_range      = p_high - p_low
+upper_wick   = c_high - math.max(c_open, c_close)
+lower_wick   = math.min(c_open, c_close) - c_low
+tot_wick     = upper_wick + lower_wick
+wick_pct     = c_range > 0 ? (tot_wick / c_range) * 100.0 : 100.0
 
-// Filters
-wick_valid    = wick_pct <= max_wick_pct
+p_upper_wick = p_high - math.max(p_open, p_close)
+p_lower_wick = math.min(p_open, p_close) - p_low
+p_tot_wick   = p_upper_wick + p_lower_wick
+p_wick_pct   = p_range > 0 ? (p_tot_wick / p_range) * 100.0 : 100.0
+
+both_range    = c_range + p_range
+both_tot_wick = tot_wick + p_tot_wick
+both_wick_pct = both_range > 0 ? (both_tot_wick / both_range) * 100.0 : 100.0
+
+// Filters (Both candles individually and combined overall must have wicks <= max_wick_pct)
+wick_valid    = (wick_pct <= max_wick_pct) and (p_wick_pct <= max_wick_pct) and (both_wick_pct <= max_wick_pct)
 ratio_valid   = p_body > 0 and (c_body / p_body) >= min_body_ratio
 prev_not_doji = p_body >= (p_close * (min_body_pct / 100.0))
 
